@@ -6,7 +6,7 @@ import { useBookCoverAspectRatio } from '@/features/library/contexts/LibraryCont
 import { useMediaContext } from '@/features/player/contexts/MediaContext'
 import { usePlayLibraryItem } from '@/features/player/hooks/usePlayLibraryItem'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
-import { getLibraryItemCoverUrl, getPlaceholderCoverUrl } from '@/shared/lib/coverUtils'
+import { getLibraryItemCoverUrl, getPlaceholderCoverUrl, isMissingCoverPath } from '@/shared/lib/coverUtils'
 import { isLibraryItemPlayable } from '@/shared/lib/mediaPlayability'
 import { computeProgress } from '@/shared/lib/mediaProgress'
 import { mergeClasses } from '@/shared/lib/merge-classes'
@@ -75,7 +75,7 @@ export default function LibraryItemCover({
   )
 
   const rawCoverUrl = useMemo(() => {
-    if (!coverPath) return getPlaceholderCoverUrl()
+    if (!coverPath || isMissingCoverPath(coverPath)) return getPlaceholderCoverUrl()
     return getLibraryItemCoverUrl(libraryItem.id, libraryItem.updatedAt, true)
   }, [coverPath, libraryItem.id, libraryItem.updatedAt])
 

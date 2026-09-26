@@ -48,9 +48,33 @@ export function getPlaceholderCoverUrl(): string {
   return '/images/book_placeholder.jpg'
 }
 
-export function getLibraryItemCoverSrc(libraryItem: { id: string; updatedAt?: number }, placeholder: string): string {
-  // Always return the dynamic API URL so that the backend can attempt to fetch missing covers on the fly.
-  // The API will return a 404 if it truly cannot find one, at which point the frontend will fall back to the placeholder via the `onError` handler in MediaCardCover.
+/**
+ * `cover_path = 'missing'` is a TERMINAL verdict written by the backend after
+ * metadata providers confirmed a work genuinely has no cover art. It is not a
+ * storage path.
+ *
+ * The `/:id/cover` endpoint answers the sentinel with a JSON 404, and a JSON
+ * body in an `<img>` request is blocked by the browser's ORB (no-sniff) as a
+ * cross-origin resource, surfacing as `net::ERR_BLOCKED_BY_ORB` instead of a
+ * clean `onError`. It is also a request that can never succeed, so rendering
+ * the placeholder directly is both correct and cheaper. `?force=1` is the only
+ * way to re-attempt a sentinel item, which the cover editor drives explicitly.
+ */
+export const MISSING_COVER_SENTINEL = 'missing'
+
+export function isMissingCoverPath(coverPath: string | null | undefined): boolean {
+  return coverPath === MISSING_COVER_SENTINEL
+}
+
+export function getLibraryItemCoverSrc(
+  libraryItem: { id: string; updatedAt?: number; coverPath?: string | null },
+  placeholder: string
+): string {
+  if (isMissingCoverPath(libraryItem.coverPath)) return placeholder
+  // Otherwise always return the dynamic API URL so that the backend can attempt
+  // to fetch covers on the fly. It returns a 404 only when no art is
+  // obtainable, at which point the frontend falls back to the placeholder via
+  // the `onError` handler in MediaCardCover.
   const timestamp = 'updatedAt' in libraryItem ? libraryItem.updatedAt : undefined
   return getLibraryItemCoverUrl(libraryItem.id, timestamp ?? null)
 }

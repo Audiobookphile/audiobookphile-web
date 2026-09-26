@@ -112,10 +112,10 @@ export default function SearchClient({ libraryId, initialQuery, initialResults }
 
           const title = sanitizeDisplayTitle(item.media?.metadata?.title || item.title || 'Unknown')
           const author = item.media?.metadata?.authorName || item.author_names_first_last || ''
-          const coverSrc =
-            item.coverPath || item.cover_path
-              ? `/api/items/${itemId}/cover?ts=${item.updatedAt || item.updated_at || Date.now()}`
-              : getLibraryItemCoverSrc(item, placeholder)
+          const coverSrc = getLibraryItemCoverSrc(
+            { id: itemId, updatedAt: item.updatedAt ?? item.updated_at, coverPath: item.coverPath ?? item.cover_path },
+            placeholder
+          )
 
           return (
             <Link key={itemId} href={`/library/${libraryId}/item/${itemId}`} className="group flex flex-col gap-1">

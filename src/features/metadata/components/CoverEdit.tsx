@@ -19,7 +19,12 @@ import { useCoverSearch } from '@/features/metadata/hooks/useCoverSearch'
 import { useGlobalToast } from '@/shared/contexts/ToastContext'
 import { useUser } from '@/shared/contexts/UserContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
-import { getLibraryFileUrl, getLibraryItemCoverUrl, getPlaceholderCoverUrl } from '@/shared/lib/coverUtils'
+import {
+  getLibraryFileUrl,
+  getLibraryItemCoverUrl,
+  getPlaceholderCoverUrl,
+  isMissingCoverPath,
+} from '@/shared/lib/coverUtils'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 import CoverPreviewModal from '@/shared/modals/CoverPreviewModal'
 import Btn from '@/shared/ui/Btn'
@@ -82,9 +87,10 @@ export default function CoverEdit({ libraryItem }: CoverEditProps) {
   const media = libraryItem.media || {}
   const coverPath = media.coverPath
 
-  const coverUrl = !coverPath
-    ? getPlaceholderCoverUrl()
-    : getLibraryItemCoverUrl(libraryItem.id, libraryItem.updatedAt, true)
+  const coverUrl =
+    !coverPath || isMissingCoverPath(coverPath)
+      ? getPlaceholderCoverUrl()
+      : getLibraryItemCoverUrl(libraryItem.id, libraryItem.updatedAt, true)
 
   // Keep useMemo for localCovers since it filters and maps an array
   const localCovers = useMemo(() => {

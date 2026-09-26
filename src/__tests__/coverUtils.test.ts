@@ -41,4 +41,20 @@ describe('getLibraryItemCoverSrc', () => {
     expect(src).toContain('/items/item-9/cover')
     expect(src).toContain('ts=42')
   })
+
+  it('renders the placeholder for the terminal "missing" sentinel instead of hitting the cover api', () => {
+    // Regression: cover_path='missing' is a terminal verdict, and the API
+    // answers it with a JSON 404 that the browser blocks with
+    // net::ERR_BLOCKED_BY_ORB. Rendering the placeholder directly avoids both
+    // the console error and a request that can never succeed.
+    const src = getLibraryItemCoverSrc({ id: 'item-10', updatedAt: 7, coverPath: 'missing' }, '/images/ph.jpg')
+    expect(src).toBe('/images/ph.jpg')
+  })
+
+  it('still uses the api for a real cover path, an unknown path, or no path at all', () => {
+    for (const coverPath of ['item-10/cover.jpg', null, undefined]) {
+      const src = getLibraryItemCoverSrc({ id: 'item-10', updatedAt: 7, coverPath }, '/images/ph.jpg')
+      expect(src).toContain('/items/item-10/cover')
+    }
+  })
 })
