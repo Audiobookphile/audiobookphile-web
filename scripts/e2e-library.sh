@@ -45,4 +45,11 @@ cleanup_dev_types() {
 }
 trap cleanup_dev_types EXIT
 
-bunx playwright test tests/e2e/library-resilience.spec.ts --project="$PROJECT" --reporter=line
+# library-resilience guards the /library/books crash class.
+# play-button guards the "press play on the cover and nothing happens" class,
+# which the API contract tests could not see: the endpoint returned a valid
+# session while the button itself was inert.
+bunx playwright test \
+  tests/e2e/library-resilience.spec.ts \
+  tests/e2e/play-button.spec.ts \
+  --project="$PROJECT" --reporter=line

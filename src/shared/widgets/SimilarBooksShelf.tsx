@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useUser } from '@/shared/contexts/UserContext'
+import { fetchSimilarItemsAction } from '@/features/library/actions/libraryActions'
 import { BookLibraryItem, BookshelfView, PodcastLibraryItem } from '@/types/api'
 import BookShelfRow from '../../features/library/components/BookShelfRow'
 import BookMediaCard from './media-card/BookMediaCard'
@@ -23,15 +24,11 @@ export default function SimilarBooksShelf({ libraryItem }: SimilarBooksShelfProp
     const fetchSimilarItems = async () => {
       setIsLoading(true)
       try {
-        const url = process.env.NEXT_PUBLIC_API_URL
-          ? `${process.env.NEXT_PUBLIC_API_URL}/items/${libraryItem.id}/similar`
-          : `/api/items/${libraryItem.id}/similar`
+        // A server action, not bare fetch(): bare fetch skipped the API layer
+        // and its session token, so this 401'd on every item page.
+        const data = await fetchSimilarItemsAction<BookLibraryItem | PodcastLibraryItem>(libraryItem.id)
 
-        const res = await fetch(url)
-        if (!res.ok) throw new Error('Failed to fetch similar items')
-        const data = await res.json()
-
-        if (!data || !data.similarItems || data.similarItems.length === 0) {
+        if (!data?.similarItems || data.similarItems.length === 0) {
           if (isMounted) setHasEmbedding(false)
           return
         }
