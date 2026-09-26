@@ -49,7 +49,11 @@ trap cleanup_dev_types EXIT
 # play-button guards the "press play on the cover and nothing happens" class,
 # which the API contract tests could not see: the endpoint returned a valid
 # session while the button itself was inert.
+# playback-progress is the stronger sibling: it proves audio bytes arrive and
+# the playhead actually advances, which is the only assertion that catches a
+# session that mounts a player and then plays nothing.
 bunx playwright test \
   tests/e2e/library-resilience.spec.ts \
   tests/e2e/play-button.spec.ts \
+  tests/e2e/playback-progress.spec.ts \
   --project="$PROJECT" --reporter=line

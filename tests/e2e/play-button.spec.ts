@@ -21,64 +21,13 @@
  * fixture.
  */
 import { expect, test } from './fixtures'
+import { dismissPlayerIfOpen, findPlayableCard, gotoStable, playerPanel } from './helpers/playableItem'
 
 // The player chrome has pre-existing WCAG findings; this spec is about
 // behaviour, not a11y.
 test.use({ axeEnabled: false })
 
 test.describe.configure({ mode: 'serial' })
-
-/** Navigate without hanging on long-poll / analytics sockets that never idle. */
-async function gotoStable(page: import('@playwright/test').Page, path: string) {
-  await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-  await page.waitForLoadState('load', { timeout: 15_000 }).catch(() => {})
-}
-
-/** The player panel only mounts once a stream item is set. */
-function playerPanel(page: import('@playwright/test').Page) {
-  return page.locator('.glassmorphism.fixed.bottom-0')
-}
-
-async function dismissPlayerIfOpen(page: import('@playwright/test').Page) {
-  const pause = page.getByRole('button', { name: 'Pause', exact: true }).first()
-  if (await pause.isVisible().catch(() => false)) {
-    await pause.click().catch(() => {})
-    await page.waitForTimeout(500)
-  }
-}
-
-/**
- * Finds an item id that the shelf itself advertises as playable, and returns
- * it together with the Play button that proved it.
- *
- * Two things matter here. First, it hovers cards until one actually offers
- * Play: only 27 of 100 books in this library have audio in storage, and the
- * other 73 are *correctly* shown without a Play button. Picking "the first
- * card" would therefore be flaky by construction -- and asserting a Play
- * button on an unplayable book would be asserting a bug.
- *
- * Second, it reads the id from the card's own cover image URL, so the target
- * is derived from what the UI renders rather than from a hardcoded id that
- * would rot.
- */
-async function findPlayableCard(page: import('@playwright/test').Page): Promise<{
-  itemId: string
-  playButton: import('@playwright/test').Locator
-}> {
-  const cards = page.locator('.group.h-full')
-  const count = await cards.count()
-  for (let i = 0; i < count; i++) {
-    const card = cards.nth(i)
-    await card.hover().catch(() => {})
-    await page.waitForTimeout(150)
-    const play = card.getByRole('button', { name: 'Play', exact: true }).first()
-    if (!(await play.isVisible().catch(() => false))) continue
-    const src = await card.locator('img[src*="/api/items/"]').first().getAttribute('src')
-    const itemId = src?.match(/\/api\/items\/([0-9a-f-]{36})\/cover/)?.[1]
-    if (itemId) return { itemId, playButton: play }
-  }
-  throw new Error(`no playable card found among ${count} cards: the shelf advertises no playable book at all`)
-}
 
 test('a playable book on the shelf mounts the player when Play is clicked', async ({ adminPage }) => {
   await gotoStable(adminPage, '/library/books')
