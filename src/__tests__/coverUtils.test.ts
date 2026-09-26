@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { getLibraryItemCoverSrc, getLibraryItemCoverUrl } from '../shared/lib/coverUtils'
+import { getLibraryItemCoverSrc, getLibraryItemCoverUrl, withCoverRetry } from '../shared/lib/coverUtils'
 
 describe('getLibraryItemCoverUrl', () => {
   it('uses the provided updatedAt as a stable cache-buster', () => {
@@ -25,6 +25,40 @@ describe('getLibraryItemCoverUrl', () => {
     const before = getLibraryItemCoverUrl('item-1', 1_700_000_000_000)
     const after = getLibraryItemCoverUrl('item-1', 1_800_000_000_000)
     expect(before).not.toBe(after)
+  })
+
+  it('never sends a raw flag the API does not declare', () => {
+    // The endpoint 302-redirects to the stored object and does no processing,
+    // so `raw=1` implied a variant that does not exist and was silently
+    // dropped by the API's query schema.
+    const src = getLibraryItemCoverUrl('item-1', 42)
+    expect(src).not.toContain('raw')
+  })
+})
+
+describe('withCoverRetry', () => {
+  it('leaves the URL alone on the first attempt', () => {
+    const src = 'https://api.test/items/item-1/cover?ts=1'
+    expect(withCoverRetry(src, 0)).toBe(src)
+  })
+
+  it('appends a cache-buster so the request is genuinely re-issued', () => {
+    const src = 'https://api.test/items/item-1/cover?ts=1'
+    expect(withCoverRetry(src, 1)).toBe(`${src}&cb=1`)
+    expect(withCoverRetry(src, 2)).not.toBe(withCoverRetry(src, 1))
+  })
+
+  it('uses ? when the URL has no query string', () => {
+    expect(withCoverRetry('https://api.test/items/item-1/cover', 1)).toBe('https://api.test/items/item-1/cover?cb=1')
+  })
+
+  it('does NOT send force=1, which would re-query providers and can persist the missing sentinel', () => {
+    const retried = withCoverRetry('https://api.test/items/item-1/cover?ts=1', 2)
+    expect(retried).not.toContain('force')
+  })
+
+  it('is inert for an empty source', () => {
+    expect(withCoverRetry('', 3)).toBe('')
   })
 })
 

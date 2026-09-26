@@ -90,7 +90,7 @@ export default function CoverEdit({ libraryItem }: CoverEditProps) {
   const coverUrl =
     !coverPath || isMissingCoverPath(coverPath)
       ? getPlaceholderCoverUrl()
-      : getLibraryItemCoverUrl(libraryItem.id, libraryItem.updatedAt, true)
+      : getLibraryItemCoverUrl(libraryItem.id, libraryItem.updatedAt)
 
   // Keep useMemo for localCovers since it filters and maps an array
   const localCovers = useMemo(() => {

@@ -10,7 +10,15 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 2,
+  // One worker. Two workers was a genuine source of flakiness, not just speed:
+  // each spec file performs its own login against the same account, so they
+  // raced on rate limits, and the pair of concurrent Chromium instances plus
+  // the Next dev server was enough to exhaust swap on a 16 GB host and get the
+  // dev server OOM-killed mid-run, which surfaces as
+  // `ERR_CONNECTION_REFUSED on /login` and looks exactly like a product
+  // regression. The gate is three files; serialising it costs little and makes
+  // a red run mean something.
+  workers: 1,
   reporter: 'html',
   use: {
     baseURL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000', // dev-only fallback

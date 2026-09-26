@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getLibraryItemCoverSrc } from '@/shared/lib/coverUtils'
+import { getLibraryItemCoverSrc, withCoverRetry } from '@/shared/lib/coverUtils'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 import type { LibraryItem } from '@/types/api'
 
@@ -54,11 +54,7 @@ export default function MediaCardCover({
   const shouldAttemptCover = !imageError
 
   const baseCoverSrc = useMemo(() => getLibraryItemCoverSrc(libraryItem, placeholderUrl), [libraryItem, placeholderUrl])
-  const bookCoverSrc = useMemo(() => {
-    if (!baseCoverSrc || retryCount === 0) return baseCoverSrc
-    const sep = baseCoverSrc.includes('?') ? '&' : '?'
-    return `${baseCoverSrc}${sep}retry=${retryCount}`
-  }, [baseCoverSrc, retryCount])
+  const bookCoverSrc = useMemo(() => withCoverRetry(baseCoverSrc, retryCount), [baseCoverSrc, retryCount])
 
   const [prevBaseSrc, setPrevBaseSrc] = useState(baseCoverSrc)
 

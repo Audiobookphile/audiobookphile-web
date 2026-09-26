@@ -2,12 +2,19 @@ import type { LibraryItem } from '@/types/api'
 
 /**
  * Build cover URL for a library item
+ *
+ * The endpoint 302-redirects to the object stored in the `covers` bucket and
+ * performs no processing, so there is no "raw vs processed" variant to ask
+ * for: the bytes you get are the bytes that were uploaded. Callers that used to
+ * pass `raw=1` were sending a parameter the API does not declare (its query
+ * schema accepts only `force`), so it was silently dropped while implying a
+ * distinction that does not exist.
+ *
  * @param libraryItemId
  * @param timestamp - Optional timestamp for cache busting (typically updatedAt)
- * @param raw - If true, requests raw cover without server-side processing
  * @returns Cover URL
  */
-export function getLibraryItemCoverUrl(libraryItemId: string, timestamp?: number | null, raw: boolean = false): string {
+export function getLibraryItemCoverUrl(libraryItemId: string, timestamp?: number | null): string {
   const params = new URLSearchParams()
   // `ts` must be a STABLE, content-derived value. Falling back to Date.now()
   // produced a brand-new URL on every re-render for items whose updatedAt is 0,
@@ -16,14 +23,31 @@ export function getLibraryItemCoverUrl(libraryItemId: string, timestamp?: number
   // bumped by the library_items cover trigger whenever cover_path changes, so
   // 0 is a safe, cacheable fallback.
   params.set('ts', String(timestamp || 0))
-  if (raw) {
-    params.set('raw', '1')
-  }
   const fallbackUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/api`
     : 'http://localhost:54321/functions/v1/api'
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || fallbackUrl
   return `${apiUrl}/items/${libraryItemId}/cover?${params.toString()}`
+}
+
+/**
+ * Re-requests a cover URL past the browser cache, after a load failure.
+ *
+ * This is a *client-side* cache-buster and nothing more. It deliberately does
+ * NOT send `force=1`, which is the one parameter the cover endpoint actually
+ * acts on: `force` makes the server re-query the metadata providers and can
+ * persist the terminal `missing` sentinel on a transient blip, so firing it
+ * from a card hover would both hammer the providers and risk stripping a cover
+ * that is perfectly fetchable. Re-issuing the request is enough to retry a
+ * dropped connection or a cold edge cache.
+ *
+ * @param src - The cover URL to re-request
+ * @param attempt - 1-based retry counter; 0 returns the URL unchanged
+ */
+export function withCoverRetry(src: string, attempt: number): string {
+  if (!src || attempt <= 0) return src
+  const sep = src.includes('?') ? '&' : '?'
+  return `${src}${sep}cb=${attempt}`
 }
 
 /**

@@ -76,7 +76,7 @@ export default function LibraryItemCover({
 
   const rawCoverUrl = useMemo(() => {
     if (!coverPath || isMissingCoverPath(coverPath)) return getPlaceholderCoverUrl()
-    return getLibraryItemCoverUrl(libraryItem.id, libraryItem.updatedAt, true)
+    return getLibraryItemCoverUrl(libraryItem.id, libraryItem.updatedAt)
   }, [coverPath, libraryItem.id, libraryItem.updatedAt])
 
   const handleMouseEnter = useCallback(() => {

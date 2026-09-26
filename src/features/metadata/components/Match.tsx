@@ -81,7 +81,7 @@ export default function Match({
 
   const coverUrl = useMemo(() => {
     if (!media.coverPath) return null
-    return getLibraryItemCoverUrl(libraryItem.id, libraryItem.updatedAt, true)
+    return getLibraryItemCoverUrl(libraryItem.id, libraryItem.updatedAt)
   }, [media.coverPath, libraryItem.id, libraryItem.updatedAt])
 
   const providerItems = useMemo(() => {

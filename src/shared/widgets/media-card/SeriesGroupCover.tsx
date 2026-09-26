@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCardSize } from '@/features/library/contexts/CardSizeContext'
-import { getLibraryItemCoverSrc, getPlaceholderCoverUrl } from '@/shared/lib/coverUtils'
+import { getLibraryItemCoverSrc, getPlaceholderCoverUrl, withCoverRetry } from '@/shared/lib/coverUtils'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 import type { LibraryItem } from '@/types/api'
 
@@ -157,8 +157,7 @@ export default function SeriesGroupCover({ name, books, width, height, bookCover
           // Re-trigger image load by bumping a retry param
           const img = document.querySelector<HTMLImageElement>(`img[data-cover-id="${bookId}"]`)
           if (img) {
-            const sep = coverUrl.includes('?') ? '&' : '?'
-            img.src = `${coverUrl}${sep}retry=${retryCount + 1}`
+            img.src = withCoverRetry(coverUrl, retryCount + 1)
           }
         }, delay)
       } else {
@@ -220,11 +219,7 @@ export default function SeriesGroupCover({ name, books, width, height, bookCover
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               data-cover-id={cover.id}
-              src={
-                retryCount > 0
-                  ? `${cover.coverUrl}${cover.coverUrl.includes('?') ? '&' : '?'}retry=${retryCount}`
-                  : cover.coverUrl
-              }
+              src={retryCount > 0 ? withCoverRetry(cover.coverUrl, retryCount) : cover.coverUrl}
               alt=""
               aria-hidden="true"
               onError={() => handleImageError(cover.id, cover.coverUrl)}

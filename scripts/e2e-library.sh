@@ -25,6 +25,16 @@ case "${NEXT_PUBLIC_SITE_URL:-}" in
     ;;
 esac
 
+# Cap the dev server's heap. Next's dev server will grow until the OS starts
+# swapping, and on a memory-constrained host the OOM killer then takes the dev
+# server out mid-run. That surfaces as `ERR_CONNECTION_REFUSED on /login` or a
+# locator that never appears -- a red run that says nothing about the product.
+# Capping the heap makes it collect instead.
+if [ -z "${NODE_OPTIONS:-}" ]; then
+  export NODE_OPTIONS="--max-old-space-size=${E2E_NODE_HEAP_MB:-3072}"
+  echo "🧠 Dev server heap capped at ${E2E_NODE_HEAP_MB:-3072} MB."
+fi
+
 if [ -z "${PLAYWRIGHT_ADMIN_EMAIL:-}" ] || [ -z "${PLAYWRIGHT_ADMIN_PASSWORD:-}" ]; then
   echo "🚫 e2e gate requires PLAYWRIGHT_ADMIN_EMAIL and PLAYWRIGHT_ADMIN_PASSWORD"
   exit 1
