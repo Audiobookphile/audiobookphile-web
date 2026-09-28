@@ -65,12 +65,17 @@ export async function removeSeriesFromContinueListeningAction(seriesId: string) 
 }
 
 /**
- * Remove a single item from Continue Listening by marking it finished.
+ * Remove a single item from Continue Listening by deleting its progress row.
+ *
+ * This called `PATCH /api/me/progress/id/:progressId`, which does not exist: the
+ * server implements `DELETE /api/me/progress/id/:id` (and scopes it to
+ * `user_id`), so every use 404'd, the toast said "Failed to update", and the
+ * item stayed on the Continue Listening shelf on the next load. DELETE is also
+ * the honest verb here — the row is removed rather than flagged finished.
  */
 export async function removeFromContinueListeningAction(progressId: string) {
   return await apiRequest(`/api/me/progress/id/${progressId}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ isFinished: true }),
+    method: 'DELETE',
   })
 }
 
