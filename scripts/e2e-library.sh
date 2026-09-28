@@ -62,8 +62,12 @@ trap cleanup_dev_types EXIT
 # playback-progress is the stronger sibling: it proves audio bytes arrive and
 # the playhead actually advances, which is the only assertion that catches a
 # session that mounts a player and then plays nothing.
+# cover-fallback guards the no-cover path: a book whose cover_path is the
+# terminal "missing" sentinel must render the placeholder without requesting a
+# cover that can only 404 (and be blocked by the browser as a JSON body).
 bunx playwright test \
   tests/e2e/library-resilience.spec.ts \
   tests/e2e/play-button.spec.ts \
   tests/e2e/playback-progress.spec.ts \
+  tests/e2e/cover-fallback.spec.ts \
   --project="$PROJECT" --reporter=line

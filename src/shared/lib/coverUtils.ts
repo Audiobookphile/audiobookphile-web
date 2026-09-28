@@ -91,10 +91,21 @@ export function isMissingCoverPath(coverPath: string | null | undefined): boolea
 }
 
 export function getLibraryItemCoverSrc(
-  libraryItem: { id: string; updatedAt?: number; coverPath?: string | null },
+  libraryItem: {
+    id: string
+    updatedAt?: number
+    coverPath?: string | null
+    media?: { coverPath?: string | null } | null
+  },
   placeholder: string
 ): string {
-  if (isMissingCoverPath(libraryItem.coverPath)) return placeholder
+  // The cover path is nested under `media` on a LibraryItem payload; only some
+  // raw search shapes carry it at the top level. Reading the top level alone
+  // made this resolve to `undefined` for every real library item, so the
+  // sentinel check below silently never fired and cards kept requesting a
+  // cover that could only 404.
+  const coverPath = libraryItem.coverPath ?? libraryItem.media?.coverPath ?? null
+  if (isMissingCoverPath(coverPath)) return placeholder
   // Otherwise always return the dynamic API URL so that the backend can attempt
   // to fetch covers on the fly. It returns a 404 only when no art is
   // obtainable, at which point the frontend falls back to the placeholder via

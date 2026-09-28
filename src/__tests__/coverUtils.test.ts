@@ -85,6 +85,25 @@ describe('getLibraryItemCoverSrc', () => {
     expect(src).toBe('/images/ph.jpg')
   })
 
+  it('detects the sentinel on a real payload, where coverPath is nested under media', () => {
+    // The shape that actually ships. `LibraryItem` has no top-level
+    // coverPath, so a top-level-only read made this resolve to undefined for
+    // every real item and the sentinel short-circuit above never ran. A test
+    // that hand-built `{ coverPath: 'missing' }` passed while the product
+    // still requested a guaranteed 404.
+    const fromMedia = getLibraryItemCoverSrc(
+      { id: 'item-11', updatedAt: 9, media: { coverPath: 'missing' } },
+      '/images/ph.jpg'
+    )
+    expect(fromMedia).toBe('/images/ph.jpg')
+
+    const realFromMedia = getLibraryItemCoverSrc(
+      { id: 'item-11', updatedAt: 9, media: { coverPath: 'item-11/cover.jpg' } },
+      '/images/ph.jpg'
+    )
+    expect(realFromMedia).toContain('/items/item-11/cover')
+  })
+
   it('still uses the api for a real cover path, an unknown path, or no path at all', () => {
     for (const coverPath of ['item-10/cover.jpg', null, undefined]) {
       const src = getLibraryItemCoverSrc({ id: 'item-10', updatedAt: 7, coverPath }, '/images/ph.jpg')

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
-import { getLibraryItemCoverSrc, getPlaceholderCoverUrl } from '@/shared/lib/coverUtils'
+import { getLibraryItemCoverSrc, getPlaceholderCoverUrl, isMissingCoverPath } from '@/shared/lib/coverUtils'
 import { filterEncode } from '@/shared/lib/filterUtils'
 import { SearchLibraryResponse } from '@/types/api'
 
@@ -168,13 +168,28 @@ export function useGlobalSearchTransformer({
 
     // Series
     addGroup(searchResults.series, 'header-series', t('LabelSeries'), (item) => {
-      // Use series cover or fallback to first book cover
-      let imageSrc = ''
-      if (item.series.coverPath) {
-        imageSrc = `/api/series/${item.series.id}/cover?ts=${item.series.updatedAt || 0}`
-      } else if (item.books.length > 0) {
-        imageSrc = getLibraryItemCoverSrc(item.books[0], getPlaceholderCoverUrl())
-      }
+      // Series have no cover of their own. The `series` table carries no image
+      // column and the covers bucket has no `series/` prefix, so series art is
+      // always derived from the books in the series -- which is exactly what
+      // SeriesGroupCover does for the series page.
+      //
+      // This used to prefer `item.series.coverPath` and request
+      // `/api/series/:id/cover`. That endpoint does not exist (the API has
+      // exactly one cover route, `/items/:id/cover`) and the field is never
+      // sent on a series payload, so the branch was unreachable. Left in
+      // place it was a trap: the day someone adds a series cover, every
+      // series in global search renders a broken image, because a JSON 404 in
+      // an <img> is blocked by the browser as a cross-origin resource.
+      //
+      // Picking the first book that actually has stored art also matches
+      // SeriesGroupCover's rule of skipping placeholder-only entries, so the
+      // same series shows the same face in search and on its page.
+      const placeholder = getPlaceholderCoverUrl()
+      const bookWithCover = item.books?.find((book) => {
+        const path = book.media?.coverPath
+        return Boolean(path) && !isMissingCoverPath(path)
+      })
+      const imageSrc = bookWithCover ? getLibraryItemCoverSrc(bookWithCover, placeholder) : placeholder
 
       return {
         type: 'series',
