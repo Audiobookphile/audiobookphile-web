@@ -1,6 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import PlayerTrackGpuOverlay from '@/features/player/components/PlayerTrackGpuOverlay'
+import { publishTrackGpuState } from '@/features/player/lib/playerTrackGpu'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
 import { secondsToTimestamp } from '@/shared/lib/datefns'
 import { mergeClasses } from '@/shared/lib/merge-classes'
@@ -147,11 +149,26 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
       if (trackCursorRef.current) {
         trackCursorRef.current.style.left = `${offsetX - 1}px`
       }
+      // Same position, in the form the GPU layer's shader wants (0..1).
+      publishTrackGpuState({ hoverPercent: rect.width ? offsetX / rect.width : 0 })
     },
     [useChapterTrack, currentChapterStart, currentChapterDuration, duration, effectivePlaybackRate, chapters]
   )
 
   const activePointerIdRef = useRef<number | null>(null)
+
+  // Mirror the render-derived values into the GPU layer's store after commit.
+  // The overlay samples that store once per animation frame, so this bar is
+  // never re-rendered for pointer-level updates.
+  useEffect(() => {
+    publishTrackGpuState({
+      playedPercent,
+      bufferedPercent,
+      isHovering,
+      isDragging,
+      isLoading,
+    })
+  }, [playedPercent, bufferedPercent, isHovering, isDragging, isLoading])
 
   // ─── Pointer events (Unified Mouse & Touch) ──────────────────────────────────
   const handlePointerDown = useCallback(
@@ -174,7 +191,10 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
   }, [isDragging])
 
   const handlePointerLeave = useCallback(() => {
-    if (!isDragging) setIsHovering(false)
+    if (!isDragging) {
+      setIsHovering(false)
+      publishTrackGpuState({ hoverPercent: null })
+    }
   }, [isDragging])
 
   const handlePointerMove = useCallback(
@@ -283,6 +303,15 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
           {isLoading && (
             <div className="via-track-progress/30 loading-track-slide pointer-events-none absolute top-0 h-full w-1/4 bg-gradient-to-r from-transparent to-transparent" />
           )}
+          {/*
+            GPU track layer. Painted on top of the DOM fills above and rendered
+            only when WebGPU is available; `pointer-events-none` keeps hit
+            testing on the role="slider" element, and it is `aria-hidden`, so the
+            accessibility tree is byte-for-byte what it was before. When WebGPU
+            is missing the canvas is never even imported and the DOM fills above
+            are the whole visual.
+          */}
+          <PlayerTrackGpuOverlay trackRef={trackRef} />
         </div>
 
         {/* Chapter ticks */}

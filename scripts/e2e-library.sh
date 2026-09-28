@@ -65,9 +65,13 @@ trap cleanup_dev_types EXIT
 # cover-fallback guards the no-cover path: a book whose cover_path is the
 # terminal "missing" sentinel must render the placeholder without requesting a
 # cover that can only 404 (and be blocked by the browser as a JSON body).
+# player-track guards the GPU track layer's fallback: the DOM role="slider" must
+# stay the single accessible control and must keep receiving pointer and keyboard
+# seeks, so the WebGPU layer can never take the scrubber down with it.
 bunx playwright test \
   tests/e2e/library-resilience.spec.ts \
   tests/e2e/play-button.spec.ts \
   tests/e2e/playback-progress.spec.ts \
   tests/e2e/cover-fallback.spec.ts \
+  tests/e2e/player-track.spec.ts \
   --project="$PROJECT" --reporter=line
