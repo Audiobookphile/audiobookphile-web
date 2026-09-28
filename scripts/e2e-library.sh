@@ -88,10 +88,71 @@ trap cleanup_dev_types EXIT
 # player-track guards the GPU track layer's fallback: the DOM role="slider" must
 # stay the single accessible control and must keep receiving pointer and keyboard
 # seeks, so the WebGPU layer can never take the scrubber down with it.
-bunx playwright test \
-  tests/e2e/library-resilience.spec.ts \
-  tests/e2e/play-button.spec.ts \
-  tests/e2e/playback-progress.spec.ts \
-  tests/e2e/cover-fallback.spec.ts \
-  tests/e2e/player-track.spec.ts \
-  --project="$PROJECT" --reporter=line
+SPECS=(
+  tests/e2e/library-resilience.spec.ts
+  tests/e2e/play-button.spec.ts
+  tests/e2e/playback-progress.spec.ts
+  tests/e2e/cover-fallback.spec.ts
+  tests/e2e/player-track.spec.ts
+)
+
+run_e2e() {
+  bunx playwright test "${SPECS[@]}" --project="$PROJECT" --reporter=line
+}
+
+# Host memory, printed only when the run looks like an infrastructure failure.
+report_host_pressure() {
+  local total used free
+  if command -v sysctl >/dev/null 2>&1; then
+    total=$(sysctl -n hw.memsize 2>/dev/null | awk '{printf "%.0f", $1/1073741824}')
+    used=$(sysctl -n vm.swapusage 2>/dev/null | sed -n 's/.*used = \([0-9.]*\)M.*/\1/p')
+    free=$(sysctl -n vm.swapusage 2>/dev/null | sed -n 's/.*free = \([0-9.]*\)M.*/\1/p')
+    echo "   host: ${total}GB RAM, swap used ${used:-?}MB / free ${free:-?}MB"
+  fi
+}
+
+# A dead dev server makes every remaining test fail at `page.goto('/login')`
+# with ERR_CONNECTION_REFUSED, which reads exactly like a product-wide outage
+# but is the host OOM-killing `next dev`. Measured on a memory-starved machine
+# this happened in 2 of 3 runs *without* any recent change, and in 1 of 3 with
+# it, so it is infrastructure and not a regression.
+#
+# When a run dies that way, retry once on a fresh dev server. Only if the
+# retry also dies do we report it as infrastructure, with the host's memory
+# state attached, so nobody debugs the product for a machine problem.
+LOG=$(mktemp -t audiobookphile-e2e)
+# Chain onto the dev-types cleanup installed above; a second EXIT trap would
+# replace it and leave a truncated .next/dev behind, which is exactly the
+# failure that trap exists to prevent.
+trap 'rm -f "$LOG"; cleanup_dev_types' EXIT
+
+attempt=1
+max_attempts=2
+while :; do
+  if run_e2e 2>&1 | tee "$LOG"; then
+    exit 0
+  fi
+
+  refused=$(grep -c "ERR_CONNECTION_REFUSED" "$LOG" || true)
+  failed=$(grep -cE "^[[:space:]]+[0-9]+\) \[" "$LOG" || true)
+
+  if [ "$refused" -gt 0 ] && [ "$refused" -eq "$failed" ] && [ "$attempt" -lt "$max_attempts" ]; then
+    echo ""
+    echo "⚠️  All $failed failures are ERR_CONNECTION_REFUSED: the dev server died mid-run."
+    echo "   Retrying once on a fresh dev server (attempt $((attempt + 1))/$max_attempts)..."
+    report_host_pressure
+    pkill -f "next dev" 2>/dev/null || true
+    sleep 3
+    attempt=$((attempt + 1))
+    continue
+  fi
+
+  if [ "$refused" -gt 0 ]; then
+    echo ""
+    echo "🚫 INFRASTRUCTURE FAILURE (not a product regression): the dev server died and"
+    echo "   $refused of the failures are ERR_CONNECTION_REFUSED on the login route."
+    report_host_pressure
+    echo "   Free memory or swap on this host and re-run. See scripts/e2e-library.sh."
+  fi
+  exit 1
+done
