@@ -48,7 +48,15 @@ export async function syncPlaybackSession(sessionId: string, syncData: SessionSy
       }),
     })
   } catch (err) {
-    console.error('[playbackActions] syncPlaybackSession failed:', err)
+    // Rethrow deliberately. This used to swallow the failure into a
+    // console.error, which made the catch block in usePlaybackSession.syncProgress
+    // unreachable: `failedSyncsRef` stayed at 0, so the "progress is not being
+    // synced" toast could never fire, and progress was silently lost exactly when
+    // the edge function started rejecting every sync -- which is the one
+    // situation the toast exists to report. The consumer already counts failures
+    // and surfaces the warning, and logs the error itself, so re-throwing is
+    // enough; logging here too would just double the noise.
+    throw err
   }
 }
 
@@ -68,6 +76,11 @@ export async function closePlaybackSession(sessionId: string, syncData: SessionS
       }),
     })
   } catch (err) {
-    console.error('[playbackActions] closePlaybackSession failed:', err)
+    // Same reasoning as syncPlaybackSession: swallowing here made the caller's
+    // catch (and its "Failed to close session" log) unreachable. Note the
+    // caller's `finally` still resets the session refs either way, so a failed
+    // close cannot wedge the player — it only means final progress was not
+    // persisted, which is worth surfacing rather than hiding.
+    throw err
   }
 }
