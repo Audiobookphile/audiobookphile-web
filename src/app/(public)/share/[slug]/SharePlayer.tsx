@@ -10,6 +10,7 @@ import { secondsToTimestamp } from '@/shared/lib/datefns'
 import IconBtn from '@/shared/ui/IconBtn'
 import Tooltip from '@/shared/ui/Tooltip'
 import LoadingSpinner from '@/shared/widgets/LoadingSpinner'
+import { shouldDeferToFocusedElement } from '@/features/player/lib/hotkeyScope'
 import type { AudioTrackData, Chapter, MediaItemShareResponse } from '@/types/api'
 import { PlayerState } from '@/types/api'
 
@@ -376,6 +377,12 @@ export default function SharePlayer({ slug, startTime: startTimeParam }: SharePl
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!playerRef.current || !hasLoaded) return
+      // This page is a public share view with a form on it. Without this guard
+      // the hotkeys swallowed Space and the arrow keys even while the visitor was
+      // typing into a text field, and the scrubber below is a role="slider" that
+      // handles its own arrows -- so one ArrowRight both seeked 5s and jumped the
+      // track. Same rule as the in-app player; see hotkeyScope.
+      if (shouldDeferToFocusedElement(document.activeElement, e.code, e.shiftKey)) return
 
       switch (e.key) {
         case ' ':
