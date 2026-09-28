@@ -168,7 +168,19 @@ test.describe('library resilience', () => {
   test('unknown library slug redirects home instead of crashing', async ({ adminPage }) => {
     await gotoStable(adminPage, '/library/definitely-not-a-library-xyz')
     await expectNoErrorBoundary(adminPage)
-    expect(adminPage.url()).not.toContain('definitely-not-a-library-xyz')
+
+    // The redirect is async: the route resolves the slug server-side and then
+    // replaces the URL client-side. `gotoStable` returns at domcontentloaded,
+    // so asserting the URL immediately races that resolve and failed
+    // intermittently on a cold dev server — a red run that said nothing about
+    // the product. Poll instead, and say what was left on screen if it never
+    // redirects.
+    await expect
+      .poll(() => adminPage.url(), {
+        timeout: 15_000,
+        message: 'an unknown library slug should redirect away from /library/<bogus>, but stayed put',
+      })
+      .not.toContain('definitely-not-a-library-xyz')
   })
 
   test('library controls render real icons and cover sizing stays usable at boundaries', async ({ adminPage }) => {

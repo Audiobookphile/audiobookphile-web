@@ -30,9 +30,29 @@ esac
 # server out mid-run. That surfaces as `ERR_CONNECTION_REFUSED on /login` or a
 # locator that never appears -- a red run that says nothing about the product.
 # Capping the heap makes it collect instead.
+#
+# The default is 2048 rather than something larger on purpose. A cap is only
+# useful if it bites: a high ceiling lets V8 keep growing (and the host keep
+# swapping) right up until something is killed, which is the failure this cap
+# exists to prevent. 2048 leaves headroom for Turbopack's compile graph while
+# still collecting before the process becomes the OOM killer's target.
 if [ -z "${NODE_OPTIONS:-}" ]; then
-  export NODE_OPTIONS="--max-old-space-size=${E2E_NODE_HEAP_MB:-3072}"
-  echo "🧠 Dev server heap capped at ${E2E_NODE_HEAP_MB:-3072} MB."
+  export NODE_OPTIONS="--max-old-space-size=${E2E_NODE_HEAP_MB:-2048}"
+  echo "🧠 Dev server heap capped at ${E2E_NODE_HEAP_MB:-2048} MB."
+fi
+
+# Keep the browser binaries OUT of ~/Library/Caches.
+#
+# macOS periodically reaps ~/Library/Caches (com.apple.cache_delete), and it
+# reaped the Playwright browser mid-gate twice here: every test in the run died
+# with "browserType.launch: Executable doesn't exist", which looks exactly like
+# a broken test environment and tells you nothing about the product.
+# ~/.cache is not reaped, survives `node_modules` being rebuilt, and is the
+# XDG-standard location, so it is the durable home for the browsers.
+export PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-${XDG_CACHE_HOME:-$HOME/.cache}/ms-playwright}"
+if [ ! -d "$PLAYWRIGHT_BROWSERS_PATH" ] || [ -z "$(ls -A "$PLAYWRIGHT_BROWSERS_PATH" 2>/dev/null)" ]; then
+  echo "⬇️ Installing Playwright browsers into $PLAYWRIGHT_BROWSERS_PATH (one-time)..."
+  bunx playwright install chromium >/dev/null 2>&1 || true
 fi
 
 if [ -z "${PLAYWRIGHT_ADMIN_EMAIL:-}" ] || [ -z "${PLAYWRIGHT_ADMIN_PASSWORD:-}" ]; then
