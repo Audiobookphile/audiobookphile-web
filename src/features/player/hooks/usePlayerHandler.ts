@@ -103,10 +103,13 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
   const { showToast } = useGlobalToast()
   const t = useTypeSafeTranslations()
 
-  // Late-bound control refs: setupPlayerListeners is defined before the
-  // controls below, and its dependency array would hit their TDZ if
-  // referenced directly.
-  const closePlayerRef = useRef<() => Promise<void>>(async () => {})
+  // NOTE: this hook used to keep a `closePlayerRef` so that setupPlayerListeners
+  // — declared before the controls, and so unable to reference them without
+  // hitting their temporal dead zone — could tear the player down from the
+  // `error` and `finished` handlers. Neither handler does that any more: terminal
+  // teardown belongs to MediaPlayerContainer, which also has to clear the stream
+  // state and so cannot be done from in here. The ref was therefore a write-only
+  // local, and it is gone rather than left as a decoy for the next reader.
 
   // Player state
   const [playerState, setPlayerState] = useState<PlayerState>(PlayerState.IDLE)
@@ -247,15 +250,25 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
         // Fatal after LocalAudioPlayer's retry budget. Previously swallowed —
         // the UI had no ERROR rendering, leaving a silently dead player.
         showToast(t('ToastPlaybackFailed'), { type: 'error', duration: 6000 })
-        void closePlayerRef.current()
-        // TODO: Try switching to HLS transcode on error
+        // Deliberately NOT closePlayer() here. closePlayer() resets the state to
+        // IDLE, which (a) erased the ERROR state in the same tick so the
+        // container never saw it, and (b) left `streamLibraryItem` set, because
+        // only clearStreamMedia() clears that. The bar therefore stayed on screen
+        // showing the failed book with a Play button wired to a destroyed player:
+        // tapping it ran playerRef.current?.playPause() on a null ref, so
+        // nothing happened, with no toast and no error. Tearing down is the
+        // container's decision, and it does both halves in the right order.
+        setPlayerState(PlayerState.ERROR)
       })
 
       player.on('finished', () => {
         console.log('[usePlayerHandler] Playback finished')
-        // Close the server session on final-track end; previously a TODO left
-        // sessions lingering open until the next playback started.
-        void closePlayerRef.current()
+        // Same reason as the error path: LocalAudioPlayer emits stateChange
+        // (FINISHED) and finished back to back, so calling closePlayer() here
+        // overwrote FINISHED with IDLE before React could commit an intermediate
+        // render. MediaPlayerContainer's auto-advance effect gates on FINISHED,
+        // so it could never fire and the queue never advanced. Leave the state
+        // as FINISHED and let the container either advance or clear.
       })
     },
     [startSyncInterval, stopSyncInterval]
@@ -497,7 +510,6 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
     audioTracksRef.current = []
     libraryItemRef.current = null
   }, [closeSession, stopSyncInterval])
-  closePlayerRef.current = closePlayer
 
   const startSleepTimer = useCallback((duration: number) => {
     setSleepTimerRemaining(duration)

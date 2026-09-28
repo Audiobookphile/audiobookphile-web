@@ -26,21 +26,47 @@ export default function MediaPlayerContainer() {
   const coverUrl = streamLibraryItem ? getLibraryItemCoverUrl(streamLibraryItem.id, streamLibraryItem.updatedAt) : null
   const dominantColor = useImageColor(coverUrl)
 
-  // ── Auto-advance to next queue item when playback finishes ──────────────────
+  // ── Terminal states: advance the queue, or tear the bar down ───────────────
+  //
+  // This component owns the end of playback, because tearing down is half
+  // `closePlayer()` (which usePlayerHandler does not and must not do) and half
+  // `clearStreamMedia()` (which only lives here). Doing only one half is what
+  // left the bar stranded: the state was reset to IDLE while `streamLibraryItem`
+  // stayed set, so the UI showed a finished book whose Play button called
+  // playPause() on a destroyed player — no sound, no toast, no error.
   useEffect(() => {
     if (playerHandler.state.playerState !== PlayerState.FINISHED) return
-    if (playerQueueItems.length === 0 || !streamLibraryItem) return
+    if (!streamLibraryItem) return
 
     const currentIndex = playerQueueItems.findIndex((q) => q.libraryItemId === streamLibraryItem.id)
     const next = playerQueueItems[currentIndex + 1]
-    if (!next) return
+
+    if (!next) {
+      // End of the queue: close the server session AND clear the stream state,
+      // so the bar animates out instead of becoming an inert control.
+      void clearStreamMedia()
+      return
+    }
 
     // We only have the queue metadata here; fetch the full LibraryItem via the
     // existing server action which re-uses the already-loaded item cache.
     getExpandedLibraryItemAction(next.libraryItemId)
       .then((item) => playItem({ libraryItem: item, episodeId: next.episodeId }))
-      .catch((err) => console.error('[MediaPlayerContainer] Auto-advance failed:', err))
-  }, [playerHandler.state.playerState, streamLibraryItem, playerQueueItems, playItem])
+      .catch((err) => {
+        console.error('[MediaPlayerContainer] Auto-advance failed:', err)
+        // The next item could not be loaded, so the queue cannot continue.
+        // Clear rather than strand the bar on a book that has already finished.
+        void clearStreamMedia()
+      })
+  }, [playerHandler.state.playerState, streamLibraryItem, playerQueueItems, playItem, clearStreamMedia])
+
+  // A fatal playback error is terminal too: the toast explains what happened, and
+  // the bar must not survive it. Same reason as above — IDLE alone is not enough
+  // to unmount, because IDLE is also the pre-load and post-close state.
+  useEffect(() => {
+    if (playerHandler.state.playerState !== PlayerState.ERROR) return
+    void clearStreamMedia()
+  }, [playerHandler.state.playerState, clearStreamMedia])
 
   if (!streamLibraryItem) return null
 

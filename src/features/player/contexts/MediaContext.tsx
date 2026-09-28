@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import MediaPlayerContainer from '@/features/player/components/MediaPlayerContainer'
+import { resolveQueueUpdate } from '@/features/player/lib/queue'
 import {
   type PlayerHandlerControls,
   type PlayerHandlerState,
@@ -164,17 +165,27 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
       libraryItem,
       episodeId = null,
       startTime,
-      queueItems = [],
+      queueItems,
     }: {
       libraryItem: LibraryItem
       episodeId?: string | null
       startTime?: number
+      /**
+       * Only set the queue when the caller actually supplies one. This used to
+       * default to `[]`, and `setPlayerQueueItems([])` ran on EVERY call, so:
+       * the item page, the episode table and auto-advance all wiped a queue the
+       * user had built with "Add to queue". Auto-advance in particular calls
+       * playItem with no queue argument, so the queue was emptied the moment the
+       * first item finished -- after which its own `length === 0` guard stopped
+       * advancement dead, and the "N / M in queue" indicator vanished the moment
+       * playback started. `undefined` now means "leave the queue alone".
+       */
       queueItems?: PlayerQueueItem[]
     }) => {
       // Set stream state
       setStreamLibraryItem(libraryItem)
       setStreamEpisodeId(episodeId)
-      setPlayerQueueItems(queueItems)
+      setPlayerQueueItems((current) => resolveQueueUpdate(current, queueItems))
 
       // Load and start playback via player handler
       await playerControls.load(libraryItem, episodeId, startTime)
