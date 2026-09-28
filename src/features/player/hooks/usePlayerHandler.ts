@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePlaybackSession } from '@/features/player/hooks/usePlaybackSession'
+import { closePlaybackSession } from '@/features/player/actions/playbackActions'
+import { isStaleSessionResponse } from '@/features/player/lib/sessionFreshness'
 import {
   type PlayerSettings,
   type UsePlayerSettingsReturn,
@@ -148,6 +150,32 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
 
   const handleSessionReady = useCallback(
     (session: PlaybackSession, audioTracks: AudioTrack[], hlsTranscode: boolean) => {
+      // Stale-response guard. `load` is async and the session start is a network
+      // round trip, so two rapid Play presses can be in flight at once: A is
+      // loading, the user presses Play on B, `libraryItemRef` becomes B, and then
+      // A's session response arrives. The old code took the item from
+      // `libraryItemRef.current` (now B) and the tracks from the response (A's),
+      // then called `set(itemB, tracksA)`. The bar showed B's title and cover
+      // while playing A's audio, progress synced against B, and B's saved
+      // position never advanced. See isStaleSessionResponse.
+      const currentItem = libraryItemRef.current
+      if (isStaleSessionResponse(session.libraryItemId, currentItem?.id)) {
+        console.warn(
+          `[usePlayerHandler] discarding stale session ${session.id} for ${session.libraryItemId}; ` +
+            `now playing ${currentItem?.id}`
+        )
+        // Close it rather than dropping it on the floor. This is why the stale
+        // session's id must be recorded here and nowhere else: `load` only closes
+        // the previous session when it knows its id, and a session that is never
+        // adopted is never known, so ignoring it without closing would leak an
+        // open server session per superseded Play press.
+        void closePlaybackSession(session.id, null).catch(() => {
+          // Best effort: the session may already have been closed, and a failure
+          // here must not surface to the user mid-playback.
+        })
+        return
+      }
+
       setSessionId(session.id)
       sessionIdRef.current = session.id
       setDisplayTitle(session.displayTitle)
