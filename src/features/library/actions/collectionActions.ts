@@ -19,12 +19,18 @@ export async function createCollectionAction(payload: {
 }
 
 /**
- * Add a library item to a collection
+ * Add a library item to a collection.
+ *
+ * This sent `{ libraryItemId }`, which matched neither shape the server accepted:
+ * the create-collection route takes `{ items: [...] }` and the add route took a
+ * bare array. Every use therefore failed with 400 "Expected array, received
+ * object" and the modal showed its generic error toast. Now uses the same
+ * `{ items: [...] }` envelope as the create route.
  */
 export async function addBookToCollectionAction(collectionId: string, libraryItemId: string): Promise<Collection> {
   return await apiRequest<Collection>(`/api/collections/${collectionId}/items`, {
     method: 'POST',
-    body: JSON.stringify({ libraryItemId }),
+    body: JSON.stringify({ items: [libraryItemId] }),
   })
 }
 
