@@ -40,6 +40,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v7
 
+      # This runner is self-hosted, and all three audiobookphile repos share one
+      # macOS host. Under memory pressure the OOM killer takes the Next.js dev
+      # server or the typecheck process out mid-run, which reads exactly like a
+      # broken build. Check the host before spending 15 minutes finding out.
+      - name: Host Pressure Preflight
+        run: ./scripts/host-pressure.sh
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -73,3 +80,10 @@ jobs:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG || 'organicnz' }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT || 'audiobookphile' }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN || '' }}
+
+      # Runs even when the steps above failed. A red build that ends with the
+      # host at 2% free memory is not the same defect as a red build on a calm
+      # box, and without this the distinction is invisible in the log.
+      - name: Host Pressure Postmortem
+        if: always()
+        run: ./scripts/host-pressure.sh --report

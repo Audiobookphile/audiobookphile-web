@@ -11,6 +11,7 @@ jobs:
   verify:
     name: Verify Web Build & Linting
     runs-on: [self-hosted, macOS]
+    timeout-minutes: 20
     steps:
       - name: Checkout Repository
         id: checkout
@@ -69,6 +70,7 @@ jobs:
   lighthouse:
     name: Lighthouse Performance Audit
     runs-on: [self-hosted, macOS]
+    timeout-minutes: 20
     steps:
       - name: Checkout Repository
         id: checkout
@@ -128,6 +130,7 @@ jobs:
     name: Bundle Size Limit
     if: github.event_name == 'pull_request'
     runs-on: [self-hosted, macOS]
+    timeout-minutes: 15
     steps:
       - name: Checkout Repository
         id: checkout
@@ -187,6 +190,7 @@ jobs:
     needs: verify
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, macOS]
+    timeout-minutes: 20
     concurrency:
       group: deploy-web-prod-${{ github.ref }}
       cancel-in-progress: false
@@ -241,6 +245,7 @@ jobs:
     needs: deploy
     if: needs.deploy.outputs.deployment_url != ''
     runs-on: [self-hosted, macOS]
+    timeout-minutes: 30
     steps:
       - name: Checkout Repository
         id: checkout
@@ -326,6 +331,7 @@ jobs:
     needs: e2e
     if: needs.deploy.outputs.deployment_url != ''
     runs-on: [self-hosted, macOS]
+    timeout-minutes: 15
     steps:
       - name: Setup Bun
         id: bun
@@ -351,10 +357,19 @@ jobs:
     needs: verify
     if: github.event_name == 'pull_request'
     runs-on: [self-hosted, macOS]
+    timeout-minutes: 30
     steps:
       - name: Checkout Repository
         id: checkout
         uses: actions/checkout@v4
+
+      # This job starts a real dev server and drives a browser against it, which
+      # is the exact workload the OOM killer takes out on this shared host. Fail
+      # on the host's state now, with a message that says so, rather than as a
+      # page.goto that never connects.
+      - name: Host Pressure Preflight
+        id: host
+        run: ./scripts/host-pressure.sh
 
       - name: Setup Bun
         id: bun

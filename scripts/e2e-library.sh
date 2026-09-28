@@ -71,7 +71,22 @@ echo "🧪 Running library resilience e2e (project=$PROJECT)..."
 # `bun run typecheck` fails on syntax errors that have nothing to do with the
 # source tree. Drop the generated dev types so the gate leaves a clean tree.
 cleanup_dev_types() {
-  rm -rf "$REPO_ROOT/.next/dev"
+  # The dev server is still flushing `.next/dev` as it dies, so a bare
+  # `rm -rf` can fail with "Directory not empty" and, worse, leave a truncated
+  # types file behind. Retry briefly, then force it. `rm -rf` on a path that
+  # keeps being repopulated needs persistence, not luck.
+  local dir="$REPO_ROOT/.next/dev"
+  [ -d "$dir" ] || return 0
+  local i
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    if rm -rf "$dir" 2>/dev/null && [ ! -d "$dir" ]; then
+      return 0
+    fi
+    sleep 0.5
+  done
+  # Last resort: empty it bottom-up, which cannot lose a race the way a
+  # single rm of a mutating directory can.
+  find "$dir" -depth -delete 2>/dev/null || true
 }
 trap cleanup_dev_types EXIT
 
@@ -101,14 +116,24 @@ run_e2e() {
 }
 
 # Host memory, printed only when the run looks like an infrastructure failure.
+# Delegates to the shared preflight so the numbers quoted in a CI log, in a bug
+# report, and on a developer's terminal are produced by exactly one script --
+# three copies of this arithmetic is how they drift apart and start lying.
 report_host_pressure() {
-  local total used free
-  if command -v sysctl >/dev/null 2>&1; then
-    total=$(sysctl -n hw.memsize 2>/dev/null | awk '{printf "%.0f", $1/1073741824}')
-    used=$(sysctl -n vm.swapusage 2>/dev/null | sed -n 's/.*used = \([0-9.]*\)M.*/\1/p')
-    free=$(sysctl -n vm.swapusage 2>/dev/null | sed -n 's/.*free = \([0-9.]*\)M.*/\1/p')
-    echo "   host: ${total}GB RAM, swap used ${used:-?}MB / free ${free:-?}MB"
-  fi
+  ./scripts/host-pressure.sh --report
+}
+
+# Blocks until nothing is listening on the e2e port, so a retry never races a
+# server that has not finished dying.
+wait_for_port_free() {
+  local port="${1:-3100}" i
+  for i in $(seq 1 20); do
+    if ! lsof -ti ":$port" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 0.5
+  done
+  echo "   ⚠️  port $port is still held after 10s; the retry may fail to bind."
 }
 
 # A dead dev server makes every remaining test fail at `page.goto('/login')`
@@ -141,8 +166,10 @@ while :; do
     echo "⚠️  All $failed failures are ERR_CONNECTION_REFUSED: the dev server died mid-run."
     echo "   Retrying once on a fresh dev server (attempt $((attempt + 1))/$max_attempts)..."
     report_host_pressure
-    pkill -f "next dev" 2>/dev/null || true
-    sleep 3
+    # Wait for the dead server to actually release the port. Do NOT pkill
+    # "next dev" here: that pattern also matches a developer's own dev server
+    # on :3000, and a gate must never take out unrelated local work.
+    wait_for_port_free "$E2E_PORT"
     attempt=$((attempt + 1))
     continue
   fi
