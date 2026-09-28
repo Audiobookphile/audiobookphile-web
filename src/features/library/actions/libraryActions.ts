@@ -1,6 +1,5 @@
 'use server'
 
-import { apiRequest } from '@/shared/lib/api/client'
 import {
   getLibraryAuthors,
   getLibraryCollections,
@@ -9,6 +8,7 @@ import {
   getLibraryPlaylists,
   getLibrarySeries,
 } from '@/shared/lib/api'
+import { apiRequest } from '@/shared/lib/api/client'
 import { getLibraryStats } from '@/shared/lib/api/libraries'
 
 export async function fetchLibraryItemsAction(libraryId: string, query?: string) {

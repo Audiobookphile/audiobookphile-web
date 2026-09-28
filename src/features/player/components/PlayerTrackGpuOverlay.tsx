@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { parseCssColor, toTrackUniforms, trackGpuState, TRACK_WGSL } from '@/features/player/lib/playerTrackGpu'
+import { parseCssColor, TRACK_WGSL, toTrackUniforms, trackGpuState } from '@/features/player/lib/playerTrackGpu'
 
 interface PlayerTrackGpuOverlayProps {
   /** The DOM track element, used for measurement and theme-token lookup. */

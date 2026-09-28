@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PlayerTrackGpuOverlay from '@/features/player/components/PlayerTrackGpuOverlay'
-import { publishTrackGpuState } from '@/features/player/lib/playerTrackGpu'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
+import { publishTrackGpuState } from '@/features/player/lib/playerTrackGpu'
 import { secondsToTimestamp } from '@/shared/lib/datefns'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 import { PlayerState } from '@/types/api'

@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useTransition } from 'react'
 import { getExpandedLibraryItemAction } from '@/features/player/actions/mediaActions'
-import { useMediaContext, type PlayerQueueItem } from '@/features/player/contexts/MediaContext'
+import { type PlayerQueueItem, useMediaContext } from '@/features/player/contexts/MediaContext'
 import type { PlayerHandlerControls } from '@/features/player/hooks/usePlayerHandler'
 import { useGlobalToast } from '@/shared/contexts/ToastContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'

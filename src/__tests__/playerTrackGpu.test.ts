@@ -4,11 +4,11 @@ import {
   clampFraction,
   parseCssColor,
   percentToFraction,
-  toTrackUniforms,
   TRACK_FLAG_DRAGGING,
   TRACK_FLAG_HOVER,
   TRACK_FLAG_LOADING,
   TRACK_WGSL,
+  toTrackUniforms,
 } from '../features/player/lib/playerTrackGpu'
 
 /**

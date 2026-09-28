@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useUser } from '@/shared/contexts/UserContext'
 import { fetchSimilarItemsAction } from '@/features/library/actions/libraryActions'
+import { useUser } from '@/shared/contexts/UserContext'
 import { BookLibraryItem, BookshelfView, PodcastLibraryItem } from '@/types/api'
 import BookShelfRow from '../../features/library/components/BookShelfRow'
 import BookMediaCard from './media-card/BookMediaCard'

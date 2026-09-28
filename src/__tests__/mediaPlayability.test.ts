@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { getBookTrackCount, isLibraryItemPlayable } from '@/shared/lib/mediaPlayability'
-import { isBookMedia, isPodcastMedia } from '@/types/api/functions'
 import type { BookMedia, LibraryItem } from '@/types/api'
+import { isBookMedia, isPodcastMedia } from '@/types/api/functions'
 
 function book(overrides: Partial<BookMedia> = {}): BookMedia {
   return {
