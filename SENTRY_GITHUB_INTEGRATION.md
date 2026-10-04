@@ -18,7 +18,7 @@ Sentry's GitHub integration enables:
 1. Navigate to [Sentry.io](https://sentry.io) → Settings → Integrations
 2. Find "GitHub" and click "Install"
 3. Authorize Sentry to access your GitHub organization
-4. Select the repositories to link (e.g., `organicnz/audiobookphile-web`)
+4. Select the repositories to link (e.g., `Audiobookphile/audiobookphile-web`)
 
 ### 2. Configure Issue Sync
 

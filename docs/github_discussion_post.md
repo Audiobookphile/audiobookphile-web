@@ -6,7 +6,7 @@ I've been using Audiobookshelf for a while and love it, but I really wanted to s
 
 So I spent some time building **Audiobookphile** as an experiment. It's a completely rewritten, decoupled architecture.
 
-<img alt="Audiobookphile Logo" src="https://raw.githubusercontent.com/organicnz/audiobookphile-web/main/public/images/logo.png" width="100%" />
+<img alt="Audiobookphile Logo" src="https://raw.githubusercontent.com/Audiobookphile/audiobookphile-web/main/public/images/logo.png" width="100%" />
 
 ### What it actually does
 
@@ -34,9 +34,9 @@ To keep cloud costs essentially free, I set up a hybrid storage model:
 
 If you want to mess around with a serverless setup, you can check out the source code here:
 
-- [Web Repo](https://github.com/organicnz/audiobookphile-web)
-- [Backend Repo](https://github.com/organicnz/audiobookphile-backend)
-- [Mobile App Repo](https://github.com/organicnz/audiobookphile-app)
+- [Web Repo](https://github.com/Audiobookphile/audiobookphile-web)
+- [Backend Repo](https://github.com/Audiobookphile/audiobookphile-backend)
+- [Mobile App Repo](https://github.com/Audiobookphile/audiobookphile-app)
 
 I'd love to hear what you guys think of the UI and the architecture!
 
