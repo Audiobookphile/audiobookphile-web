@@ -17,7 +17,8 @@ permissions:
 jobs:
   remediate:
     name: Sentry Error Remediation & PR Generator
-    runs-on: [self-hosted, macOS]
+    # Portable toolchain: any compatible VPS slot can execute this job.
+    runs-on: [self-hosted, Linux]
     timeout-minutes: 30
     env:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
