@@ -17,7 +17,7 @@ permissions:
 jobs:
   release-please:
     name: Release Please Versioning
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, Linux]
     timeout-minutes: 10
     steps:
       - uses: googleapis/release-please-action@v4
@@ -28,7 +28,7 @@ jobs:
 
   sentry-release:
     name: Create Sentry Release
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, Linux]
     timeout-minutes: 10
     steps:
       - name: Checkout Code
