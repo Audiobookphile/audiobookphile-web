@@ -109,3 +109,22 @@ Audiobookphile's web app descends from the [Audiobookshelf web client](https://g
 ## Contributing
 
 Pull requests are welcome. For major changes, open an issue first to discuss what you'd like to change. Please ensure you do not use any GPLv3 assets or proprietary logos from other projects when contributing.
+
+
+### Linux runner verification
+
+The `CI Web Verification` job runs on the existing self-hosted Linux pool with
+`ram-3g` placement. This is a resident-RAM requirement; adding swap does not make
+a smaller slot eligible. The pool still sets RAM and swap limits from current
+host capacity for each new worker.
+
+Before dependency installation, `scripts/host-pressure.sh` delegates Linux checks
+to `scripts/linux-host-pressure.sh`. It uses the lesser of host availability and
+remaining cgroup v2 allowance, accounting for already occupied RAM and swap.
+Unknown or inconsistent kernel counters fail the build preflight; `--report`
+remains diagnostic. The default requires 2 GiB of remaining resident headroom and
+retains the host memory/swap pressure thresholds. The macOS diagnostic fallback
+remains available for local use. No pressure check stops other jobs or services.
+
+Run `bun test scripts/host-capacity.test.ts` for isolated host/cgroup fixtures.
+The workflow includes these tests and reruns when the guard or its tests change.
