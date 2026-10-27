@@ -1,8 +1,9 @@
 #!/bin/bash
 # Host-pressure preflight for self-hosted CI runners.
 #
-# All three audiobookphile repos run on ONE macOS host, each with its own
-# self-hosted runner. When two heavy jobs land at once the box starts swapping,
+# Linux pool workers delegate to a cgroup-aware check below. The macOS
+# fallback remains useful for local diagnostics. On a shared machine, concurrent
+# heavy jobs can start swapping,
 # the OOM killer takes the biggest process, and the job dies in a way that reads
 # like a product failure: `ERR_CONNECTION_REFUSED on /login`, a Swift compiler
 # that vanishes, a Playwright locator that never appears. Every one of those was
@@ -18,10 +19,18 @@
 #   ./scripts/host-pressure.sh --report   # diagnostics only, always exits 0
 #
 # Thresholds (override per-host if the box changes):
+#   CI_MIN_RESIDENT_MIB   default 2048  Linux resident worker headroom, MiB
 #   CI_MIN_FREE_MEM_PCT   default 10    memory_pressure "free percentage"
 #   CI_MIN_FREE_SWAP_PCT  default 5     swap free / swap total
 #   CI_MAX_LOAD_PER_CORE  default 4     1-minute load average / logical CPUs
 set -uo pipefail
+
+# Linux pool workers have independent cgroups; retain the macOS fallback for
+# local developer diagnostics instead of applying host percentages to a worker.
+if [ "$(uname -s)" = Linux ]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  exec "$SCRIPT_DIR/linux-host-pressure.sh" "$@"
+fi
 
 MODE="check"
 [ "${1:-}" = "--report" ] && MODE="report"
@@ -62,9 +71,8 @@ mem_free_pct() {
 }
 
 swap_free_pct() {
-  local used free total
+  local free total
   if out="$(sysctl -n vm.swapusage 2>/dev/null)"; then
-    used="$(printf '%s' "$out" | sed -n 's/.*used = \([0-9.]*\)[MG].*/\1/p')"
     free="$(printf '%s' "$out" | sed -n 's/.*free = \([0-9.]*\)[MG].*/\1/p')"
     total="$(printf '%s' "$out" | sed -n 's/.*total = \([0-9.]*\)[MG].*/\1/p')"
     if [ -n "$free" ] && [ -n "$total" ] && awk "BEGIN{exit !($total > 0)}"; then
@@ -145,19 +153,10 @@ cat >&2 <<EOF
    Largest resident processes right now:
 $(top_hogs)
 
-   This is infrastructure, not a regression. The self-hosted runners for all
-   three audiobookphile repos share this one host, so the box is only ever as
-   healthy as whatever else is running on it. Diagnose in this order:
+   This is infrastructure, not a regression. Preserve running jobs and
+   applications. Wait for capacity, inspect the workload-specific logs, or
+   route the job to a slot with sufficient resident RAM. Do not kill unrelated
+   compiler daemons, simulators, or services from CI.
 
-     1. Another build on this host. A Gradle/Kotlin compile of an unrelated
-        project is the usual culprit -- check the project path in the list
-        above. It belongs to whoever started it; do not kill it from CI.
-     2. A leftover from an earlier CI job:
-          pkill -f KotlinCompileDaemon; pkill -f GradleDaemon
-          xcrun simctl shutdown all
-     3. Genuinely just busy: wait, or re-run once the load average decays.
-
-   To override the gate for a deliberate one-off:
-     CI_MIN_FREE_MEM_PCT=0 CI_MIN_FREE_SWAP_PCT=0 ./scripts/host-pressure.sh
 EOF
 exit 1

@@ -11,6 +11,9 @@ on:
       - 'tsconfig.json'
       - 'biome.json'
       - '.oxlintrc.json'
+      - 'scripts/host-pressure.sh'
+      - 'scripts/linux-host-pressure.sh'
+      - 'scripts/host-capacity.test.ts'
       - '.github/workflows/ci-web.yml'
   pull_request:
     branches: [main]
@@ -22,6 +25,10 @@ on:
       - 'tsconfig.json'
       - 'biome.json'
       - '.oxlintrc.json'
+      - 'scripts/host-pressure.sh'
+      - 'scripts/linux-host-pressure.sh'
+      - 'scripts/host-capacity.test.ts'
+      - '.github/workflows/ci-web.yml'
   workflow_dispatch:
 
 permissions:
@@ -34,16 +41,16 @@ concurrency:
 jobs:
   verify:
     name: Verify Web Build & Quality
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, Linux, ram-3g]
     timeout-minutes: 15
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      # This runner is self-hosted, and all three audiobookphile repos share one
-      # macOS host. Under memory pressure the OOM killer takes the Next.js dev
-      # server or the typecheck process out mid-run, which reads exactly like a
-      # broken build. Check the host before spending 15 minutes finding out.
+      # Select a real resident-RAM class, then verify current host and worker
+      # headroom before installing dependencies or building.
       - name: Host Pressure Preflight
         run: ./scripts/host-pressure.sh
 
@@ -51,6 +58,9 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
+      - name: Verify Linux Capacity Guard
+        run: bun test scripts/host-capacity.test.ts
 
       - name: Install Dependencies
         run: bun install --frozen-lockfile
