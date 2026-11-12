@@ -1,4 +1,5 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { getSupabaseAnonKey, getSupabaseUrl } from './supabase/env'
 
 export async function requireApiAuth(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -8,8 +9,8 @@ export async function requireApiAuth(request: Request) {
     return { user: null, supabase: null, token: null }
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabaseUrl = getSupabaseUrl()
+  const supabaseKey = getSupabaseAnonKey()
 
   const supabase = createSupabaseClient(supabaseUrl, supabaseKey, {
     global: {

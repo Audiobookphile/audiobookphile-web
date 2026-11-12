@@ -17,7 +17,7 @@
  */
 const repoRoot = `${import.meta.dir}/..`
 
-if (process.env.CI) {
+if (process.env.CI || process.env.VERCEL) {
   process.exit(0)
 }
 
@@ -34,7 +34,13 @@ if (!inGitRepo) {
   process.exit(0)
 }
 
-const result = Bun.spawnSync([`${repoRoot}/node_modules/.bin/lefthook`, 'install'], {
+const lefthookBin = `${repoRoot}/node_modules/.bin/lefthook`
+if (!(await Bun.file(lefthookBin).exists())) {
+  console.log('⏭️  lefthook binary not found in node_modules — skipping hook install.')
+  process.exit(0)
+}
+
+const result = Bun.spawnSync([lefthookBin, 'install'], {
   cwd: repoRoot,
   stdio: ['inherit', 'inherit', 'inherit'],
 })

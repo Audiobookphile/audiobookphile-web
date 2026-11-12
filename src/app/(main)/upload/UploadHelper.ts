@@ -1,4 +1,5 @@
 import type { Library } from '@/types/api'
+import { getSupabaseAnonKey } from '@/shared/utils/supabase/env'
 import { uploadBackupArchive, uploadMultipart, uploadSinglePart } from './uploadChunk'
 import { probeItemDurations } from './uploadDurationProbe'
 import { buildStorageKey, commonDirPrefix } from './uploadKeys'
@@ -62,8 +63,9 @@ export async function upload(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${cookie}`,
       }
-      if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        headers['apikey'] = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      const anonKey = getSupabaseAnonKey()
+      if (anonKey) {
+        headers['apikey'] = anonKey
       }
 
       const presignRes = await fetch(presignUrl, {
@@ -166,8 +168,9 @@ export async function upload(
     'Content-Type': 'application/json',
     Authorization: `Bearer ${cookie}`,
   }
-  if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    finalizeHeaders['apikey'] = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const anonKey = getSupabaseAnonKey()
+  if (anonKey) {
+    finalizeHeaders['apikey'] = anonKey
   }
 
   const response = await fetch(baseUrl, {

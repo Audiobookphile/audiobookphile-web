@@ -1,3 +1,5 @@
+import { getSupabaseUrl } from '@/shared/utils/supabase/env'
+
 /**
  * Build cover URL for a library item
  *
@@ -21,8 +23,9 @@ export function getLibraryItemCoverUrl(libraryItemId: string, timestamp?: number
   // bumped by the library_items cover trigger whenever cover_path changes, so
   // 0 is a safe, cacheable fallback.
   params.set('ts', String(timestamp || 0))
-  const fallbackUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/api`
+  const supabaseUrl = getSupabaseUrl()
+  const fallbackUrl = supabaseUrl
+    ? `${supabaseUrl}/functions/v1/api`
     : 'http://localhost:54321/functions/v1/api'
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || fallbackUrl
   return `${apiUrl}/items/${libraryItemId}/cover?${params.toString()}`

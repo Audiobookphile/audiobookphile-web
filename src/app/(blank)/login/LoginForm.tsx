@@ -11,6 +11,7 @@ import { useFeatureFlag } from '@/shared/lib/analytics'
 import Btn from '@/shared/ui/Btn'
 import TextInput from '@/shared/ui/TextInput'
 import { createClient } from '@/shared/utils/supabase/client'
+import { getSupabaseAnonKey } from '@/shared/utils/supabase/env'
 
 export default function LoginForm() {
   const router = useRouter()
@@ -57,7 +58,7 @@ export default function LoginForm() {
       }
 
       try {
-        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+        const anonKey = getSupabaseAnonKey()
         const libsRes = await fetch('/api/libraries', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -95,7 +96,7 @@ export default function LoginForm() {
         return
       }
       try {
-        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+        const anonKey = getSupabaseAnonKey()
         const res = await fetch('/api/login', {
           method: 'POST',
           headers: {

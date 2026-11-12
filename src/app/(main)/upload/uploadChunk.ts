@@ -1,3 +1,4 @@
+import { getSupabaseAnonKey } from '@/shared/utils/supabase/env'
 import { getMimeType, UploadProgressInfo } from './uploadTypes'
 
 export interface MultipartUploadParams {
@@ -96,8 +97,9 @@ export async function uploadMultipart(params: MultipartUploadParams): Promise<{ 
     'Content-Type': 'application/json',
     Authorization: `Bearer ${cookie}`,
   }
-  if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    completeHeaders['apikey'] = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const anonKey = getSupabaseAnonKey()
+  if (anonKey) {
+    completeHeaders['apikey'] = anonKey
   }
 
   const completeRes = await fetch(presignUrl, {

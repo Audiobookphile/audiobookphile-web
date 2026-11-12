@@ -1,5 +1,6 @@
 import { Database, ExternalLink, Terminal } from 'lucide-react'
 import { getTypeSafeTranslations } from '@/shared/lib/getTypeSafeTranslations'
+import { getSupabaseUrl } from '@/shared/utils/supabase/env'
 import SettingsContent from '../SettingsContent'
 
 export const dynamic = 'force-dynamic'
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function BackupsPage() {
   const t = await getTypeSafeTranslations()
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  const supabaseUrl = getSupabaseUrl()
   const isSupabaseCloud = supabaseUrl.includes('.supabase.co')
   const projectRef = isSupabaseCloud ? supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] : null
   const dashboardHref =

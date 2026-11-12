@@ -1,3 +1,4 @@
+import { getSupabaseAnonKey } from '@/shared/utils/supabase/env'
 import { ApiError, NetworkError, UnauthorizedError } from '../apiErrors'
 import { type ApiResult, fetchAsResult, getServerBaseUrl } from './base'
 
@@ -18,8 +19,9 @@ export async function apiFetch<T = unknown>(endpoint: string, options: RequestIn
     fetchHeaders.set('Content-Type', 'application/json')
   }
 
-  if (!fetchHeaders.has('apikey') && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    fetchHeaders.set('apikey', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  const anonKey = getSupabaseAnonKey()
+  if (!fetchHeaders.has('apikey') && anonKey) {
+    fetchHeaders.set('apikey', anonKey)
   }
 
   const { createClient } = await import('@/shared/utils/supabase/client')

@@ -1,6 +1,7 @@
 import { ExternalLink } from 'lucide-react'
 import TwoFactorSettingsPanel from '@/features/auth/components/TwoFactorSettingsPanel'
 import { getTypeSafeTranslations } from '@/shared/lib/getTypeSafeTranslations'
+import { getSupabaseUrl } from '@/shared/utils/supabase/env'
 import { createClient } from '@/shared/utils/supabase/server'
 import SettingsContent from '../SettingsContent'
 
@@ -21,7 +22,7 @@ export default async function AuthenticationPage() {
     is2faEnabled = profile?.is_2fa_enabled === true
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  const supabaseUrl = getSupabaseUrl()
   const isSupabaseCloud = supabaseUrl.includes('.supabase.co')
   const projectRef = isSupabaseCloud ? supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] : null
 

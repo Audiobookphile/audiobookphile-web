@@ -37,6 +37,10 @@ const nextConfig = async (phase: string, { defaultConfig }: { defaultConfig: Nex
 
   const baseConfig: NextConfig = {
     ...defaultConfig,
+    env: {
+      NEXT_PUBLIC_SUPABASE_URL: detectedSupabaseUrl || '',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: detectedAnonKey || '',
+    },
     reactCompiler: true,
     // Self-contained production bundle for the container images, which boot it
     // with `bun server.js` (no Node.js in the runtime image at all).
@@ -92,12 +96,18 @@ const nextConfig = async (phase: string, { defaultConfig }: { defaultConfig: Nex
         permanent: false,
       },
     ],
-    rewrites: async () => [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/api/:path*`,
-      },
-    ],
+    rewrites: async () => {
+      const targetUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+      if (!targetUrl || targetUrl.includes('placeholder')) {
+        return []
+      }
+      return [
+        {
+          source: '/api/:path*',
+          destination: `${targetUrl.replace(/\/+$/, '')}/functions/v1/api/:path*`,
+        },
+      ]
+    },
     headers: async () => [
       {
         source: '/(.*)',

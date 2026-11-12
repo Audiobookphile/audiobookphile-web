@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getSupabaseAnonKey } from '@/shared/utils/supabase/env'
 import { ApiError, NetworkError, UnauthorizedError } from '../apiErrors'
 import { type ApiResult, fetchAsResult, getClientBaseUrlFromRequest, getServerBaseUrl } from './base'
 
@@ -45,7 +46,7 @@ export async function apiFetch<T = unknown>(endpoint: string, options: RequestIn
     fetchHeaders.set('Content-Type', 'application/json')
   }
 
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY
+  const anonKey = getSupabaseAnonKey()
   if (!fetchHeaders.has('apikey') && anonKey) {
     fetchHeaders.set('apikey', anonKey)
   }

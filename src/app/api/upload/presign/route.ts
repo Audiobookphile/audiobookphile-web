@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/shared/utils/supabase/env'
 
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+    const supabaseUrl = getSupabaseUrl()
+    const anonKey = getSupabaseAnonKey()
     if (!supabaseUrl) {
       return NextResponse.json({ error: 'Supabase URL not configured' }, { status: 500 })
     }

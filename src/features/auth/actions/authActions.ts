@@ -22,8 +22,8 @@ function getSiteUrl(): string {
   const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
   if (productionUrl) return `https://${productionUrl}`
 
-  // NEXT_PUBLIC_VERCEL_URL is the deployment-specific URL — less ideal but beats localhost
-  const vercelUrl = process.env.NEXT_PUBLIC_VERCEL_URL
+  // VERCEL_URL or NEXT_PUBLIC_VERCEL_URL is the deployment-specific URL
+  const vercelUrl = process.env.NEXT_PUBLIC_VERCEL_URL || process.env.VERCEL_URL
   if (vercelUrl) return `https://${vercelUrl}`
 
   return 'http://localhost:3000' // dev-only fallback

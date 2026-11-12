@@ -3,6 +3,7 @@
 import { AlertTriangle, BookOpen, CheckCircle2, Loader2, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Modal from '@/shared/modals/Modal'
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/shared/utils/supabase/env'
 
 export interface ChapterAIModalProps {
   isOpen: boolean
@@ -40,8 +41,8 @@ export default function ChapterAIModal({
 
     const fetchInsights = async () => {
       try {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+        const supabaseUrl = getSupabaseUrl()
+        const anonKey = getSupabaseAnonKey()
 
         const endpoint = supabaseUrl ? `${supabaseUrl}/functions/v1/api/chapter-ai` : '/api/chapter-ai'
 

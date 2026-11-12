@@ -9,11 +9,11 @@
  */
 
 export function getSupabaseUrl(): string {
-  return (
+  const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     ''
-  )
+  return url.replace(/\/+$/, '')
 }
 
 export function getSupabaseAnonKey(): string {
@@ -42,3 +42,4 @@ export function getSupabaseEnv() {
     serviceRoleKey: getSupabaseServiceRoleKey(),
   }
 }
+

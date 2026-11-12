@@ -1200,13 +1200,38 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
  SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
+DECLARE
+  v_admin_count integer;
+  v_role text;
 BEGIN
-  INSERT INTO public.profiles (id, username)
-  VALUES (new.id, new.email);
+  -- Automatically assign root permissions to the first user in the database
+  SELECT count(*) INTO v_admin_count FROM public.profiles WHERE user_type IN ('admin', 'root');
+  IF v_admin_count = 0 THEN
+    v_role := 'root';
+  ELSE
+    v_role := 'user';
+  END IF;
+
+  INSERT INTO public.profiles (id, username, user_type)
+  VALUES (
+    NEW.id,
+    coalesce(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
+    v_role
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    username = coalesce(EXCLUDED.username, profiles.username)
+    WHERE profiles.user_type IS NULL;
+
   RETURN NEW;
 END;
 $function$
 ;
+
+-- Trigger to execute handle_new_user on every new signup in auth.users
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 CREATE OR REPLACE FUNCTION public.is_admin()
  RETURNS boolean
@@ -2949,5 +2974,47 @@ CREATE POLICY "Admins can update podcasts" ON public."podcasts"
     USING ((EXISTS ( SELECT 1
    FROM profiles
   WHERE ((profiles.id = ( SELECT auth.uid() AS uid)) AND (profiles.user_type IN ('admin', 'root'))))));
+
+-- ============================================================================
+-- STORAGE BUCKET INITIALIZATION (Idempotent for new Supabase instances)
+-- ============================================================================
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+SELECT 'covers', 'covers', true, 5242880, ARRAY['image/jpeg','image/png','image/webp','image/gif','image/svg+xml']
+WHERE NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'covers');
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+SELECT 'audio-files', 'audio-files', false, 10485760, ARRAY['audio/mpeg','audio/mp4','audio/ogg','audio/flac','audio/x-matroska','audio/wav','audio/aac','audio/webm','audio/x-aiff','audio/x-caf','audio/opus']
+WHERE NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'audio-files');
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+SELECT 'backups', 'backups', false, 5242880, ARRAY['application/json','application/gzip','application/zip']
+WHERE NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'backups');
+
+-- Storage object policies for covers
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname = 'Public Access for Covers'
+  ) THEN
+    CREATE POLICY "Public Access for Covers" ON storage.objects
+      FOR SELECT USING (bucket_id = 'covers');
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname = 'Authenticated uploads for Covers'
+  ) THEN
+    CREATE POLICY "Authenticated uploads for Covers" ON storage.objects
+      FOR INSERT TO authenticated WITH CHECK (bucket_id = 'covers');
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname = 'Authenticated updates for Covers'
+  ) THEN
+    CREATE POLICY "Authenticated updates for Covers" ON storage.objects
+      FOR ALL TO authenticated USING (bucket_id = 'covers');
+  END IF;
+END $$;
+
 
 

@@ -3,6 +3,7 @@
 import { User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { mergeClasses } from '@/shared/lib/merge-classes'
+import { getSupabaseUrl } from '@/shared/utils/supabase/env'
 import type { Author } from '@/types/api'
 
 interface AuthorImageProps {
@@ -16,8 +17,9 @@ interface AuthorImageProps {
 export default function AuthorImage({ author, className }: AuthorImageProps) {
   const [imageError, setImageError] = useState(false)
   const [showCoverBg, setShowCoverBg] = useState(false)
-  const fallbackUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/api`
+  const supabaseUrl = getSupabaseUrl()
+  const fallbackUrl = supabaseUrl
+    ? `${supabaseUrl}/functions/v1/api`
     : 'http://localhost:54321/functions/v1/api'
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || fallbackUrl
   const rawImageSrc = `${apiUrl}/authors/${author.id}/image`

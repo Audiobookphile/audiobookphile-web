@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/nextjs'
 import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/shared/utils/supabase/env'
 
 export const maxDuration = 60
 
@@ -24,8 +25,8 @@ async function checkSite(url: string, expect: number[], timeoutMs = 10000) {
 }
 
 async function checkEdgeHealth(timeoutMs = 10000) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+  const supabaseUrl = getSupabaseUrl()
+  const anonKey = getSupabaseAnonKey()
   if (!supabaseUrl) return { ok: false, status: 0, ms: 0, error: 'Supabase URL not configured' }
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), timeoutMs)

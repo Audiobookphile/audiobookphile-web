@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/shared/utils/supabase/env'
 import { updateSession } from '@/shared/utils/supabase/middleware'
 
 /**
@@ -31,10 +32,35 @@ export const ALLOWED_ORIGIN_PATTERNS = [
   /^http:\/\/127\.0\.0\.1:\d+$/i,
 ]
 
-export function isOriginAllowed(origin: string | null): boolean {
+export function isOriginAllowed(origin: string | null, requestUrl?: string): boolean {
   if (!origin) return false
   if (ALLOWED_ORIGINS.has(origin)) return true
-  return ALLOWED_ORIGIN_PATTERNS.some((pattern) => pattern.test(origin))
+  if (ALLOWED_ORIGIN_PATTERNS.some((pattern) => pattern.test(origin))) return true
+
+  // Allow any Vercel preview or production domain (*.vercel.app) for cloned templates
+  if (/^https:\/\/[a-z0-9-.]+\.vercel\.app$/i.test(origin)) return true
+
+  // Allow explicitly configured site URL
+  if (process.env.NEXT_PUBLIC_SITE_URL && origin === process.env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, '')) {
+    return true
+  }
+
+  // Allow Vercel system production URL
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL && origin === `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`) {
+    return true
+  }
+
+  // Allow same-origin requests
+  if (requestUrl) {
+    try {
+      const parsedRequest = new URL(requestUrl)
+      if (origin === parsedRequest.origin) return true
+    } catch {
+      // Ignore URL parse failures
+    }
+  }
+
+  return false
 }
 
 export async function proxy(request: NextRequest) {
@@ -43,7 +69,7 @@ export async function proxy(request: NextRequest) {
   // rejected, and set Access-Control-Allow-Credentials only for trusted origins.
   if (request.method === 'OPTIONS') {
     const origin = request.headers.get('origin')
-    const allowed = isOriginAllowed(origin)
+    const allowed = isOriginAllowed(origin, request.url)
 
     if (origin && !allowed) {
       return new NextResponse(null, { status: 403 })
@@ -66,8 +92,11 @@ export async function proxy(request: NextRequest) {
     })
   }
 
+  const supabaseUrl = getSupabaseUrl()
+  const supabaseAnonKey = getSupabaseAnonKey()
+
   // If Supabase env vars are missing, skip session update and redirect root to /login
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (!supabaseUrl || !supabaseAnonKey) {
     if (request.nextUrl.pathname === '/') {
       return NextResponse.redirect(new URL('/login', request.nextUrl.origin))
     }
@@ -87,7 +116,7 @@ export async function proxy(request: NextRequest) {
   // once for /settings/* and again for /). Cookie reads are cheap but each
   // construction re-parses env + allocates; share one per request.
   const getSupabase = () =>
-    createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll()

@@ -1,8 +1,8 @@
 'use client'
 
-import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { createClient } from '@/shared/utils/supabase/client'
 
 const APP_DEEP_LINK_SCHEME = 'audiobookphile://'
 
@@ -35,10 +35,7 @@ export default function AuthConfirmPage() {
       return
     }
 
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = createClient()
 
     void supabase.auth
       .setSession({ access_token: accessToken, refresh_token: refreshToken })

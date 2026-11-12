@@ -1,3 +1,5 @@
+import { getSupabaseUrl } from '@/shared/utils/supabase/env'
+
 /**
  * Isomorphic API helpers: no next/* imports (safe for client bundles).
  */
@@ -6,8 +8,9 @@ export function getServerBaseUrl() {
 
   // On the server, bypass Vercel's Edge Router (loopback fetch) to prevent it from dropping
   // Authorization headers and throwing 401 Unauthorized loops.
-  if (isServer && process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`
+  const supabaseUrl = getSupabaseUrl()
+  if (isServer && supabaseUrl) {
+    return `${supabaseUrl}/functions/v1`
   }
 
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL

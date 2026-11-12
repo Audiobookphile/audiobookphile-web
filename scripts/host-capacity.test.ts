@@ -61,7 +61,7 @@ function check(data: string, report = false, thresholds: Record<string, string> 
     ],
     {
       env: {
-        ...Bun.env,
+        ...process.env,
         TEST_SNAPSHOT: data,
         CI_MIN_RESIDENT_MIB: '2048',
         CI_MIN_FREE_MEM_PCT: '10',
