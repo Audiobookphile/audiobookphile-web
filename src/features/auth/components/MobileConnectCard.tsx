@@ -125,3 +125,4 @@ export default function MobileConnectCard({ serverUrl, className = '', compact =
     </div>
   )
 }
+
