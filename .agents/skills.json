@@ -1,3 +1,8 @@
 {
-  "entries": [{ "path": "/Users/organic/dev/work/AI/skills/skills/engineering/improve-codebase-architecture" }]
+  "entries": [
+    { "path": "./skills/bun-workflow" },
+    { "path": "./skills/liquid-glass-ui" },
+    { "path": "./skills/nextjs-app-router" },
+    { "path": "./skills/audio-player-engine" }
+  ]
 }
