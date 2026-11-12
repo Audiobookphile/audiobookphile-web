@@ -12,7 +12,7 @@ interface SystemStatusRpcResponse {
   storage_ready: boolean
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabaseUrl = getSupabaseUrl()
   const anonKey = getSupabaseAnonKey()
 
@@ -100,11 +100,18 @@ export async function GET() {
     edgeApiStatus = 0
   }
 
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host')
+  const proto = request.headers.get('x-forwarded-proto') || (host && !host.includes('localhost') ? 'https' : 'http')
+  const requestUrl = host ? `${proto}://${host}` : null
+
   const serverUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('localhost')
+      ? process.env.NEXT_PUBLIC_SITE_URL
+      : null) ||
+    requestUrl ||
     (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-    'http://localhost:3000'
+    'https://audiobookphile.app'
 
   const canAutoBootstrap = Boolean(
     process.env.POSTGRES_URL ||
