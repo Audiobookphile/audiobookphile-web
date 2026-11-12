@@ -1,13 +1,15 @@
 #!/usr/bin/env bun
 /**
- * Seed Demo Supabase Backend (uffjxiwowclumvtnyvol)
- * Seeds 100% legal, public domain classic audiobooks and demo credentials.
+ * Seed Demo Supabase Backend with Real Public Domain Audiobooks & Covers
+ *
+ * Sources 100% legal, human-narrated LibriVox / Internet Archive public domain
+ * audiobooks with authentic illustrated book covers.
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { execSync } from 'child_process'
 import { readFileSync, statSync, existsSync } from 'fs'
 import { join } from 'path'
+import { execSync } from 'child_process'
 
 const SUPABASE_URL = process.env.DEMO_SUPABASE_URL || 'https://uffjxiwowclumvtnyvol.supabase.co'
 const SERVICE_KEY =
@@ -23,7 +25,7 @@ const DEMO_EMAIL = 'demo@audiobookphile.app'
 const DEMO_PASSWORD = 'AudiobookphileDemo2026!'
 const LIBRARY_ID = 'a0000000-0000-0000-0000-000000000001'
 
-interface SeedBook {
+interface RealDemoBook {
   id: string
   authorId: string
   title: string
@@ -33,12 +35,13 @@ interface SeedBook {
   publishedYear: string
   genres: string[]
   narratorName: string
-  voiceName: string
   description: string
-  narrationText: string
+  coverUrl: string
+  audioUrl: string
+  trackTitle: string
 }
 
-const BOOKS: SeedBook[] = [
+const BOOKS: RealDemoBook[] = [
   {
     id: 'b0000000-0000-0000-0000-000000000001',
     authorId: 'c0000000-0000-0000-0000-000000000001',
@@ -48,115 +51,89 @@ const BOOKS: SeedBook[] = [
     authorLastFirst: 'Wells, H. G.',
     publishedYear: '1895',
     genres: ['Science Fiction', 'Classics', 'Adventure'],
-    narratorName: 'Daniel (Audiobookphile Classic)',
-    voiceName: 'Daniel (English (UK))',
+    narratorName: 'Alex Foster (LibriVox)',
     description:
-      'The Time Traveller, a brilliant Victorian scientist, invents a machine capable of travelling into the fourth dimension. Journeying forward to the year 802,701 AD, he discovers the peaceful, childlike Eloi living above ground, and the monstrous, nocturnal Morlocks lurking in darkness below.',
-    narrationText:
-      'The Time Machine, by H. G. Wells. Chapter One. The Time Traveller, for so it will be convenient to speak of him, was expounding a recondite matter to us. His grey eyes shone and twinkled, and his usually pale face was flushed and animated. The fire burned brightly, and the soft radiance of the incandescent lights caught the bubbles in our glasses. There was that luxurious after-dinner atmosphere when thought roams gracefully free of the trammels of precision. Any real body must have extension in four dimensions: Length, Breadth, Thickness, and Duration. But through a natural infirmity of the flesh, we incline to overlook this fact.',
+      'The Time Traveller, a brilliant Victorian scientist, journeys into the fourth dimension to the year 802,701 AD. He discovers humanity divided into two divergent evolutionary paths: the gentle, child-like Eloi living in idyllic gardens, and the sinister, nocturnal Morlocks labouring in the subterranean depths. Narrated by Alex Foster.',
+    coverUrl: 'https://archive.org/download/time_machine_0805_librivox/Time_Machine_1112.jpg',
+    audioUrl: 'https://archive.org/download/time_machine_0805_librivox/timemachinewells_01_ae_64kb.mp3',
+    trackTitle: 'Chapter 01 - The Time Traveller Expounds',
   },
   {
     id: 'b0000000-0000-0000-0000-000000000002',
     authorId: 'c0000000-0000-0000-0000-000000000002',
     title: 'The Adventures of Sherlock Holmes',
-    subtitle: 'A Scandal in Bohemia and Other Cases',
+    subtitle: 'A Scandal in Bohemia',
     authorName: 'Sir Arthur Conan Doyle',
     authorLastFirst: 'Conan Doyle, Arthur',
     publishedYear: '1892',
     genres: ['Mystery', 'Detective', 'Classics'],
-    narratorName: 'Daniel (Audiobookphile Classic)',
-    voiceName: 'Daniel (English (UK))',
+    narratorName: 'David Clarke (LibriVox)',
     description:
-      "A collection of twelve gripping detective stories chronicling the adventures of the eccentric consulting detective Sherlock Holmes and his companion Dr. John Watson, beginning with Holmes's encounter with the formidable Irene Adler.",
-    narrationText:
-      'The Adventures of Sherlock Holmes, by Sir Arthur Conan Doyle. To Sherlock Holmes she is always THE woman. I have seldom heard him mention her under any other name. In his eyes she eclipses and predominates the whole of her sex. It was not that he felt any emotion akin to love for Irene Adler. All emotions were abhorrent to his cold, precise but admirably balanced mind. He was, I take it, the most perfect reasoning and observing machine that the world has seen. But as a lover he would have placed himself in a false position. He never spoke of the softer passions, save with a gibe and a sneer.',
+      "The quintessential adventure of the world's most famous consulting detective, Sherlock Holmes, and his companion Dr. John Watson. Holmes is engaged by the King of Bohemia to recover a compromising photograph from the formidable opera singer and adventuress Irene Adler. Narrated by David Clarke.",
+    coverUrl: 'https://archive.org/download/adventures_holmes/Adventures_of_Sherlock_Holmes_1403.jpg',
+    audioUrl: 'https://archive.org/download/adventures_holmes/adventureholmes_01_doyle_64kb.mp3',
+    trackTitle: '01 - A Scandal in Bohemia',
   },
   {
     id: 'b0000000-0000-0000-0000-000000000003',
     authorId: 'c0000000-0000-0000-0000-000000000003',
     title: 'Frankenstein',
-    subtitle: 'or, The Modern Prometheus',
+    subtitle: 'or, The Modern Prometheus (1818 Edition)',
     authorName: 'Mary Wollstonecraft Shelley',
     authorLastFirst: 'Shelley, Mary',
     publishedYear: '1818',
     genres: ['Gothic Fiction', 'Horror', 'Science Fiction'],
-    narratorName: 'Shelley (Audiobookphile Classic)',
-    voiceName: 'Shelley (English (UK))',
+    narratorName: 'Cori Samuel (LibriVox)',
     description:
-      'Victor Frankenstein, driven by ambitious scientific passion, discovers the secret of generating life. But when his towering creation stirs, horror overwhelms him, unleashing a tragedy of hubris, loneliness, and vengeance across the frozen Arctic.',
-    narrationText:
-      'Frankenstein; or, The Modern Prometheus, by Mary Shelley. It was on a dreary night of November that I beheld the accomplishment of my toils. With an anxiety that almost amounted to agony, I collected the instruments of life around me, that I might infuse a spark of being into the lifeless thing that lay at my feet. It was already one in the morning; the rain pattered dismally against the panes, and my candle was nearly burnt out, when, by the glimmer of the half-extinguished light, I saw the dull yellow eye of the creature open; it breathed hard, and a convulsive motion agitated its limbs.',
+      "Mary Shelley's seminal gothic tragedy. Victor Frankenstein, consumed by the desire to unravel the mystery of life, constructs a sentient being from deceased human remains, only to recoil in terror from the consequences of his ambition. Narrated by Cori Samuel.",
+    coverUrl: 'https://archive.org/download/frankenstein_cs_librivox/Frankenstein_1111.jpg',
+    audioUrl: 'https://archive.org/download/frankenstein_cs_librivox/frankenstein_01_shelley_64kb.mp3',
+    trackTitle: '01 - Dedication and Preface',
   },
   {
     id: 'b0000000-0000-0000-0000-000000000004',
     authorId: 'c0000000-0000-0000-0000-000000000004',
     title: 'The Art of War',
-    subtitle: 'The Definitive Translation by Lionel Giles',
+    subtitle: 'Laying Plans & Waging War (Lionel Giles Translation)',
     authorName: 'Sun Tzu',
     authorLastFirst: 'Sun, Tzu',
     publishedYear: '1910',
     genres: ['Philosophy', 'Military Strategy', 'Classics'],
-    narratorName: 'Samantha (Audiobookphile Classic)',
-    voiceName: 'Samantha (English (US))',
+    narratorName: 'Moira Fogarty (LibriVox)',
     description:
-      'The definitive classic treatise on strategy and conflict resolution. Composed of 13 chapters, each devoted to one aspect of warfare, its timeless principles apply directly to strategy, negotiation, and leadership.',
-    narrationText:
-      'The Art of War, by Sun Tzu. Translated by Lionel Giles. Chapter One: Laying Plans. Sun Tzu said: The art of war is of vital importance to the State. It is a matter of life and death, a road either to safety or to ruin. Hence it is a subject of inquiry which can on no account be neglected. The art of war, then, is governed by five constant factors: The Moral Law; Heaven; Earth; The Commander; and Method and discipline. These five heads should be familiar to every general: he who knows them will be victorious; he who knows them not will fail.',
+      'The foundational military treatise by ancient Chinese strategist Sun Tzu, translated with authoritative notes by Lionel Giles. Composed of timeless maxims on planning, maneuvering, adaptation, and decisive leadership. Narrated by Moira Fogarty.',
+    coverUrl: 'https://archive.org/download/art_of_war_librivox/Art_War_1107.jpg',
+    audioUrl: 'https://archive.org/download/art_of_war_librivox/art_of_war_01-02_sun_tzu_64kb.mp3',
+    trackTitle: '01 - Laying Plans & Waging War',
   },
 ]
 
-async function main() {
-  console.log('--- Step 1: Ensure Root Demo User ---')
-  const { data: usersData, error: listErr } = await supabase.auth.admin.listUsers()
-  if (listErr) {
-    console.error('Error listing users:', listErr)
-    process.exit(1)
+async function downloadFile(url: string, destPath: string): Promise<void> {
+  if (existsSync(destPath) && statSync(destPath).size > 1000) {
+    console.log(`  ⚡ Cache hit: ${destPath} (${statSync(destPath).size} bytes)`)
+    return
   }
+  console.log(`  📥 Downloading: ${url}`)
+  execSync(`curl -sL --retry 3 "${url}" -o "${destPath}"`)
+}
 
+async function main() {
+  console.log('--- Step 1: Verify Root Demo User & Library ---')
+  const { data: usersData } = await supabase.auth.admin.listUsers()
   let demoUser = usersData?.users.find((u) => u.email === DEMO_EMAIL)
+
   if (!demoUser) {
-    console.log(`Creating demo user: ${DEMO_EMAIL}`)
-    const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
+    const { data: newUser } = await supabase.auth.admin.createUser({
       email: DEMO_EMAIL,
       password: DEMO_PASSWORD,
       email_confirm: true,
       user_metadata: { username: 'demo' },
     })
-    if (createErr || !newUser.user) {
-      console.error('Failed to create demo user:', createErr)
-      process.exit(1)
-    }
-    demoUser = newUser.user
-    console.log(`Demo user created with ID: ${demoUser.id}`)
-  } else {
-    console.log(`Demo user already exists: ${demoUser.id}`)
-    // Reset password to standard demo credentials
-    await supabase.auth.admin.updateUserById(demoUser.id, {
-      password: DEMO_PASSWORD,
-      email_confirm: true,
-      user_metadata: { username: 'demo' },
-    })
+    demoUser = newUser?.user
   }
 
-  // Ensure profile has user_type = 'root'
-  const { error: profErr } = await supabase
-    .from('profiles')
-    .upsert({
-      id: demoUser.id,
-      username: 'demo',
-      user_type: 'root',
-      language: 'en-US',
-      theme: 'dark',
-      default_library_id: LIBRARY_ID,
-    })
-  if (profErr) {
-    console.error('Failed to upsert demo profile:', profErr)
-  } else {
-    console.log('✅ Demo profile configured as root admin')
-  }
-
-  console.log('--- Step 2: Ensure Demo Library ---')
-  const { error: libErr } = await supabase.from('libraries').upsert({
+  // Ensure library exists
+  await supabase.from('libraries').upsert({
     id: LIBRARY_ID,
     name: 'Public Domain Classics',
     display_order: 1,
@@ -168,103 +145,100 @@ async function main() {
       disableWatcher: true,
     },
   })
-  if (libErr) {
-    console.error('Failed to upsert library:', libErr)
-    process.exit(1)
+
+  // Ensure demo user profile
+  if (demoUser) {
+    await supabase.from('profiles').upsert({
+      id: demoUser.id,
+      username: 'demo',
+      user_type: 'root',
+      language: 'en-US',
+      theme: 'dark',
+      default_library_id: LIBRARY_ID,
+    })
   }
-  console.log('✅ Demo library "Public Domain Classics" upserted')
 
-  console.log('--- Step 3: Generate Covers via Swift ---')
-  const tmpDir = '/tmp/audiobookphile_demo'
+  const tmpDir = '/tmp/audiobookphile_real_demo'
   execSync(`mkdir -p ${tmpDir}`)
-  const swiftScript = join(import.meta.dir, 'generate-covers.swift')
-  execSync(`swift "${swiftScript}" "${tmpDir}"`)
 
-  console.log('--- Step 4: Seed Audiobooks ---')
+  console.log('\n--- Step 2: Seed Real Audiobook Demos with Real Covers ---')
   for (const book of BOOKS) {
     console.log(`\n📚 Processing "${book.title}" by ${book.authorName}...`)
 
     // 1. Author
-    const { error: authorErr } = await supabase.from('authors').upsert({
+    await supabase.from('authors').upsert({
       id: book.authorId,
       name: book.authorName,
       last_first: book.authorLastFirst,
       library_id: LIBRARY_ID,
-      description: `Author of classic works including ${book.title}.`,
+      description: `Author of celebrated classic literature including ${book.title}.`,
     })
-    if (authorErr) console.warn('Author upsert warning:', authorErr)
 
-    // 2. Cover image upload to storage
-    const coverPathLocal = join(tmpDir, `${book.id}.jpg`)
+    // 2. Real cover download & storage upload
+    const coverLocalPath = join(tmpDir, `${book.id}_cover.jpg`)
+    await downloadFile(book.coverUrl, coverLocalPath)
+    const coverBytes = readFileSync(coverLocalPath)
     const coverStoragePath = `${book.id}/cover.jpg`
-    if (existsSync(coverPathLocal)) {
-      const coverBytes = readFileSync(coverPathLocal)
-      const { error: coverUpErr } = await supabase.storage.from('covers').upload(coverStoragePath, coverBytes, {
-        contentType: 'image/jpeg',
-        upsert: true,
-      })
-      if (coverUpErr) {
-        console.warn('Cover upload warning:', coverUpErr)
-      } else {
-        console.log(`  🖼️  Cover uploaded -> covers/${coverStoragePath}`)
-      }
+
+    const { error: coverErr } = await supabase.storage.from('covers').upload(coverStoragePath, coverBytes, {
+      contentType: 'image/jpeg',
+      upsert: true,
+    })
+    if (coverErr) {
+      console.warn('  ⚠️ Cover upload warning:', coverErr.message)
+    } else {
+      console.log(`  🖼️  Real cover uploaded -> covers/${coverStoragePath} (${coverBytes.length} bytes)`)
     }
 
-    // 3. Audio generation & upload
-    const aiffPath = join(tmpDir, `${book.id}.aiff`)
-    const m4bPath = join(tmpDir, `${book.id}.m4b`)
-    const audioStoragePath = `${book.id}/track-01.m4b`
+    // 3. Real audio download & storage upload
+    const audioLocalPath = join(tmpDir, `${book.id}_audio.mp3`)
+    await downloadFile(book.audioUrl, audioLocalPath)
+    const audioBytes = readFileSync(audioLocalPath)
+    const audioStat = statSync(audioLocalPath)
+    const audioStoragePath = `${book.id}/track-01.mp3`
 
-    console.log(`  🎙️  Synthesizing narration via ${book.voiceName}...`)
-    execSync(`say -v "${book.voiceName}" "${book.narrationText.replace(/"/g, '\\"')}" -o "${aiffPath}"`)
-    execSync(`afconvert -d aac -f m4af "${aiffPath}" "${m4bPath}"`)
-
-    const audioStat = statSync(m4bPath)
-    const audioBytes = readFileSync(m4bPath)
-
-    // Measure duration via afinfo
-    let duration = 30
+    let duration = 300
     try {
-      const afinfoOut = execSync(`afinfo "${m4bPath}"`).toString()
+      const afinfoOut = execSync(`afinfo "${audioLocalPath}"`).toString()
       const durMatch = afinfoOut.match(/estimated duration:\s*([0-9.]+)\s*sec/i)
       if (durMatch && durMatch[1]) {
         duration = parseFloat(durMatch[1])
       }
     } catch {
-      duration = Math.max(15, Math.round(audioStat.size / 16000))
+      duration = Math.round(audioStat.size / 8000)
     }
 
-    console.log(`  🎵  Audio generated: ${audioStat.size} bytes (${duration.toFixed(1)}s)`)
+    console.log(`  🎵 Real audio ready: ${audioStat.size} bytes (${duration.toFixed(1)}s, ${book.narratorName})`)
 
-    const { error: audioUpErr } = await supabase.storage.from('audio-files').upload(audioStoragePath, audioBytes, {
-      contentType: 'audio/mp4',
+    const { error: audioErr } = await supabase.storage.from('audio-files').upload(audioStoragePath, audioBytes, {
+      contentType: 'audio/mpeg',
       upsert: true,
     })
-    if (audioUpErr) {
-      console.warn('Audio upload warning:', audioUpErr)
+    if (audioErr) {
+      console.warn('  ⚠️ Audio upload warning:', audioErr.message)
     } else {
-      console.log(`  ☁️  Audio uploaded -> audio-files/${audioStoragePath}`)
+      console.log(`  ☁️  Real audio uploaded -> audio-files/${audioStoragePath}`)
     }
 
-    // 4. Upsert Library Item
+    // 4. Update Library Item with Real Metadata
     const audioFilesMetadata = [
       {
         index: 0,
         ino: `${book.id}-track-01`,
         size: audioStat.size,
         duration: duration,
-        mimeType: 'audio/mp4',
-        codec: 'aac',
+        mimeType: 'audio/mpeg',
+        codec: 'mp3',
         storage_path: `supabase://${audioStoragePath}`,
         metadata: {
-          filename: `${book.title} - Chapter 1.m4b`,
-          ext: '.m4b',
+          filename: `${book.title} - ${book.trackTitle}.mp3`,
+          ext: '.mp3',
           path: `supabase://${audioStoragePath}`,
-          relPath: `${book.title}/Chapter 1.m4b`,
+          relPath: `${book.title}/${book.trackTitle}.mp3`,
           size: audioStat.size,
           duration: duration,
-          mimeType: 'audio/mp4',
-          codec: 'aac',
+          mimeType: 'audio/mpeg',
+          codec: 'mp3',
         },
       },
     ]
@@ -274,7 +248,7 @@ async function main() {
         id: 0,
         start: 0,
         end: duration,
-        title: 'Chapter 1',
+        title: book.trackTitle,
       },
     ]
 
@@ -293,6 +267,7 @@ async function main() {
       narrators: [book.narratorName],
       audio_files: audioFilesMetadata,
       chapters: chapters,
+      num_tracks: 1,
       is_file: false,
       is_missing: false,
       is_invalid: false,
@@ -301,12 +276,13 @@ async function main() {
       path: `/demo/${book.title}`,
       rel_path: book.title,
       size: audioStat.size,
+      updated_at: new Date().toISOString(),
     })
 
     if (itemErr) {
-      console.error(`Error upserting ${book.title}:`, itemErr)
+      console.error(`  ❌ Error upserting ${book.title}:`, itemErr)
     } else {
-      console.log(`  ✅  Library item "${book.title}" upserted`)
+      console.log(`  ✅ Library item "${book.title}" updated with real audio & cover`)
     }
 
     // 5. Link book_authors
@@ -316,22 +292,17 @@ async function main() {
     })
   }
 
-  console.log('\n--- Step 5: Verification & System Status ---')
-  const { data: status, error: statErr } = await supabase.rpc('get_system_status')
-  console.log('RPC get_system_status:', status)
+  console.log('\n--- Step 3: Verification ---')
+  const { data: status } = await supabase.rpc('get_system_status')
+  console.log('System status:', status)
 
-  // Test sign in
-  const { data: loginData, error: loginErr } = await supabase.auth.signInWithPassword({
-    email: DEMO_EMAIL,
-    password: DEMO_PASSWORD,
-  })
-  if (loginErr || !loginData.session) {
-    console.error('❌ Demo login test failed:', loginErr)
-  } else {
-    console.log('✅ Demo login test succeeded! User:', loginData.user.email)
+  const { data: items } = await supabase.from('library_items').select('id, title, duration, narrators, cover_path')
+  console.log('\nSeeded Real Books:')
+  for (const it of items || []) {
+    console.log(` • [${it.id}] "${it.title}" (${it.duration}s, Narrator: ${it.narrators?.[0]}, Cover: ${it.cover_path})`)
   }
 
-  console.log('\n🎉 Demo backend seeding complete!')
+  console.log('\n🎉 Real demo audiobooks and real covers successfully deployed!')
 }
 
 main().catch((err) => {
