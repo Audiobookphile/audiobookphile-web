@@ -1,6 +1,6 @@
 'use client'
 
-import { Fingerprint, Lock, Smartphone } from 'lucide-react'
+import { Fingerprint, Lock, Smartphone, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -441,6 +441,20 @@ export default function LoginForm() {
           </Link>
         </div>
       )}
+      <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-sky-500/20 bg-sky-500/10 p-3 text-xs text-foreground">
+        <span className="flex items-center gap-1.5 text-sky-400">
+          <Sparkles size={14} className="shrink-0" />
+          <span>Evaluating Audiobookphile?</span>
+        </span>
+        <a
+          href="https://audiobookphile.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-sky-400 hover:text-sky-300 underline underline-offset-4 whitespace-nowrap"
+        >
+          Explore Live Demo &rarr;
+        </a>
+      </div>
       <div className="mb-4 flex flex-col gap-4">
         <TextInput label="Email" value={email} type="email" autocomplete="email" onChange={setEmail} />
         <TextInput

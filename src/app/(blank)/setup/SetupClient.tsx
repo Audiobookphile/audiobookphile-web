@@ -1,15 +1,18 @@
 'use client'
 
-import { CheckCircle2, Database, ExternalLink, HardDrive, KeyRound, Loader2, RefreshCw, Server, ShieldCheck, Sparkles, XCircle } from 'lucide-react'
+import { CheckCircle2, Database, ExternalLink, HardDrive, Loader2, RefreshCw, Server, ShieldCheck, Sparkles, XCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useActionState, useEffect, useState } from 'react'
 import { createInitialAdmin, type SetupResult } from '@/features/auth/actions/setupActions'
 import AuthCard from '@/features/auth/components/AuthCard'
+import MobileConnectCard from '@/features/auth/components/MobileConnectCard'
 import Btn from '@/shared/ui/Btn'
 
 interface SetupStatus {
   configured: boolean
+  serverUrl?: string
+  canAutoBootstrap?: boolean
   reason?: string
   supabaseUrl: string | null
   projectRef: string | null
@@ -35,6 +38,9 @@ export default function SetupClient() {
   const [status, setStatus] = useState<SetupStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [bootstrapping, setBootstrapping] = useState(false)
+  const [bootstrapMessage, setBootstrapMessage] = useState<string | null>(null)
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null)
 
   const [formState, formAction, isPending] = useActionState<SetupResult | null, FormData>(
     createInitialAdmin,
@@ -47,9 +53,6 @@ export default function SetupClient() {
       if (res.ok) {
         const data = await res.json()
         setStatus(data)
-        if (data?.database?.hasAdmin) {
-          // If setup is already finished, offer redirect after brief delay
-        }
       }
     } catch (err) {
       console.error('Failed to load setup status:', err)
@@ -74,12 +77,32 @@ export default function SetupClient() {
     fetchStatus()
   }
 
+  const handleAutoBootstrap = async () => {
+    setBootstrapping(true)
+    setBootstrapMessage(null)
+    setBootstrapError(null)
+    try {
+      const res = await fetch('/api/setup/bootstrap', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setBootstrapMessage(data.message || 'Database schema initialized successfully!')
+        await fetchStatus()
+      } else {
+        setBootstrapError(data.error || 'Failed to auto-bootstrap database.')
+      }
+    } catch (err) {
+      setBootstrapError(err instanceof Error ? err.message : 'Network error during auto-bootstrap.')
+    } finally {
+      setBootstrapping(false)
+    }
+  }
+
   if (loading) {
     return (
       <AuthCard title="Checking Environment..." icon="shield">
         <div className="flex flex-col items-center justify-center space-y-4 py-8">
           <Loader2 className="animate-spin text-accent" size={36} />
-          <p className="text-sm text-foreground-muted">Probing Supabase instance & database status...</p>
+          <p className="text-sm text-foreground-muted">Probing Supabase instance &amp; database status...</p>
         </div>
       </AuthCard>
     )
@@ -98,7 +121,7 @@ export default function SetupClient() {
         {/* Subtitle / Description */}
         <p className="mb-6 text-sm text-foreground-muted text-center">
           {hasAdmin
-            ? 'Your Audiobookphile instance is configured and initialized.'
+            ? 'Your Audiobookphile instance is configured, initialized, and ready to connect.'
             : isSchemaReady
               ? 'Database schema detected! Create your primary owner account to complete setup.'
               : 'Welcome! Your deployment is mapped to Supabase. Complete the one-time database bootstrap below.'}
@@ -173,42 +196,66 @@ export default function SetupClient() {
         {/* Step 1: Database Schema Required */}
         {!isSchemaReady && (
           <div className="space-y-4">
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-foreground">
-              <h4 className="font-semibold text-amber-500 flex items-center gap-1.5 mb-1.5">
+            <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-4 text-sm text-foreground">
+              <h4 className="font-semibold text-sky-400 flex items-center gap-1.5 mb-1.5">
                 <Database size={16} />
-                <span>Initialize PostgreSQL Schema</span>
+                <span>Initialize PostgreSQL Schema &amp; Tables</span>
               </h4>
               <p className="text-xs text-foreground-muted leading-relaxed">
-                Your Supabase instance is connected, but the Audiobookphile database tables and functions have not been
-                loaded yet.
+                Your Supabase instance is connected. Click below to automatically provision the database tables, Row Level
+                Security (RLS) policies, and storage buckets.
               </p>
             </div>
 
+            {bootstrapError && (
+              <div className="p-3 text-xs text-rose-500 bg-rose-500/10 border border-rose-500/30 rounded-lg">
+                {bootstrapError}
+              </div>
+            )}
+
+            {bootstrapMessage && (
+              <div className="p-3 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                {bootstrapMessage}
+              </div>
+            )}
+
             <div className="space-y-3 pt-2">
+              <button
+                type="button"
+                onClick={handleAutoBootstrap}
+                disabled={bootstrapping}
+                className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-sky-500/25 active:scale-[0.98] disabled:opacity-50"
+              >
+                {bootstrapping ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Bootstrapping Database Schema...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} />
+                    <span>🚀 Auto-Initialize Database (1-Click)</span>
+                  </>
+                )}
+              </button>
+
+              <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-border/40" />
+                <span className="flex-shrink mx-3 text-[11px] text-foreground-muted uppercase">or manual sql editor</span>
+                <div className="flex-grow border-t border-border/40" />
+              </div>
+
               {status?.sqlEditorUrl && (
                 <a
                   href={status.sqlEditorUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-accent hover:bg-accent-hover text-accent-foreground font-medium text-sm transition-all shadow-md shadow-accent/20"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-foreground font-medium text-xs transition-all"
                 >
-                  <ExternalLink size={16} />
-                  <span>Open Supabase SQL Editor (1-Click)</span>
+                  <ExternalLink size={14} />
+                  <span>Open Supabase SQL Editor</span>
                 </a>
               )}
-
-              <div className="rounded-lg bg-surface-darker/60 border border-border/40 p-3 text-xs text-foreground-muted font-mono space-y-1.5">
-                <p className="text-foreground font-sans font-semibold">How to initialize:</p>
-                <p className="text-foreground-muted font-sans">
-                  1. Copy the contents of <span className="text-accent font-mono">supabase/schema.sql</span> from this repository.
-                </p>
-                <p className="text-foreground-muted font-sans">
-                  2. Paste into your Supabase Dashboard SQL Editor and click <strong className="text-foreground">Run</strong>.
-                </p>
-                <p className="text-foreground-muted font-sans">
-                  Or via CLI: <span className="text-foreground font-mono">bun run supabase db push</span>
-                </p>
-              </div>
 
               <Btn
                 color="bg-bg-light"
@@ -218,7 +265,7 @@ export default function SetupClient() {
                 disabled={refreshing}
               >
                 <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-                <span>{refreshing ? 'Checking Schema...' : 'I have run the SQL — Check Again'}</span>
+                <span>{refreshing ? 'Checking Schema...' : 'Check Status Again'}</span>
               </Btn>
             </div>
           </div>
@@ -252,19 +299,19 @@ export default function SetupClient() {
                   type="text"
                   name="username"
                   placeholder="admin"
-                  required
                   autoComplete="username"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-light/50 border border-border text-foreground text-sm placeholder:text-foreground-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-foreground-muted mb-1">Password (min 8 chars)</label>
+                <label className="block text-xs font-medium text-foreground-muted mb-1">Password</label>
                 <input
                   type="password"
                   name="password"
                   placeholder="••••••••"
                   required
+                  minLength={8}
                   autoComplete="new-password"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-light/50 border border-border text-foreground text-sm placeholder:text-foreground-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
                 />
@@ -296,28 +343,32 @@ export default function SetupClient() {
               ) : (
                 <>
                   <ShieldCheck size={16} />
-                  <span>Create Owner Account & Enter</span>
+                  <span>Create Owner Account &amp; Enter</span>
                 </>
               )}
             </button>
           </form>
         )}
 
-        {/* Step 3: Already Initialized */}
+        {/* Step 3: Already Initialized / Completed */}
         {hasAdmin && (
-          <div className="space-y-4 text-center">
-            <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 space-y-1">
-              <Sparkles className="mx-auto" size={24} />
-              <p className="font-semibold text-sm">Instance Initialized</p>
-              <p className="text-xs text-foreground-muted">An administrator account is already configured.</p>
+          <div className="space-y-6">
+            <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 space-y-1 text-center">
+              <Sparkles className="mx-auto text-emerald-400" size={24} />
+              <p className="font-semibold text-sm">Deployment &amp; Backend Ready!</p>
+              <p className="text-xs text-foreground-muted">Your server is live and fully configured.</p>
             </div>
 
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-accent hover:bg-accent-hover text-accent-foreground font-medium text-sm transition-all shadow-md shadow-accent/20"
-            >
-              Proceed to Sign In &rarr;
-            </Link>
+            <MobileConnectCard serverUrl={status?.serverUrl} />
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Link
+                href="/login"
+                className="flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-xl bg-accent hover:bg-accent-hover text-accent-foreground font-medium text-sm transition-all shadow-md shadow-accent/20"
+              >
+                Sign In to Web Client &rarr;
+              </Link>
+            </div>
           </div>
         )}
       </AuthCard>

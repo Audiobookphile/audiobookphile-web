@@ -100,8 +100,23 @@ export async function GET() {
     edgeApiStatus = 0
   }
 
+  const serverUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    'http://localhost:3000'
+
+  const canAutoBootstrap = Boolean(
+    process.env.POSTGRES_URL ||
+      process.env.POSTGRES_URL_NON_POOLING ||
+      process.env.DATABASE_URL ||
+      process.env.SUPABASE_ACCESS_TOKEN
+  )
+
   return NextResponse.json({
     configured: true,
+    serverUrl,
+    canAutoBootstrap,
     supabaseUrl,
     projectRef,
     sqlEditorUrl: projectRef ? `https://supabase.com/dashboard/project/${projectRef}/sql/new` : null,

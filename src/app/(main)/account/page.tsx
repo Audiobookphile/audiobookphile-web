@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import MobileConnectCard from '@/features/auth/components/MobileConnectCard'
 import { getCurrentUser } from '@/shared/lib/api'
 import { getTypeSafeTranslations } from '@/shared/lib/getTypeSafeTranslations'
 import { getTheme } from '@/shared/lib/theme'
@@ -56,6 +57,9 @@ export default async function AccountPage() {
         </div>
         <div className="w-full">
           <ThemeSelector value={currentTheme} label={t('LabelTheme')} />
+        </div>
+        <div className="w-full pt-2">
+          <MobileConnectCard />
         </div>
         <div className="h-px w-full bg-border" />
         <div className="flex w-full items-center justify-between">
