@@ -17,6 +17,16 @@ interface SetupStatus {
   supabaseUrl: string | null
   projectRef: string | null
   sqlEditorUrl: string | null
+  credentials?: {
+    serverUrl?: string
+    supabaseUrl?: string
+    hasDemoAccount?: boolean
+    demoAccount?: {
+      username: string
+      password: string
+    }
+    deepLink?: string
+  }
   database: {
     connected: boolean
     initialized: boolean
@@ -359,7 +369,7 @@ export default function SetupClient() {
               <p className="text-xs text-foreground-muted">Your server is live and fully configured.</p>
             </div>
 
-            <MobileConnectCard serverUrl={status?.serverUrl} />
+            <MobileConnectCard serverUrl={status?.serverUrl} credentials={status?.credentials} />
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Link

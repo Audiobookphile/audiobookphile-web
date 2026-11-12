@@ -133,7 +133,7 @@ async function main() {
       email_confirm: true,
       user_metadata: { username: 'demo' },
     })
-    demoUser = newUser?.user
+    demoUser = newUser?.user || undefined
   }
 
   // Ensure library exists

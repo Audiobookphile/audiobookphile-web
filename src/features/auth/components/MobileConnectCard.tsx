@@ -1,28 +1,50 @@
 'use client'
 
-import { Check, Copy, ExternalLink, QrCode, Smartphone, Sparkles } from 'lucide-react'
+import { Check, Copy, ExternalLink, KeyRound, QrCode, Smartphone, Sparkles, User } from 'lucide-react'
 import Image from 'next/image'
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 
-interface MobileConnectCardProps {
+export interface MobileConnectCardProps {
   serverUrl?: string
+  credentials?: {
+    serverUrl?: string
+    supabaseUrl?: string
+    hasDemoAccount?: boolean
+    demoAccount?: {
+      username: string
+      password: string
+    }
+    deepLink?: string
+  }
   className?: string
   compact?: boolean
 }
 
-export default function MobileConnectCard({ serverUrl, className = '', compact = false }: MobileConnectCardProps) {
+export default function MobileConnectCard({
+  serverUrl,
+  credentials,
+  className = '',
+  compact = false,
+}: MobileConnectCardProps) {
   const [resolvedUrl, setResolvedUrl] = useState(serverUrl || '')
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const [copiedUrl, setCopiedUrl] = useState(false)
+  const [copiedUser, setCopiedUser] = useState(false)
+  const [copiedPass, setCopiedPass] = useState(false)
+
+  const demoUser = credentials?.demoAccount?.username || 'demo@audiobookphile.app'
+  const demoPass = credentials?.demoAccount?.password || 'AudiobookphileDemo2026!'
 
   useEffect(() => {
     const url = serverUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://audiobookphile.app')
     setResolvedUrl(url)
 
     // Deep link protocol format parsed by iOS/Android client:
-    // audiobookphile://connect?server=<encoded_server_url>
-    const deepLink = `audiobookphile://connect?server=${encodeURIComponent(url)}`
+    // audiobookphile://connect?server=<url>&username=<user>&password=<pass>&autoLogin=1
+    const deepLink =
+      credentials?.deepLink ||
+      `audiobookphile://connect?server=${encodeURIComponent(url)}&username=${encodeURIComponent(demoUser)}&password=${encodeURIComponent(demoPass)}&autoLogin=1`
 
     QRCode.toDataURL(deepLink, {
       width: 256,
@@ -34,15 +56,17 @@ export default function MobileConnectCard({ serverUrl, className = '', compact =
     })
       .then(setQrCodeDataUrl)
       .catch((err) => console.error('Failed to generate QR code:', err))
-  }, [serverUrl])
+  }, [serverUrl, credentials?.deepLink, demoUser, demoPass])
 
-  const deepLink = `audiobookphile://connect?server=${encodeURIComponent(resolvedUrl)}`
+  const deepLink =
+    credentials?.deepLink ||
+    `audiobookphile://connect?server=${encodeURIComponent(resolvedUrl)}&username=${encodeURIComponent(demoUser)}&password=${encodeURIComponent(demoPass)}&autoLogin=1`
 
-  const copyToClipboard = () => {
-    if (!resolvedUrl) return
-    navigator.clipboard.writeText(resolvedUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const copyText = (text: string, setter: (val: boolean) => void) => {
+    if (!text) return
+    navigator.clipboard.writeText(text)
+    setter(true)
+    setTimeout(() => setter(false), 2000)
   }
 
   return (
@@ -58,12 +82,12 @@ export default function MobileConnectCard({ serverUrl, className = '', compact =
       </div>
 
       <p className="text-xs text-foreground-muted mb-4">
-        Scan this QR code from your phone camera or tap the 1-click button to automatically map this server in the native mobile app.
+        Scan this QR code with your phone camera or click below to automatically map this server and log into the native iOS or Android app.
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-6">
         {/* QR Code Container */}
-        <div className="relative flex h-40 w-40 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/40 p-2 shadow-inner">
+        <div className="relative flex h-44 w-44 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/40 p-2 shadow-inner">
           {qrCodeDataUrl ? (
             <Image
               src={qrCodeDataUrl}
@@ -82,9 +106,10 @@ export default function MobileConnectCard({ serverUrl, className = '', compact =
         </div>
 
         {/* Credentials & 1-Click Launch */}
-        <div className="flex-1 w-full space-y-3">
+        <div className="flex-1 w-full space-y-2.5">
+          {/* Server URL */}
           <div>
-            <label className="block text-[11px] font-medium text-foreground-muted mb-1 uppercase tracking-wider">
+            <label className="block text-[10px] font-medium text-foreground-muted mb-1 uppercase tracking-wider">
               Server Connection URL
             </label>
             <div className="flex items-center gap-2">
@@ -92,31 +117,78 @@ export default function MobileConnectCard({ serverUrl, className = '', compact =
                 type="text"
                 readOnly
                 value={resolvedUrl}
-                className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-xs font-mono text-sky-300 focus:outline-none"
+                className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs font-mono text-sky-300 focus:outline-none"
               />
               <button
                 type="button"
-                onClick={copyToClipboard}
+                onClick={() => copyText(resolvedUrl, setCopiedUrl)}
                 title="Copy Server URL"
-                className="flex items-center justify-center h-8 w-8 shrink-0 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-foreground transition-colors"
+                className="flex items-center justify-center h-7 w-7 shrink-0 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-foreground transition-colors"
               >
-                {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4 text-foreground-muted" />}
+                {copiedUrl ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-foreground-muted" />}
               </button>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 pt-1">
+          {/* Demo User & Password */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label className="flex items-center gap-1 text-[10px] font-medium text-foreground-muted mb-1 uppercase tracking-wider">
+                <User size={10} /> Demo Account
+              </label>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  readOnly
+                  value={demoUser}
+                  className="w-full rounded-lg border border-white/10 bg-black/30 px-2.5 py-1.5 text-xs font-mono text-foreground focus:outline-none truncate"
+                />
+                <button
+                  type="button"
+                  onClick={() => copyText(demoUser, setCopiedUser)}
+                  title="Copy Demo Username"
+                  className="flex items-center justify-center h-7 w-7 shrink-0 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-foreground transition-colors"
+                >
+                  {copiedUser ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-foreground-muted" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-1 text-[10px] font-medium text-foreground-muted mb-1 uppercase tracking-wider">
+                <KeyRound size={10} /> Password
+              </label>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  readOnly
+                  value={demoPass}
+                  className="w-full rounded-lg border border-white/10 bg-black/30 px-2.5 py-1.5 text-xs font-mono text-foreground focus:outline-none truncate"
+                />
+                <button
+                  type="button"
+                  onClick={() => copyText(demoPass, setCopiedPass)}
+                  title="Copy Demo Password"
+                  className="flex items-center justify-center h-7 w-7 shrink-0 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-foreground transition-colors"
+                >
+                  {copiedPass ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-foreground-muted" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5 pt-1">
             <a
               href={deepLink}
-              className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-medium text-xs transition-all shadow-md shadow-sky-500/20 active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-semibold text-xs transition-all shadow-md shadow-sky-500/25 active:scale-[0.98]"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              <span>Launch &amp; Map in iOS / Android App</span>
+              <span>🚀 1-Click Launch &amp; Auto-Login Mobile App</span>
             </a>
 
             {!compact && (
-              <p className="text-[11px] text-foreground-muted text-center pt-1">
-                Deep link: <code className="text-sky-300 font-mono text-[10px]">audiobookphile://connect</code>
+              <p className="text-[10px] text-foreground-muted text-center pt-0.5">
+                Deep link: <code className="text-sky-300 font-mono text-[9px]">audiobookphile://connect?server=...&amp;autoLogin=1</code>
               </p>
             )}
           </div>
@@ -125,4 +197,3 @@ export default function MobileConnectCard({ serverUrl, className = '', compact =
     </div>
   )
 }
-

@@ -136,13 +136,28 @@ export async function GET(request: Request) {
       process.env.SUPABASE_ACCESS_TOKEN
   )
 
+  const demoUsername = 'demo@audiobookphile.app'
+  const demoPassword = 'AudiobookphileDemo2026!'
+  const mobileDeepLink = `audiobookphile://connect?server=${encodeURIComponent(serverUrl)}&username=${encodeURIComponent(demoUsername)}&password=${encodeURIComponent(demoPassword)}&autoLogin=1`
+
   return NextResponse.json({
     configured: true,
     serverUrl,
     canAutoBootstrap,
     supabaseUrl,
+    anonKey: anonKey || null,
     projectRef,
     sqlEditorUrl: projectRef ? `https://supabase.com/dashboard/project/${projectRef}/sql/new` : null,
+    credentials: {
+      serverUrl,
+      supabaseUrl,
+      hasDemoAccount: true,
+      demoAccount: {
+        username: demoUsername,
+        password: demoPassword,
+      },
+      deepLink: mobileDeepLink,
+    },
     database: {
       connected: databaseConnected,
       initialized: databaseInitialized,

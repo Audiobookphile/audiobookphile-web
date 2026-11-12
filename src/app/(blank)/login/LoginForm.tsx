@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { signInWithGoogle, signInWithMagicLink } from '@/features/auth/actions/authActions'
 import AuthCard from '@/features/auth/components/AuthCard'
+import MobileConnectCard from '@/features/auth/components/MobileConnectCard'
 import { performPasskeyLogin, webAuthnErrorMessage } from '@/features/auth/lib/webauthn'
 import { useFeatureFlag } from '@/shared/lib/analytics'
 import Btn from '@/shared/ui/Btn'
@@ -24,6 +25,7 @@ export default function LoginForm() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [magicLoading, setMagicLoading] = useState(false)
   const [needsSetup, setNeedsSetup] = useState(false)
+  const [showMobileConnect, setShowMobileConnect] = useState(false)
 
   useEffect(() => {
     fetch('/api/setup/status')
@@ -486,17 +488,33 @@ export default function LoginForm() {
         </div>
         <div className="flex items-center justify-between text-[11px] text-foreground-muted border-t border-sky-500/15 pt-2">
           <span>Demo User: <strong className="font-mono text-foreground">demo@audiobookphile.app</strong></span>
-          <button
-            type="button"
-            onClick={() => {
-              setEmail('demo@audiobookphile.app')
-              setPassword('AudiobookphileDemo2026!')
-            }}
-            className="text-accent hover:underline font-medium cursor-pointer"
-          >
-            Fill Inputs
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowMobileConnect((v) => !v)}
+              className="text-sky-400 hover:underline font-medium cursor-pointer flex items-center gap-1"
+            >
+              <Smartphone size={12} />
+              <span>{showMobileConnect ? 'Hide QR' : 'Mobile App'}</span>
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('demo@audiobookphile.app')
+                setPassword('AudiobookphileDemo2026!')
+              }}
+              className="text-accent hover:underline font-medium cursor-pointer"
+            >
+              Fill Inputs
+            </button>
+          </div>
         </div>
+        {showMobileConnect && (
+          <div className="pt-2">
+            <MobileConnectCard compact />
+          </div>
+        )}
       </div>
       <div className="mb-4 flex flex-col gap-4">
         <TextInput label="Email" value={email} type="email" autocomplete="email" onChange={setEmail} />
