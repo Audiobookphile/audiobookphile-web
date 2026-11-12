@@ -95,12 +95,12 @@ export default function SettingsClient(props: SettingsClientProps) {
     if (key === 'homeBookshelfView' || key === 'bookshelfView') {
       newValue = value ? BookshelfView.STANDARD : BookshelfView.DETAIL
     }
-    const updatedSettings = { ...serverSettings, [key]: newValue } as ServerSettings
+    const updatedSettings = { ...serverSettings, [key]: newValue }
     handleSaveSettings(updatedSettings)
   }
 
   const handleLanguageChanged = async (language: string) => {
-    const updatedSettings = { ...serverSettings, language } as ServerSettings
+    const updatedSettings = { ...serverSettings, language }
 
     try {
       // Optimistically update the UI
@@ -293,7 +293,7 @@ export default function SettingsClient(props: SettingsClientProps) {
               value={serverSettings?.dateFormat}
               onChange={(value) => handleSettingChanged('dateFormat', value as string)}
             />
-            <p className="text-foreground-muted mb-2 px-1 text-xs">
+            <p className="mb-2 px-1 text-xs text-foreground-muted">
               {t('LabelExample')}: {exampleDateFormat}
             </p>
           </div>
@@ -304,7 +304,7 @@ export default function SettingsClient(props: SettingsClientProps) {
               value={serverSettings?.timeFormat}
               onChange={(value) => handleSettingChanged('timeFormat', value as string)}
             />
-            <p className="text-foreground-muted mb-2 px-1 text-xs">
+            <p className="mb-2 px-1 text-xs text-foreground-muted">
               {t('LabelExample')}: {exampleTimeFormat}
             </p>
           </div>
@@ -322,24 +322,25 @@ export default function SettingsClient(props: SettingsClientProps) {
               onItemEdited={(value: MultiSelectItem<string>) => {
                 handleSettingChanged(
                   'allowedOrigins',
-                  serverSettings?.allowedOrigins?.map((item) =>
-                    item === value.value ? value.content : item
-                  ) as string[]
+                  (serverSettings?.allowedOrigins || []).map((item) => (item === value.value ? value.content : item))
                 )
               }}
               onItemRemoved={(value: MultiSelectItem<string>) => {
                 handleSettingChanged(
                   'allowedOrigins',
-                  serverSettings?.allowedOrigins?.filter((item) => item !== value.content) as string[]
+                  (serverSettings?.allowedOrigins || []).filter((item) => item !== value.content)
                 )
               }}
               onItemAdded={(value: MultiSelectItem<string>) => {
                 if (!corsAllowedItems.some((item) => item.content === value.content)) {
-                  handleSettingChanged('allowedOrigins', [...serverSettings?.allowedOrigins, value.content] as string[])
+                  handleSettingChanged('allowedOrigins', [
+                    ...(serverSettings?.allowedOrigins ?? []),
+                    value.content,
+                  ] as string[])
                 } else {
                   handleSettingChanged(
                     'allowedOrigins',
-                    serverSettings?.allowedOrigins?.filter((item) => item !== value.content) as string[]
+                    (serverSettings?.allowedOrigins || []).filter((item) => item !== value.content)
                   )
                 }
               }}

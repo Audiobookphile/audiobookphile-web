@@ -93,7 +93,7 @@ export default function Match({
     if (providerItems.length === 0) return provider
     const isValid = providerItems.some((item) => item.value === provider)
     if (!isValid && providerItems.length > 0) {
-      return providerItems[0].value as string
+      return providerItems[0].value
     }
     return provider
   }, [provider, providerItems])
@@ -106,7 +106,7 @@ export default function Match({
 
   // Initialize component when library item changes
   useEffect(() => {
-    ensureProvidersLoaded()
+    void ensureProvidersLoaded()
 
     if (libraryItem.id) {
       setSearchResults([])
@@ -429,10 +429,10 @@ export default function Match({
       ) : selectedMatchOrig ? (
         isPodcast ? (
           <PodcastMatchView
-            selectedMatchOrig={selectedMatchOrig as PodcastSearchResult}
+            selectedMatchOrig={selectedMatchOrig}
             libraryItemId={libraryItem.id}
             media={media as PodcastLibraryItem['media']}
-            mediaMetadata={mediaMetadata as PodcastLibraryItem['media']['metadata']}
+            mediaMetadata={mediaMetadata}
             coverUrl={coverUrl}
             availableGenres={availableGenres}
             availableTags={availableTags}
@@ -440,7 +440,7 @@ export default function Match({
           />
         ) : (
           <BookMatchView
-            selectedMatchOrig={selectedMatchOrig as BookSearchResult}
+            selectedMatchOrig={selectedMatchOrig}
             libraryItemId={libraryItem.id}
             media={media as BookLibraryItem['media']}
             mediaMetadata={mediaMetadata as BookLibraryItem['media']['metadata']}

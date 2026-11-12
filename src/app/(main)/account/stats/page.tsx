@@ -32,7 +32,7 @@ export default async function AccountStatsPage() {
       <h1 className="mb-6 text-2xl font-semibold">Your Stats</h1>
 
       {/* Summary row */}
-      <div className="border-border mb-8 rounded-lg border p-4">
+      <div className="mb-8 rounded-lg border border-border p-4">
         <StatsSummaryRow summary={summary} />
       </div>
 

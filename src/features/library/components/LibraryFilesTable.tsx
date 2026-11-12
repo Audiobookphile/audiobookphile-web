@@ -67,11 +67,11 @@ export default function LibraryFilesTable({
 
   const audioFiles = useMemo<AudioFile[]>(() => {
     if (libraryItem.mediaType === 'podcast') {
-      const episodes = (libraryItem as PodcastLibraryItem).media?.episodes
+      const episodes = libraryItem.media?.episodes
       if (!Array.isArray(episodes)) return []
       return episodes.map((ep) => ep.audioFile).filter((af): af is AudioFile => !!af)
     }
-    const files = (libraryItem as BookLibraryItem).media?.audioFiles
+    const files = libraryItem.media?.audioFiles
     return Array.isArray(files) ? files : []
   }, [libraryItem])
 

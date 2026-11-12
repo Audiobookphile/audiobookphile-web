@@ -1,6 +1,13 @@
 import Hls from 'hls.js'
+import type { NetworkErrorAction } from 'hls.js'
 import type { AudioTrack } from '../AudioTrack'
 import { IAudioProvider } from '../types'
+
+// hls.js declares NetworkErrorAction as an ambient const enum, and
+// `isolatedModules` forbids reading a const enum's members by name. The
+// value is spelled out here instead, typed as the enum so the comparison
+// below is still enum-to-enum. This is NetworkErrorAction.RetryRequest.
+const HLS_RETRY_REQUEST_ACTION: NetworkErrorAction = 5
 
 export class HlsAudioProvider implements IAudioProvider {
   private hlsInstance: Hls | null = null
@@ -92,7 +99,7 @@ export class HlsAudioProvider implements IAudioProvider {
         if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
           console.warn('[HLS] Buffer stalled, waiting for stream...')
         } else if (data.details === Hls.ErrorDetails.FRAG_LOAD_ERROR) {
-          if (data.errorAction?.action !== 5) {
+          if (data.errorAction?.action !== HLS_RETRY_REQUEST_ACTION) {
             console.warn('[HLS] Fragment load error, retry in progress', data)
           }
         }

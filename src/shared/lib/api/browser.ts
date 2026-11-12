@@ -12,7 +12,7 @@ export async function apiFetch<T = unknown>(endpoint: string, options: RequestIn
   const baseUrl = getServerBaseUrl()
   const url = `${baseUrl}${endpoint}`
 
-  const fetchHeaders = new Headers(options.headers as Record<string, string>)
+  const fetchHeaders = new Headers(options.headers)
 
   if (!(options.body instanceof FormData) && !fetchHeaders.has('Content-Type')) {
     fetchHeaders.set('Content-Type', 'application/json')
@@ -23,7 +23,7 @@ export async function apiFetch<T = unknown>(endpoint: string, options: RequestIn
   }
 
   const { createClient } = await import('@/shared/utils/supabase/client')
-  const supabase = await createClient()
+  const supabase = createClient()
 
   const { data: sessionData } = await supabase.auth.getSession()
   let accessToken = sessionData.session?.access_token ?? null

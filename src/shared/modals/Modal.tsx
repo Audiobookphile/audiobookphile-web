@@ -149,7 +149,7 @@ export default function Modal({
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-foreground-muted hover:text-foreground absolute end-4 top-4 z-20 inline-flex items-center justify-center rounded-full bg-black/20 p-2 backdrop-blur-md transition-colors hover:bg-black/40"
+            className="absolute end-4 top-4 z-20 inline-flex items-center justify-center rounded-full bg-black/20 p-2 text-foreground-muted backdrop-blur-md transition-colors hover:bg-black/40 hover:text-foreground"
             aria-label={t('ButtonCloseModal')}
             onClick={clickClose}
             cy-id="modal-close-button"

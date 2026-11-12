@@ -49,17 +49,17 @@ export default function Toolbar() {
   const showContextMenu = contextMenuItems.length > 0 && (!isBookshelfEmpty || isSeriesDetailPage)
 
   return (
-    <div className="bg-bg box-shadow-toolbar relative z-40 h-10 w-full" cy-id="library-toolbar">
+    <div className="box-shadow-toolbar relative z-40 h-10 w-full bg-bg" cy-id="library-toolbar">
       <div className="flex h-full w-full items-center justify-between gap-2 px-2 sm:px-4">
         {showBookshelfSummary && (
-          <p className="text-foreground hidden text-base md:block">
+          <p className="hidden text-base text-foreground md:block">
             {itemCount} {itemName}
           </p>
         )}
 
         {showSeriesDetailSummary && (
           <div className="hidden min-w-0 flex-1 md:block">
-            <p className="text-foreground truncate text-base" title={detailToolbarTitle ?? ''}>
+            <p className="truncate text-base text-foreground" title={detailToolbarTitle ?? ''}>
               <span>{detailToolbarTitle}</span>
               <span className="text-foreground-muted"> {itemCount ? `(${itemCount})` : ''}</span>
             </p>

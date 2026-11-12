@@ -66,12 +66,10 @@ export default function AddToPlaylistModal({
 
   const sortedPlaylists = useMemo((): PlaylistRow[] => {
     return [...playlists]
-      .map(
-        (p): PlaylistRow => ({
-          ...p,
-          isItemIncluded: playlistHasItem(p, libraryItemId, episodeId),
-        })
-      )
+      .map((p): PlaylistRow => ({
+        ...p,
+        isItemIncluded: playlistHasItem(p, libraryItemId, episodeId),
+      }))
       .sort((a, b) => {
         if (a.isItemIncluded !== b.isItemIncluded) {
           return a.isItemIncluded ? -1 : 1
@@ -89,7 +87,7 @@ export default function AddToPlaylistModal({
     void (async () => {
       try {
         const res = await fetchPlaylistsAction(libraryId, '')
-        if (!cancelled) setPlaylists(res.results as Playlist[])
+        if (!cancelled) setPlaylists(res.results)
       } catch (error) {
         if (!cancelled) {
           console.error('Failed to load playlists', error)
@@ -212,7 +210,7 @@ export default function AddToPlaylistModal({
                       key={playlist.id}
                       className="relative flex items-center justify-start px-4 py-2 transition-colors hover:bg-white/10"
                     >
-                      {included && <div className="bg-success absolute start-0 top-0 z-10 h-full w-1" aria-hidden />}
+                      {included && <div className="absolute start-0 top-0 z-10 h-full w-1 bg-success" aria-hidden />}
                       <div className="w-20 max-w-20 shrink-0 text-center">
                         <PlaylistGroupCover items={playlistItems} width={coverWidth} height={coverHeight} />
                       </div>
@@ -231,7 +229,7 @@ export default function AddToPlaylistModal({
                             ariaLabel={t('ButtonRemove')}
                             size="auto"
                             outlined={false}
-                            className="bg-error/80 hover:bg-error h-9 min-w-10 px-3 text-white"
+                            className="h-9 min-w-10 bg-error/80 px-3 text-white hover:bg-error"
                             disabled={controlsDisabled}
                             onClick={() => handleRemove(playlist)}
                           >
@@ -242,7 +240,7 @@ export default function AddToPlaylistModal({
                             ariaLabel={t('ButtonAdd')}
                             size="auto"
                             outlined={false}
-                            className="bg-success/80 hover:bg-success h-9 min-w-10 px-3 text-white"
+                            className="h-9 min-w-10 bg-success/80 px-3 text-white hover:bg-success"
                             disabled={controlsDisabled}
                             onClick={() => handleAdd(playlist)}
                             icon={Plus}
@@ -259,14 +257,14 @@ export default function AddToPlaylistModal({
               <div className="flex h-32 items-center justify-center px-4 text-center sm:px-6">
                 <div>
                   <p className="mb-2 text-xl">{t('MessageNoUserPlaylists')}</p>
-                  <div className="text-foreground-muted flex items-center justify-center text-sm">
+                  <div className="flex items-center justify-center text-sm text-foreground-muted">
                     <p>{t('MessageNoUserPlaylistsHelp')}</p>
                     <Tooltip text={t('LabelClickForMoreInfo')} className="ms-2 inline-flex">
                       <a
                         href="https://www.audiobookphile.org/guides/collections"
                         target="_blank"
                         rel="noreferrer"
-                        className="hover:text-primary inline-flex text-white/40 transition-colors"
+                        className="inline-flex text-white/40 transition-colors hover:text-primary"
                       >
                         <HelpCircle size={18} strokeWidth={2.5} />
                       </a>
@@ -276,7 +274,7 @@ export default function AddToPlaylistModal({
               </div>
             )}
 
-            <div className="border-border h-px w-full border-t" />
+            <div className="h-px w-full border-t border-border" />
 
             <form onSubmit={handleCreatePlaylist}>
               <div className="flex items-center px-4 py-2 text-center sm:px-6">

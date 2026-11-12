@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { AlertExamples } from '../examples/AlertExamples'
 import { ToastNotificationExamples } from '../examples/ToastNotificationExamples'
 import { TooltipExamples } from '../examples/TooltipExamples'
@@ -15,9 +16,9 @@ export default function AlertComponentsPage() {
         <p className="mb-6 text-gray-300">
           This page showcases all the alert, toast, and tooltip components available in the audiobookphile client.
         </p>
-        <a href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
+        <Link href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
           ← Back to Components Catalog
-        </a>
+        </Link>
       </div>
 
       {/* Table of Contents */}

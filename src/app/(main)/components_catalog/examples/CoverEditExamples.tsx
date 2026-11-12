@@ -39,7 +39,7 @@ export function CoverEditExamples({ selectedLibraryItem }: CoverEditExamplesProp
             <CoverEdit libraryItem={selectedLibraryItem} />
           </div>
         ) : (
-          <div className="border-primary/20 rounded-lg border-2 border-dashed p-8 text-center">
+          <div className="rounded-lg border-2 border-dashed border-primary/20 p-8 text-center">
             <p className="mb-2 text-gray-400">No book selected</p>
             <p className="text-sm text-gray-500">
               Use the search box above to select a book and see the Cover component in action with real data

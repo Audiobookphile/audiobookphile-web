@@ -1,5 +1,4 @@
-import path from 'path'
-import { SupportedFileTypes, sanitizeFileName } from '@/shared/lib/fileUtils'
+import { getPathBasename, getPathDirname, getPathExtension, SupportedFileTypes } from '@/shared/lib/fileUtils'
 import type { Library } from '@/types/api'
 
 export interface FileWithMetadata extends File {
@@ -141,7 +140,7 @@ export interface UploadProgressInfo {
 export function checkFileType(filename: string): string | false {
   if (filename.startsWith('.')) return false
 
-  let ext = path.extname(filename)
+  let ext = getPathExtension(filename)
   if (!ext) return false
   if (ext.startsWith('.')) ext = ext.slice(1)
   ext = ext.toLowerCase()
@@ -171,7 +170,7 @@ export function cleanBook(book: UploadItemData, index: number): CleanedItem {
     return audiobook
   }
 
-  const firstBookPath = path.dirname(firstBookFile.filepath)
+  const firstBookPath = getPathDirname(firstBookFile.filepath)
   const dirs = firstBookPath.split('/').filter((d) => !!d && d !== '.')
 
   if (dirs.length) {
@@ -183,7 +182,7 @@ export function cleanBook(book: UploadItemData, index: number): CleanedItem {
       audiobook.author = dirs.pop()
     }
   } else {
-    audiobook.title = path.basename(firstBookFile.name, path.extname(firstBookFile.name))
+    audiobook.title = getPathBasename(firstBookFile.name, getPathExtension(firstBookFile.name))
   }
 
   return audiobook
@@ -202,13 +201,13 @@ export function cleanPodcast(item: UploadItemData, index: number): CleanedItem {
   const firstAudioFile = item.itemFiles[0]
   if (!firstAudioFile?.filepath) return podcast
 
-  const firstPath = path.dirname(firstAudioFile.filepath)
+  const firstPath = getPathDirname(firstAudioFile.filepath)
   const dirs = firstPath.split('/').filter((d) => !!d && d !== '.')
 
   if (dirs.length) {
     podcast.title = dirs.length > 1 ? dirs[1] : dirs[0]
   } else {
-    podcast.title = path.basename(firstAudioFile.name, path.extname(firstAudioFile.name))
+    podcast.title = getPathBasename(firstAudioFile.name, getPathExtension(firstAudioFile.name))
   }
 
   return podcast
@@ -245,7 +244,7 @@ export function getItemsFromFilelist(filelist: FileList, mediaType: Library['med
       fileWithMeta.mime_type = getMimeType(file.name)
 
       if (filetype === 'audio' || (filetype === 'ebook' && mediaType === 'book')) {
-        let dir = fileWithMeta.filepath ? path.dirname(fileWithMeta.filepath) : ''
+        let dir = fileWithMeta.filepath ? getPathDirname(fileWithMeta.filepath) : ''
         if (dir === '.') dir = ''
 
         if (!itemMap[dir]) {
@@ -264,7 +263,7 @@ export function getItemsFromFilelist(filelist: FileList, mediaType: Library['med
   })
 
   otherFiles.forEach((file) => {
-    const dir = path.dirname(file.filepath || '')
+    const dir = getPathDirname(file.filepath || '')
     const findItem = Object.values(itemMap).find((b) => dir.startsWith(b.path))
     if (findItem) {
       findItem.otherFiles.push(file)
@@ -273,7 +272,7 @@ export function getItemsFromFilelist(filelist: FileList, mediaType: Library['med
     }
   })
 
-  let items: CleanedItem[] = []
+  let items: CleanedItem[]
   let index = 1
 
   if (

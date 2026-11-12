@@ -16,7 +16,7 @@ export default async function StatsPage({ params }: { params: Promise<{ library:
         <h1 className="text-2xl font-semibold">Library Stats</h1>
         <Link
           href="/account/stats"
-          className="text-foreground-muted hover:text-foreground text-sm underline underline-offset-2 transition-colors"
+          className="text-sm text-foreground-muted underline underline-offset-2 transition-colors hover:text-foreground"
         >
           Your listening stats →
         </Link>

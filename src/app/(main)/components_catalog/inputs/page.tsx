@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { CronExpressionBuilderExamples } from '../examples/CronExpressionBuilderExamples'
 import { DropdownExamples } from '../examples/DropdownExamples'
 import { DurationPickerExamples } from '../examples/DurationPickerExamples'
@@ -23,9 +24,9 @@ export default function InputComponentsPage() {
         <p className="mb-6 text-gray-300">
           This page showcases all the input, dropdown, and selection components available in the audiobookphile client.
         </p>
-        <a href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
+        <Link href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
           ← Back to Components Catalog
-        </a>
+        </Link>
       </div>
 
       {/* Table of Contents */}

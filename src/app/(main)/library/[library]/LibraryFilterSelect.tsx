@@ -457,7 +457,7 @@ export default function LibraryFilterSelect({ entityType = 'items', user }: Libr
       {showClear && (
         <button
           type="button"
-          className="absolute inset-y-0 right-7 z-10 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors duration-200 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="absolute inset-y-0 right-7 z-10 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors duration-200 hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
           onClick={(e) => {
             e.stopPropagation()
             updateSetting(isSeries ? 'seriesFilterBy' : 'filterBy', 'all')

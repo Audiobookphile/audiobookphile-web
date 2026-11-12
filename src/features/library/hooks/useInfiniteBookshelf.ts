@@ -8,7 +8,7 @@ import {
   fetchSeriesAction,
 } from '@/features/library/actions/libraryActions'
 import { useSocketEvent } from '@/shared/contexts/SocketContext'
-import { BookshelfEntity, EntityType, LibraryItem, MediaItemShare, RssFeed } from '@/types/api'
+import { BookshelfEntity, BookshelfPageResponse, EntityType, LibraryItem, MediaItemShare, RssFeed } from '@/types/api'
 
 interface UseInfiniteBookshelfProps {
   libraryId: string
@@ -33,11 +33,11 @@ export function useInfiniteBookshelf({
 
   const queryKey = ['bookshelf', libraryId, entityType, query]
 
-  const queryFn = async ({ pageParam = 0 }: { pageParam?: any }): Promise<BookshelfPage> => {
+  const queryFn = async ({ pageParam = 0 }: { pageParam?: number }): Promise<BookshelfPage> => {
     const pageNum = typeof pageParam === 'number' ? pageParam : 0
     const queryParams = `${query}${query ? '&' : ''}limit=${limit}&page=${pageNum}&minified=1`
 
-    let response: any
+    let response: BookshelfPageResponse
     switch (entityType) {
       case 'items':
         response = await fetchLibraryItemsAction(libraryId, queryParams)
@@ -56,7 +56,7 @@ export function useInfiniteBookshelf({
         break
     }
 
-    const results = Array.isArray(response?.results)
+    const results: BookshelfEntity[] = Array.isArray(response?.results)
       ? response.results
       : Array.isArray(response?.authors)
         ? response.authors

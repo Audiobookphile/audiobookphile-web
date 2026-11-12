@@ -194,7 +194,7 @@ function SeriesCard(props: SeriesCardProps) {
           {/* Books count badge */}
           <div
             cy-id="seriesLengthMarker"
-            className="bg-primary/90 absolute end-2 top-2 z-20 rounded-lg border border-white/10 px-2 py-0.5 shadow-2xl backdrop-blur-md"
+            className="absolute end-2 top-2 z-20 rounded-lg border border-white/10 bg-primary/90 px-2 py-0.5 shadow-2xl backdrop-blur-md"
           >
             <p
               className="text-[10px] font-black tracking-tighter text-white"

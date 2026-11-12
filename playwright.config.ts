@@ -56,7 +56,12 @@ export default defineConfig({
     // booting a local dev server; reuseExistingServer skips the launch since
     // the remote site answers.
     url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000', // dev-only fallback
-    reuseExistingServer: true,
+    // On by default, so a developer can test against a dev server they are
+    // already running. The e2e gate turns it off: it starts its own server
+    // on a port it picked, and a leftover server on that port must not be
+    // reused -- the specs would then be testing a build that is not this
+    // tree, and every failure would look like a product regression.
+    reuseExistingServer: process.env.E2E_REUSE_SERVER !== '0',
     timeout: 120_000,
   },
 })

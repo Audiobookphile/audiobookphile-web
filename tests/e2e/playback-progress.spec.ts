@@ -32,7 +32,7 @@ import {
   dismissPlayerIfOpen,
   gotoStable,
   openPlayableItemPage,
-  playerPanel,
+  startPlayback,
 } from './helpers/playableItem'
 
 // The player chrome has pre-existing WCAG findings; this spec is about
@@ -102,15 +102,12 @@ function describeMedia(s: AudioSnapshot): string {
  * on a cold cache -- the 5s default is what made an early version of this spec
  * report "the player did not mount its <audio> element" on a perfectly healthy
  * run.
+ *
+ * The retry inside startPlayback covers the case where the session round trip
+ * comes back 500 -- the backend that serves the library also serves the
+ * session, and it returns 500s under load. The assertions this spec makes
+ * about the stream and the playhead are unchanged.
  */
-async function startPlayback(page: import('@playwright/test').Page): Promise<void> {
-  await page.getByRole('button', { name: 'Play', exact: true }).first().click()
-  await expect(playerPanel(page), 'Clicking Play did not mount the player panel.').toBeVisible({ timeout: 60_000 })
-  await expect(
-    audioElement(page),
-    'the player panel mounted but no <audio> element was ever created, so nothing can decode'
-  ).toHaveCount(1, { timeout: 30_000 })
-}
 
 /**
  * If the browser simply cannot decode this container, that is a browser

@@ -232,7 +232,7 @@ export default function DurationPicker({
       }
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      ;(e.currentTarget as HTMLInputElement).blur()
+      e.currentTarget.blur()
     }
   }
 

@@ -5,7 +5,7 @@ process.env.NEXT_PUBLIC_POSTHOG_HOST = ''
 
 import { describe, expect, it, mock } from 'bun:test'
 
-mock.module('posthog-js', () => ({
+void mock.module('posthog-js', () => ({
   default: {
     getFeatureFlag: () => {
       throw new Error('posthog should not be called when disabled')
@@ -19,13 +19,10 @@ mock.module('posthog-js', () => ({
     reset: () => {
       throw new Error('posthog should not be called when disabled')
     },
+    init: () => {
+      throw new Error('posthog should not be called when disabled')
+    },
   },
-  __esModule: true,
-}))
-
-mock.module('posthog-js/react', () => ({
-  usePostHog: () => null,
-  PostHogProvider: ({ children }: { children: unknown }) => children,
   __esModule: true,
 }))
 
@@ -37,7 +34,8 @@ describe('analytics with PostHog disabled', () => {
   })
 
   it('never touches posthog for capture/identify/reset', async () => {
-    const { capture, identifyUser, resetAnalytics } = await import('../shared/lib/analytics')
+    const { capture, identifyUser, resetAnalytics, loadAnalytics } = await import('../shared/lib/analytics')
+    await loadAnalytics()
     expect(() => {
       capture('playback_started', {})
       identifyUser('user_123')

@@ -154,7 +154,7 @@ export default function LibrarySettingsTab({ settings, mediaType, onSettingsChan
           />
           {markAsFinishedMode === 'percent-complete' && (
             <span
-              className="text-foreground-muted absolute end-0 top-0 flex h-full items-center justify-center px-2 text-sm"
+              className="absolute end-0 top-0 flex h-full items-center justify-center px-2 text-sm text-foreground-muted"
               aria-hidden="true"
             >
               %

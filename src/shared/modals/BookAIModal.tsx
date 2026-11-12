@@ -74,7 +74,7 @@ export default function BookAIModal({ isOpen, onClose, bookId, bookTitle, bookAu
       }
     }
 
-    fetchInsights()
+    void fetchInsights()
   }, [isOpen, bookId, bookTitle, bookAuthor])
 
   return (

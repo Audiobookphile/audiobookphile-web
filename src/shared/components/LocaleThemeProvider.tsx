@@ -2,6 +2,7 @@
 
 import { NextIntlClientProvider } from 'next-intl'
 import { createContext, useContext, useEffect, useState } from 'react'
+import { TIME_ZONE } from '@/shared/lib/timeZone'
 
 type LocaleThemeContextValue = {
   locale: string
@@ -60,7 +61,7 @@ export function LocaleThemeProvider({
 
   return (
     <LocaleThemeContext.Provider value={{ locale, theme, mounted }}>
-      <NextIntlClientProvider locale={locale} messages={initialMessages}>
+      <NextIntlClientProvider locale={locale} messages={initialMessages} timeZone={TIME_ZONE}>
         {mounted ? children : <>{children}</>}
       </NextIntlClientProvider>
     </LocaleThemeContext.Provider>

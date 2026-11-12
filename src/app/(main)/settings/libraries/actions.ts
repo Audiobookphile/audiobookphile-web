@@ -24,22 +24,22 @@ const LibraryPayloadSchema = z
 export async function createLibrary(newLibrary: Library): Promise<Library> {
   try {
     const parsed = LibraryPayloadSchema.parse(newLibrary)
-    const library = await apiCreateLibrary(parsed as any as Library)
+    const library = await apiCreateLibrary(parsed as unknown as Library)
     revalidatePath('/settings/libraries')
-    return library as any as Library
+    return library
   } catch (error: unknown) {
-    throw new Error((error as Error).message)
+    throw new Error((error as Error).message, { cause: error })
   }
 }
 
 export async function editLibrary(libraryId: string, updatedLibrary: Library): Promise<Library> {
   try {
     const parsed = LibraryPayloadSchema.parse(updatedLibrary)
-    const library = await apiUpdateLibrary(libraryId, parsed as any as Library)
+    const library = await apiUpdateLibrary(libraryId, parsed as unknown as Library)
     revalidatePath('/settings/libraries')
-    return library as any as Library
+    return library
   } catch (error: unknown) {
-    throw new Error((error as Error).message)
+    throw new Error((error as Error).message, { cause: error })
   }
 }
 
@@ -48,12 +48,12 @@ export async function saveLibraryOrder(
 ): Promise<SaveLibraryOrderApiResponse> {
   try {
     for (const item of reorderObjects) {
-      await apiUpdateLibrary(item.id, { displayOrder: item.newOrder } as any as Library)
+      await apiUpdateLibrary(item.id, { displayOrder: item.newOrder } as unknown as Library)
     }
     revalidatePath('/settings/libraries')
-    return { libraries: [] } as any as SaveLibraryOrderApiResponse
+    return { libraries: [] }
   } catch (error: unknown) {
-    throw new Error((error as Error).message)
+    throw new Error((error as Error).message, { cause: error })
   }
 }
 
@@ -63,7 +63,7 @@ export async function deleteLibrary(libraryId: string): Promise<Library> {
     revalidatePath('/settings/libraries')
     return {} as Library
   } catch (error: unknown) {
-    throw new Error((error as Error).message)
+    throw new Error((error as Error).message, { cause: error })
   }
 }
 
@@ -75,11 +75,11 @@ export async function matchAll(libraryId: string): Promise<void> {
   try {
     await apiMatchAll(libraryId)
   } catch (error: unknown) {
-    throw new Error((error as Error).message)
+    throw new Error((error as Error).message, { cause: error })
   }
 }
 
 export async function getFilesystemPaths(_path: string, _level: number): Promise<GetFilesystemPathsResponse> {
   console.warn('[libraries/actions] getFilesystemPaths is not available in the Supabase-backed version')
-  return { directories: [] } as any as GetFilesystemPathsResponse
+  return { directories: [] } as unknown as GetFilesystemPathsResponse
 }

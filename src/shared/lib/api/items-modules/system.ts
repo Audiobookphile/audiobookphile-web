@@ -185,17 +185,17 @@ export const getCustomMetadataProviders = cache(async (): Promise<GetCustomMetad
   return apiRequest<GetCustomMetadataProvidersResponse>('/api/custom-metadata-providers', {})
 })
 
-export const deleteCustomMetadataProvider = cache(async (providerId: string): Promise<void> => {
+export async function deleteCustomMetadataProvider(providerId: string): Promise<void> {
   return apiRequest<void>(`/api/custom-metadata-providers/${providerId}`, {
     method: 'DELETE',
   })
-})
+}
 
-export const closeRssFeed = cache(async (feedId: string): Promise<void> => {
+export async function closeRssFeed(feedId: string): Promise<void> {
   return apiRequest<void>(`/api/feeds/${feedId}/close`, {
     method: 'POST',
   })
-})
+}
 
 export const getBackups = cache(async (): Promise<GetBackupsResponse> => {
   return apiRequest<GetBackupsResponse>('/api/backups', {})

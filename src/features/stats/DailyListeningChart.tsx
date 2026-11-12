@@ -22,9 +22,9 @@ function StatBox({ label, value, sub }: StatBoxProps) {
   const fmt = new Intl.NumberFormat().format(value)
   return (
     <div className="text-center">
-      <p className="text-foreground-muted text-sm">{label}</p>
-      <p className="text-foreground text-4xl leading-[0.9] font-semibold">{fmt}</p>
-      <p className="text-foreground-muted text-sm">{sub}</p>
+      <p className="text-sm text-foreground-muted">{label}</p>
+      <p className="text-4xl leading-[0.9] font-semibold text-foreground">{fmt}</p>
+      <p className="text-sm text-foreground-muted">{sub}</p>
     </div>
   )
 }
@@ -80,7 +80,7 @@ export default function DailyListeningChart({ daysListening }: DailyListeningCha
             <div
               key={tick}
               style={{ height: `${lineSpacing}px` }}
-              className="text-foreground-muted flex items-center justify-end text-xs font-semibold"
+              className="flex items-center justify-end text-xs font-semibold text-foreground-muted"
             >
               {tick}
             </div>
@@ -121,7 +121,7 @@ export default function DailyListeningChart({ daysListening }: DailyListeningCha
                 y={CHART_X_LABEL_Y}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="text-foreground pointer-events-none fill-current text-sm"
+                className="pointer-events-none fill-current text-sm text-foreground"
                 fontSize={11}
               >
                 {d.weekdayAbbr}
@@ -182,7 +182,7 @@ export default function DailyListeningChart({ daysListening }: DailyListeningCha
           <div
             ref={tooltipRef}
             role="tooltip"
-            className="bg-bg-read-only text-foreground pointer-events-none fixed z-[1000] rounded px-2 py-1 text-xs whitespace-nowrap shadow-lg"
+            className="pointer-events-none fixed z-[1000] rounded bg-bg-read-only px-2 py-1 text-xs whitespace-nowrap text-foreground shadow-lg"
             style={{
               left: tooltipPos?.left ?? -9999,
               top: tooltipPos?.top ?? 0,

@@ -18,18 +18,16 @@ import { test, expect } from './fixtures'
 
 const PASSWORD = 'TestPass123!'
 
-const fs = require('node:fs')
 const ENV_FILE = '/tmp/passkey_e2e_user.env'
 
-function loadTestUser(): { email: string; secret?: string } {
+async function loadTestUser(): Promise<{ email: string; secret?: string }> {
   const env: Record<string, string> = {}
-  try {
-    for (const line of fs.readFileSync(ENV_FILE, 'utf8').split('\n')) {
+  const file = Bun.file(ENV_FILE)
+  if (await file.exists()) {
+    for (const line of (await file.text()).split('\n')) {
       const [key, ...rest] = line.split('=')
       if (key) env[key] = rest.join('=')
     }
-  } catch {
-    // fall through — assertion below will surface the problem
   }
   if (!env.EMAIL) {
     throw new Error('Missing test user. Run the passkey e2e setup script first (creates /tmp/passkey_e2e_user.env).')
@@ -37,8 +35,10 @@ function loadTestUser(): { email: string; secret?: string } {
   return { email: env.EMAIL, secret: env.SECRET }
 }
 
-function persistTestUserSecret(secret: string): void {
-  fs.appendFileSync(ENV_FILE, `SECRET=${secret}\n`)
+async function persistTestUserSecret(secret: string): Promise<void> {
+  const file = Bun.file(ENV_FILE)
+  const existing = (await file.exists()) ? await file.text() : ''
+  await Bun.write(ENV_FILE, `${existing}SECRET=${secret}\n`)
 }
 
 function base32Decode(input: string): Uint8Array<ArrayBuffer> {
@@ -118,7 +118,7 @@ async function getSessionToken(
   if (login.user?.token) return login.user.token
 
   expect(login.requires2FA, `unexpected login response: ${JSON.stringify(login)}`).toBeTruthy()
-  const { secret } = loadTestUser()
+  const { secret } = await loadTestUser()
   expect(secret, '2FA is enabled but no TOTP secret is stored for this test user').toBeTruthy()
 
   const codes = await totpCodes(secret!)
@@ -134,7 +134,7 @@ async function getSessionToken(
 
 test('passkey enrollment + passkey sign-in round trip', async ({ page, request }) => {
   test.slow()
-  const { email } = loadTestUser()
+  const { email } = await loadTestUser()
 
   // --- 1. Idempotent API setup: session token, passkey cleanup, TOTP enroll ---
   const token = await getSessionToken(request, email, PASSWORD)
@@ -173,7 +173,7 @@ test('passkey enrollment + passkey sign-in round trip', async ({ page, request }
       }
     }
     expect(verifyOk, 'TOTP verification with computed codes failed').toBeTruthy()
-    persistTestUserSecret(enroll.secret)
+    await persistTestUserSecret(enroll.secret)
   }
 
   // --- 2. Enable a passkey through the real UI with a virtual authenticator ---
@@ -197,7 +197,7 @@ test('passkey enrollment + passkey sign-in round trip', async ({ page, request }
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page.getByText('Two-Factor Authentication')).toBeVisible({ timeout: 30000 })
 
-  const codes = await totpCodes(loadTestUser().secret!)
+  const codes = await totpCodes((await loadTestUser()).secret!)
   let codeSubmitted = false
   for (const code of codes) {
     await page.getByRole('textbox', { name: /verification code/i }).fill(code)

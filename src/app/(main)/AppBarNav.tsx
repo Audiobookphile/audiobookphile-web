@@ -1,6 +1,6 @@
 'use client'
 
-import { Activity, BarChart2, LayoutGrid, LogOut, Menu as MenuIcon, Settings, Upload, User } from 'lucide-react'
+import { Activity, BarChart2, LayoutGrid, LogOut, Menu as MenuIcon, Settings, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useMemo } from 'react'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
@@ -15,7 +15,7 @@ interface AppBarNavProps {
   username: string
 }
 
-export default function AppBarNav({ userCanUpload, isAdmin, username }: AppBarNavProps) {
+export default function AppBarNav({ userCanUpload: _userCanUpload, isAdmin, username }: AppBarNavProps) {
   const t = useTypeSafeTranslations()
   const router = useRouter()
 
@@ -84,7 +84,7 @@ export default function AppBarNav({ userCanUpload, isAdmin, username }: AppBarNa
         id: 'logout',
         text: t('ButtonLogout'),
         icon: LogOut,
-        onClick: handleLogout,
+        onClick: () => void handleLogout(),
         className: 'text-error hover:bg-error/10',
       }
     )

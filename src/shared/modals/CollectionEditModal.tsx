@@ -76,7 +76,7 @@ export default function CollectionEditModal({ isOpen, collection, onClose, onSav
           />
           <TextareaInput label={t('LabelDescription')} value={description} rows={4} onChange={setDescription} />
         </div>
-        <div className="border-border flex justify-end gap-2 border-t px-4 py-4 sm:px-6">
+        <div className="flex justify-end gap-2 border-t border-border px-4 py-4 sm:px-6">
           <Btn size="small" onClick={handleSave} disabled={isPending || !name.trim()}>
             {t('ButtonSave')}
           </Btn>

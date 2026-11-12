@@ -8,10 +8,10 @@
  *   audiobookphile-web/src/types/schemas.ts
  *
  * After editing this file:
- *   1. Run `pnpm generate-types` (or `npm run generate-types`) in the backend
- *      workspace to regenerate supabase.ts from the live database.
- *   2. Copy this file to the web location above.
- *   3. Commit both changes together so the copies stay in sync.
+ *   1. Run `bun run gen:types` in the backend workspace to regenerate
+ *      supabase.ts from the live database, and `bun run sync:schemas` to copy
+ *      this file across. From this repo, `bun run types:sync` does both.
+ *   2. Commit both changes together so the copies stay in sync.
  */
 import { z } from 'zod'
 

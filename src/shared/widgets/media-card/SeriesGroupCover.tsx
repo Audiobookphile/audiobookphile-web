@@ -104,7 +104,8 @@ export default function SeriesGroupCover({ name, books, width, height, bookCover
       const validBooks = (Array.isArray(books) ? books : [])
         .filter((book) => {
           const state = loadingStates.get(book.id)
-          const hasCover = (book as any).media?.coverPath || (book as any).cover
+          const b = book as { media?: { coverPath?: string | null }; cover?: string | null }
+          const hasCover = b.media?.coverPath || b.cover
           return !state?.failed && hasCover
         })
         .map((book) => ({
@@ -140,7 +141,7 @@ export default function SeriesGroupCover({ name, books, width, height, bookCover
       }
     }
 
-    loadCovers()
+    void loadCovers()
   }, [books, checkImageAspectRatio, placeholderUrl, loadingStates])
 
   // Handle image load error with retry-with-backoff (mirrors MediaCardCover pattern)
@@ -205,7 +206,7 @@ export default function SeriesGroupCover({ name, books, width, height, bookCover
           >
             {/* Cover background for aspect ratio mismatches */}
             {cover.showCoverBg && (
-              <div className="bg-primary absolute start-0 top-0 h-full w-full overflow-hidden rounded-xs">
+              <div className="absolute start-0 top-0 h-full w-full overflow-hidden rounded-xs bg-primary">
                 <div
                   className="cover-bg absolute"
                   style={{

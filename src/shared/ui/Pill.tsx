@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Check, Edit2, X } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
@@ -241,7 +241,7 @@ export const Pill = <T,>({
           </span>
           <div className="inline-flex items-center" style={{ maxWidth: '80%' }}>
             {readOnlyPrefix && (
-              <span ref={prefixRef} className="text-foreground/40 me-1 text-xs select-none">
+              <span ref={prefixRef} className="me-1 text-xs text-foreground/40 select-none">
                 {readOnlyPrefix}
               </span>
             )}
@@ -263,7 +263,7 @@ export const Pill = <T,>({
           <div className="ms-2 flex items-center gap-1.5" role="group">
             <button
               type="button"
-              className="text-foreground/40 hover:text-error hover:bg-error/10 focus:ring-error rounded-full p-1 transition-all outline-none focus:ring-1"
+              className="rounded-full p-1 text-foreground/40 transition-all outline-none hover:bg-error/10 hover:text-error focus:ring-1 focus:ring-error"
               onClick={handleCancelEdit}
               ref={cancelButtonRef}
             >
@@ -271,7 +271,7 @@ export const Pill = <T,>({
             </button>
             <button
               type="button"
-              className="text-foreground/40 hover:text-success hover:bg-success/10 focus:ring-success rounded-full p-1 transition-all outline-none focus:ring-1"
+              className="rounded-full p-1 text-foreground/40 transition-all outline-none hover:bg-success/10 hover:text-success focus:ring-1 focus:ring-success"
               onClick={handleSaveEdit}
               ref={saveButtonRef}
             >
@@ -287,7 +287,7 @@ export const Pill = <T,>({
               {showEditButton && (
                 <button
                   type="button"
-                  className="text-foreground/40 hover:text-primary focus:ring-primary rounded-full p-1 transition-colors outline-none focus:ring-1"
+                  className="rounded-full p-1 text-foreground/40 transition-colors outline-none hover:text-primary focus:ring-1 focus:ring-primary"
                   onClick={handleEditButtonClick}
                   tabIndex={-1}
                 >
@@ -296,7 +296,7 @@ export const Pill = <T,>({
               )}
               <button
                 type="button"
-                className="text-foreground/40 hover:text-error focus:ring-error rounded-full p-1 transition-colors outline-none focus:ring-1"
+                className="rounded-full p-1 text-foreground/40 transition-colors outline-none hover:text-error focus:ring-1 focus:ring-error"
                 onClick={(e) => {
                   e.stopPropagation()
                   onRemove(item)

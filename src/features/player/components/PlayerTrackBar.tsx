@@ -275,12 +275,12 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
         >
           {/* Buffer */}
           <div
-            className="bg-track-progress/50 pointer-events-none absolute top-0 left-0 h-full transition-[width] duration-75"
+            className="pointer-events-none absolute top-0 left-0 h-full bg-track-progress/50 transition-[width] duration-75"
             style={{ width: `${bufferedPercent}%` }}
           />
           {/* Played */}
           <div
-            className="bg-track-progress pointer-events-none absolute top-0 left-0 h-full shadow-[0_0_8px_rgba(255,255,255,0.3)] transition-[width] duration-75"
+            className="pointer-events-none absolute top-0 left-0 h-full bg-track-progress shadow-[0_0_8px_rgba(255,255,255,0.3)] transition-[width] duration-75"
             style={{ width: `${playedPercent}%` }}
           />
           {/* Playhead thumb */}
@@ -301,7 +301,7 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
           />
           {/* Loading shimmer */}
           {isLoading && (
-            <div className="via-track-progress/30 loading-track-slide pointer-events-none absolute top-0 h-full w-1/4 bg-gradient-to-r from-transparent to-transparent" />
+            <div className="loading-track-slide pointer-events-none absolute top-0 h-full w-1/4 bg-gradient-to-r from-transparent via-track-progress/30 to-transparent" />
           )}
           {/*
             GPU track layer. Painted on top of the DOM fills above and rendered
@@ -319,7 +319,7 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
           {chapterTicks.map((tick, index) => (
             <div
               key={index}
-              className="bg-track-progress/30 pointer-events-none absolute top-0 h-1 w-px"
+              className="pointer-events-none absolute top-0 h-1 w-px bg-track-progress/30"
               style={{ left: `${tick.left}px` }}
             />
           ))}
@@ -350,26 +350,26 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
           )}
         >
           <div className="absolute right-0 -bottom-1.5 left-0 flex w-full justify-center">
-            <div className="border-t-foreground h-0 w-0 border-t-4 border-r-4 border-l-4 border-r-transparent border-l-transparent" />
+            <div className="h-0 w-0 border-t-4 border-r-4 border-l-4 border-t-foreground border-r-transparent border-l-transparent" />
           </div>
         </div>
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-foreground-muted font-mono text-sm">
+        <p className="font-mono text-sm text-foreground-muted">
           {currentTimeFormatted} / {Math.round(playedPercent)}%
         </p>
         {currentChapter && (
-          <p className="text-foreground-muted text-sm">
+          <p className="text-sm text-foreground-muted">
             {currentChapter.title}{' '}
             {useChapterTrack && (
-              <span className="text-foreground-subdued pl-1 text-xs">
+              <span className="pl-1 text-xs text-foreground-subdued">
                 ({currentChapterNumber} of {chapters.length})
               </span>
             )}
           </p>
         )}
-        <p className="text-foreground-muted font-mono text-sm">{timeRemainingFormatted}</p>
+        <p className="font-mono text-sm text-foreground-muted">{timeRemainingFormatted}</p>
       </div>
     </div>
   )

@@ -7,7 +7,7 @@ import type { FFProbeData } from '@/types/api'
  * FFProbe data is not available — audio metadata isn't extracted during upload.
  */
 export async function getAudioFileFFProbeDataAction(_itemId: string, _fileIno: string): Promise<FFProbeData> {
-  return {} as FFProbeData
+  return {}
 }
 
 /**

@@ -5,10 +5,15 @@ import { useGlobalToast } from '@/shared/contexts/ToastContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import type { EditListItem } from '@/shared/ui/EditList'
 import EditList from '@/shared/ui/EditList'
-import { NarratorObject } from '@/types/api'
 import { deleteNarrator, saveNarrator } from './actions'
 
-export default function NarratorsClient({ libraryId, narrators }: { libraryId: string; narrators: NarratorObject[] }) {
+export default function NarratorsClient({
+  libraryId,
+  narrators,
+}: {
+  libraryId: string
+  narrators: Array<{ id: string; name: string }>
+}) {
   const { showToast } = useGlobalToast()
   const t = useTypeSafeTranslations()
   const [isPending, startTransition] = useTransition()

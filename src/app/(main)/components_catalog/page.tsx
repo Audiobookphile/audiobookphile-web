@@ -34,15 +34,15 @@ export default function ComponentsCatalogPage() {
             <a
               key={item.href}
               href={item.href}
-              className="hover:border-primary/50 group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-md transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-md transition-all hover:scale-[1.02] hover:border-primary/50 active:scale-[0.98]"
             >
-              <div className="bg-primary/20 group-hover:bg-primary/30 rounded-xl p-3 transition-colors">
+              <div className="rounded-xl bg-primary/20 p-3 transition-colors group-hover:bg-primary/30">
                 <item.icon size={24} className="text-primary" />
               </div>
               <div className="grow">
                 <p className="text-sm font-black tracking-widest text-white/90 uppercase">{item.label}</p>
               </div>
-              <ChevronRight size={18} className="group-hover:text-primary text-white/20 transition-colors" />
+              <ChevronRight size={18} className="text-white/20 transition-colors group-hover:text-primary" />
             </a>
           ))}
         </div>
@@ -55,7 +55,7 @@ export default function ComponentsCatalogPage() {
             <li>
               <a
                 href="#side-by-side-controls-components"
-                className="hover:text-primary text-sm font-black tracking-widest text-white/60 uppercase transition-colors"
+                className="text-sm font-black tracking-widest text-white/60 uppercase transition-colors hover:text-primary"
               >
                 Side By Side Controls
               </a>
@@ -63,7 +63,7 @@ export default function ComponentsCatalogPage() {
             <li>
               <a
                 href="#cover-size-widget-examples"
-                className="hover:text-primary text-sm font-black tracking-widest text-white/60 uppercase transition-colors"
+                className="text-sm font-black tracking-widest text-white/60 uppercase transition-colors hover:text-primary"
               >
                 Cover Size Widget
               </a>
@@ -71,7 +71,7 @@ export default function ComponentsCatalogPage() {
             <li>
               <a
                 href="#edit-list-examples"
-                className="hover:text-primary text-sm font-black tracking-widest text-white/60 uppercase transition-colors"
+                className="text-sm font-black tracking-widest text-white/60 uppercase transition-colors hover:text-primary"
               >
                 Edit List
               </a>

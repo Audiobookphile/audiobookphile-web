@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   fetchAuthorsAction,
@@ -9,7 +9,7 @@ import {
 } from '@/features/library/actions/libraryActions'
 import { useLibrary } from '@/features/library/contexts/LibraryContext'
 import { useSocketEvent } from '@/shared/contexts/SocketContext'
-import { BookshelfEntity, EntityType, LibraryItem, MediaItemShare, RssFeed } from '@/types/api'
+import { BookshelfEntity, BookshelfPageResponse, EntityType, LibraryItem, MediaItemShare, RssFeed } from '@/types/api'
 
 interface UseBookshelfDataProps {
   entityType: EntityType
@@ -73,21 +73,18 @@ export function useBookshelfData({ entityType, query, itemsPerPage }: UseBookshe
       try {
         const data = await queryClient.fetchQuery({
           queryKey: pageQueryKey,
-          queryFn: async () => {
-            const response = await fetchEntityData(
-              entityType,
-              libraryId,
-              buildPageQueryParams(entityType, query, page, limit)
-            )
-            return response as any
+          queryFn: async (): Promise<BookshelfPageResponse> => {
+            return await fetchEntityData(entityType, libraryId, buildPageQueryParams(entityType, query, page, limit))
           },
           staleTime: 10 * 60 * 1000, // 10 minutes
           gcTime: 60 * 60 * 1000, // 1 hour memory retention
         })
 
-        const results = (
-          Array.isArray(data?.results) ? data.results : Array.isArray(data?.authors) ? data.authors : []
-        ) as BookshelfEntity[]
+        const results: BookshelfEntity[] = Array.isArray(data?.results)
+          ? data.results
+          : Array.isArray(data?.authors)
+            ? data.authors
+            : []
         const total = data?.total ?? results.length
 
         setTotalEntities(total)
@@ -97,7 +94,7 @@ export function useBookshelfData({ entityType, query, itemsPerPage }: UseBookshe
         setSparseItems((prev) => {
           let next = Array.isArray(prev) ? [...prev] : []
           if (next.length !== total) {
-            next = new Array(total).fill(null)
+            next = Array.from({ length: total }, () => null)
           }
 
           const startIndex = page * limit
@@ -113,15 +110,14 @@ export function useBookshelfData({ entityType, query, itemsPerPage }: UseBookshe
         const nextPage = page + 1
         if (nextPage * limit < total) {
           const nextPageQueryKey = [...baseQueryKey, 'page', nextPage, 'limit', limit]
-          queryClient.prefetchQuery({
+          void queryClient.prefetchQuery({
             queryKey: nextPageQueryKey,
-            queryFn: async () => {
-              const response = await fetchEntityData(
+            queryFn: async (): Promise<BookshelfPageResponse> => {
+              return await fetchEntityData(
                 entityType,
                 libraryId,
                 buildPageQueryParams(entityType, query, nextPage, limit)
               )
-              return response as any
             },
             staleTime: 10 * 60 * 1000,
             gcTime: 60 * 60 * 1000,

@@ -3,7 +3,7 @@
 }
 
 .iconBtn::before {
-  content: "";
+  content: '';
   position: absolute;
   border-radius: 6px;
   top: 0;

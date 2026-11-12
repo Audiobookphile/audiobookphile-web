@@ -21,16 +21,14 @@ interface MediaCardCoverProps {
   isHovering?: boolean
 }
 
-const PLACEHOLDER_COVER_PADDING = 0.8
 const TITLE_FONT_SIZE = 0.8
 const AUTHOR_FONT_SIZE = 0.65
-const AUTHOR_BOTTOM = 1
 
 export default function MediaCardCover({
   libraryItem,
   coverAspect,
   placeholderUrl,
-  hasCover,
+  hasCover: _hasCover,
   title,
   titleCleaned,
   authorCleaned,
@@ -139,7 +137,7 @@ export default function MediaCardCover({
           className="absolute start-0 top-0 flex h-full w-full items-center justify-center bg-white/5"
           style={{ padding: '1rem' }}
         >
-          <p className="text-foreground/20 text-center text-[10px] font-black tracking-widest uppercase">{title}</p>
+          <p className="text-center text-[10px] font-black tracking-widest text-foreground/20 uppercase">{title}</p>
         </div>
       )}
 
@@ -174,14 +172,14 @@ export default function MediaCardCover({
       {/* Placeholder cover title & author */}
       {!shouldAttemptCover && (
         <div
-          className="from-primary/20 to-primary/5 absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br p-4 text-center"
+          className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 p-4 text-center"
           style={{ viewTransitionName: `cover-${libraryItem.id}` }}
         >
           <div cy-id="placeholderTitle" className="flex flex-1 items-center justify-center">
             <p
               cy-id="placeholderTitleText"
               aria-hidden="true"
-              className="text-primary/80 leading-tight font-black tracking-widest uppercase drop-shadow-sm"
+              className="leading-tight font-black tracking-widest text-primary/80 uppercase drop-shadow-sm"
               style={{ fontSize: `${TITLE_FONT_SIZE}em` }}
             >
               {titleCleaned}
@@ -191,7 +189,7 @@ export default function MediaCardCover({
             <p
               cy-id="placeholderAuthorText"
               aria-hidden="true"
-              className="text-primary/40 font-bold tracking-widest uppercase"
+              className="font-bold tracking-widest text-primary/40 uppercase"
               style={{ fontSize: `${AUTHOR_FONT_SIZE}em` }}
             >
               {authorCleaned}

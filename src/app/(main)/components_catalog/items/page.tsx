@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useState } from 'react'
 import { LibraryProvider } from '@/features/library/contexts/LibraryContext'
 import { FlatResultItem } from '@/features/library/hooks/useGlobalSearchTransformer'
@@ -53,11 +54,12 @@ export default function ItemDetailsExamplesPage() {
       case 'playlist':
         setSelectedPlaylist(item.originalItem as Playlist)
         break
-      case 'series':
+      case 'series': {
         // Series originalItem now contains books (from transformer)
         const series = item.originalItem as Series
         setSelectedSeries({ series, books: series.books || [] })
         break
+      }
       case 'author':
         setSelectedAuthor(item.originalItem as Author)
         break
@@ -97,14 +99,14 @@ export default function ItemDetailsExamplesPage() {
             Use the search box below to find and select books or podcasts to see the relevant components in action with
             real data.
           </p>
-          <a href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
+          <Link href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
             ← Back to Components Catalog
-          </a>
+          </Link>
         </div>
 
         {/* Search Section */}
         <section className="mb-12">
-          <div className="bg-bg/50 border-primary/10 mb-6 rounded-lg border p-4">
+          <div className="mb-6 rounded-lg border border-primary/10 bg-bg/50 p-4">
             <h3 className="mb-4 text-lg font-semibold">Search Library Items</h3>
             <p className="mb-4 text-sm text-gray-400">
               Use the search input to find items. Click on a result to select it for viewing below.

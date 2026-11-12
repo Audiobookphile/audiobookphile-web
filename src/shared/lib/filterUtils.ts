@@ -3,34 +3,30 @@
 /**
  * Filter encoding utilities for library filter values.
  * Matches the Vue implementation's $encode and $decode functions.
+ *
+ * The encoding is plain UTF-8 to base64 and back, using only web-standard
+ * globals: `TextEncoder`, `TextDecoder`, `btoa` and `atob`. Those exist in the
+ * browser and in Bun alike, so there is no environment fork and no Node
+ * `Buffer` in the module. `Buffer` was the last Node global left in the
+ * application source, and the pre-commit gate's Node API guard keeps it out.
  */
 
 /**
  * Encode a string to base64, handling Unicode characters properly.
  */
 function utf8ToBase64(text: string): string {
-  if (typeof window !== 'undefined') {
-    // Browser: Use TextEncoder to get UTF-8 bytes, then convert to base64
-    const encoder = new TextEncoder()
-    const bytes = encoder.encode(text)
-    const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('')
-    return btoa(binary)
-  }
-  return Buffer.from(text, 'utf-8').toString('base64')
+  const bytes = new TextEncoder().encode(text)
+  const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('')
+  return btoa(binary)
 }
 
 /**
  * Decode a base64 string to UTF-8, handling Unicode characters properly.
  */
 function base64ToUtf8(base64: string): string {
-  if (typeof window !== 'undefined') {
-    // Browser: Decode base64 to binary, then use TextDecoder for UTF-8
-    const binary = atob(base64)
-    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
-    const decoder = new TextDecoder()
-    return decoder.decode(bytes)
-  }
-  return Buffer.from(base64, 'base64').toString('utf-8')
+  const binary = atob(base64)
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+  return new TextDecoder().decode(bytes)
 }
 
 /**

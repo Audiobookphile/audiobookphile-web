@@ -20,7 +20,6 @@ import PodcastMediaCard from '@/shared/widgets/media-card/PodcastMediaCard'
 import { SeriesCard } from '@/shared/widgets/media-card/SeriesCard'
 import {
   Author,
-  BookshelfEntity,
   BookshelfView,
   LibraryItem,
   MediaItemShare,
@@ -183,13 +182,13 @@ export default function LibraryClient({ personalized }: LibraryClientProps) {
     <div className="pb-20" style={{ fontSize: sizeMultiplier + 'rem' }}>
       {/* Controls Bar */}
       {shelves.length > 0 && (
-        <div className="px-4e md:px-8e mb-4 flex justify-end">
-          <div className="bg-primary/10 border-primary/20 flex items-center gap-1 rounded-full border p-1">
+        <div className="mb-4 flex justify-end px-4e md:px-8e">
+          <div className="flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 p-1">
             <Tooltip text="Row View">
               <IconBtn
                 size="small"
                 borderless
-                className={`rounded-full p-1.5 transition-colors ${localViewMode === 'row' ? 'bg-primary text-primary-foreground' : 'text-foreground-muted hover:text-foreground'}`}
+                className={`rounded-full p-1.5 transition-colors ${localViewMode === 'row' ? 'text-primary-foreground bg-primary' : 'text-foreground-muted hover:text-foreground'}`}
                 onClick={() => setLocalViewMode('row')}
                 icon={List}
               />
@@ -198,7 +197,7 @@ export default function LibraryClient({ personalized }: LibraryClientProps) {
               <IconBtn
                 size="small"
                 borderless
-                className={`rounded-full p-1.5 transition-colors ${localViewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'text-foreground-muted hover:text-foreground'}`}
+                className={`rounded-full p-1.5 transition-colors ${localViewMode === 'grid' ? 'text-primary-foreground bg-primary' : 'text-foreground-muted hover:text-foreground'}`}
                 onClick={() => setLocalViewMode('grid')}
                 icon={LayoutGrid}
               />
@@ -246,7 +245,7 @@ export default function LibraryClient({ personalized }: LibraryClientProps) {
                       ereaderDevices={ereaderDevices}
                       showSubtitles={true}
                       mediaProgress={mediaProgress}
-                      shelfEntities={(entities as unknown as (BookshelfEntity | null)[]) ?? []}
+                      shelfEntities={entities ?? []}
                       entityIndex={entityIndex}
                       continueListeningShelf={shelf.id === 'continue-listening' || shelf.id === 'continue-reading'}
                     />

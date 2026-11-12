@@ -44,7 +44,7 @@ export default function MediaPlayerContainer() {
     if (!next) {
       // End of the queue: close the server session AND clear the stream state,
       // so the bar animates out instead of becoming an inert control.
-      void clearStreamMedia()
+      clearStreamMedia()
       return
     }
 
@@ -56,7 +56,7 @@ export default function MediaPlayerContainer() {
         console.error('[MediaPlayerContainer] Auto-advance failed:', err)
         // The next item could not be loaded, so the queue cannot continue.
         // Clear rather than strand the bar on a book that has already finished.
-        void clearStreamMedia()
+        clearStreamMedia()
       })
   }, [playerHandler.state.playerState, streamLibraryItem, playerQueueItems, playItem, clearStreamMedia])
 
@@ -65,7 +65,7 @@ export default function MediaPlayerContainer() {
   // to unmount, because IDLE is also the pre-load and post-close state.
   useEffect(() => {
     if (playerHandler.state.playerState !== PlayerState.ERROR) return
-    void clearStreamMedia()
+    clearStreamMedia()
   }, [playerHandler.state.playerState, clearStreamMedia])
 
   if (!streamLibraryItem) return null
@@ -89,7 +89,7 @@ export default function MediaPlayerContainer() {
             ? `linear-gradient(to top, var(--background) 40%, ${dominantColor}22 100%)`
             : undefined,
         }}
-        className="glassmorphism border-primary/20 fixed right-0 bottom-0 left-0 z-50 h-48 w-full border-t px-2 pt-2 pb-1 shadow-[0_-8px_30px_rgb(0,0,0,0.3)] transition-colors duration-1000 lg:h-40 lg:px-4 lg:pb-4"
+        className="glassmorphism fixed right-0 bottom-0 left-0 z-50 h-48 w-full border-t border-primary/20 px-2 pt-2 pb-1 shadow-[0_-8px_30px_rgb(0,0,0,0.3)] transition-colors duration-1000 lg:h-40 lg:px-4 lg:pb-4"
       >
         <div className="absolute top-4 left-4 flex gap-4 lg:left-6">
           <div className="overflow-hidden rounded-md shadow-lg ring-1 ring-white/10 transition-transform duration-300 hover:scale-105 hover:shadow-xl">
@@ -104,17 +104,17 @@ export default function MediaPlayerContainer() {
           <div className="flex max-w-[200px] flex-col gap-0.5 sm:max-w-[400px]">
             <Link
               href={`/library/${streamLibraryItem.libraryId}/item/${streamLibraryItem.id}`}
-              className="text-foreground hover:text-primary-foreground truncate text-lg font-semibold transition-colors"
+              className="hover:text-primary-foreground truncate text-lg font-semibold text-foreground transition-colors"
             >
               {displayTitle}
             </Link>
             {bookAuthors.length > 0 && (
-              <div className="text-foreground-muted truncate text-sm">
+              <div className="truncate text-sm text-foreground-muted">
                 {bookAuthors.map((author, index) => (
                   <Fragment key={author.id}>
                     <Link
                       href={`/library/${streamLibraryItem.libraryId}/authors/${author.id}`}
-                      className="hover:text-foreground transition-colors"
+                      className="transition-colors hover:text-foreground"
                     >
                       {author.name}
                     </Link>
@@ -124,7 +124,7 @@ export default function MediaPlayerContainer() {
               </div>
             )}
             {bookDuration && (
-              <div className="text-foreground-muted/60 mt-1 flex items-center gap-1.5 text-xs font-medium">
+              <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-foreground-muted/60">
                 <Clock size={12} className="opacity-70" />
                 {secondsToTimestamp(bookDuration)}
               </div>

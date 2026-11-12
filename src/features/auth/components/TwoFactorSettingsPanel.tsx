@@ -74,7 +74,7 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
   }, [])
 
   useEffect(() => {
-    fetchStatus()
+    void fetchStatus()
   }, [fetchStatus])
 
   const handleCopySecret = useCallback(async () => {
@@ -234,11 +234,10 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
     setError('')
     setSuccess('')
     setLoading(true)
-    let token = ''
     try {
       const supabase = createClient()
       const { data: sessionData } = await supabase.auth.getSession()
-      token = sessionData.session?.access_token || ''
+      const token = sessionData.session?.access_token || ''
       if (!token) {
         setError('Your session has expired. Please log in again.')
         setLoading(false)
@@ -355,15 +354,15 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
   const isAnyEnabled = status.enabled || status.totpEnrolled || status.pinEnrolled || status.biometricEnrolled
 
   return (
-    <div className="border-border bg-bg-light/80 rounded-2xl border p-6 shadow-xl backdrop-blur-md transition-all">
-      <div className="border-border/50 flex flex-col justify-between gap-4 border-b pb-5 sm:flex-row sm:items-center">
+    <div className="bg-bg-light/80 rounded-2xl border border-border p-6 shadow-xl backdrop-blur-md transition-all">
+      <div className="flex flex-col justify-between gap-4 border-b border-border/50 pb-5 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
-          <div className="bg-accent/15 text-accent flex h-11 w-11 items-center justify-center rounded-xl shadow-inner">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/15 text-accent shadow-inner">
             {isAnyEnabled ? <ShieldCheck className="h-6 w-6 text-emerald-400" /> : <Shield className="h-6 w-6" />}
           </div>
           <div>
-            <h3 className="text-foreground text-lg font-bold tracking-tight">Multi-Factor Authentication (2FA)</h3>
-            <p className="text-foreground-muted text-xs">
+            <h3 className="text-lg font-bold tracking-tight text-foreground">Multi-Factor Authentication (2FA)</h3>
+            <p className="text-xs text-foreground-muted">
               Secure your account with Authenticator Apps, PIN Codes, or Facial/Biometric passkeys.
             </p>
           </div>
@@ -396,20 +395,20 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
 
       {mode === 'idle' && (
         <div className="mt-5 space-y-6">
-          <p className="text-foreground-muted text-sm leading-relaxed">
+          <p className="text-sm leading-relaxed text-foreground-muted">
             Choose one or more authentication methods below. Any enrolled method can be used during sign-in as a single
             source of truth verification.
           </p>
 
           <div className="grid gap-4 sm:grid-cols-3">
             {/* Authenticator App */}
-            <div className="border-border bg-bg/50 flex flex-col justify-between rounded-xl border p-4">
+            <div className="flex flex-col justify-between rounded-xl border border-border bg-bg/50 p-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <Smartphone className="text-accent h-5 w-5" />
-                  <h4 className="text-foreground text-sm font-semibold">Authenticator App</h4>
+                  <Smartphone className="h-5 w-5 text-accent" />
+                  <h4 className="text-sm font-semibold text-foreground">Authenticator App</h4>
                 </div>
-                <p className="text-foreground-muted mt-2 text-xs leading-relaxed">
+                <p className="mt-2 text-xs leading-relaxed text-foreground-muted">
                   Generate 6-digit verification codes using Google Authenticator, 1Password, or Authy.
                 </p>
               </div>
@@ -427,13 +426,13 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
             </div>
 
             {/* PIN Code Sign-In */}
-            <div className="border-border bg-bg/50 flex flex-col justify-between rounded-xl border p-4">
+            <div className="flex flex-col justify-between rounded-xl border border-border bg-bg/50 p-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <Lock className="text-accent h-5 w-5" />
-                  <h4 className="text-foreground text-sm font-semibold">PIN Code Sign-In</h4>
+                  <Lock className="h-5 w-5 text-accent" />
+                  <h4 className="text-sm font-semibold text-foreground">PIN Code Sign-In</h4>
                 </div>
-                <p className="text-foreground-muted mt-2 text-xs leading-relaxed">
+                <p className="mt-2 text-xs leading-relaxed text-foreground-muted">
                   Set a secure 4 to 8 digit numerical PIN code as an authentication factor.
                 </p>
               </div>
@@ -451,7 +450,7 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
                         setPinInput('')
                         setMode('enrollingPin')
                       }}
-                      className="text-accent text-xs hover:underline"
+                      className="text-xs text-accent hover:underline"
                     >
                       Update
                     </button>
@@ -473,13 +472,13 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
             </div>
 
             {/* Facial 2FA / Biometric */}
-            <div className="border-border bg-bg/50 flex flex-col justify-between rounded-xl border p-4">
+            <div className="flex flex-col justify-between rounded-xl border border-border bg-bg/50 p-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <Fingerprint className="text-accent h-5 w-5" />
-                  <h4 className="text-foreground text-sm font-semibold">Facial 2FA / Biometric</h4>
+                  <Fingerprint className="h-5 w-5 text-accent" />
+                  <h4 className="text-sm font-semibold text-foreground">Facial 2FA / Biometric</h4>
                 </div>
-                <p className="text-foreground-muted mt-2 text-xs leading-relaxed">
+                <p className="mt-2 text-xs leading-relaxed text-foreground-muted">
                   Sign in instantly with Face ID, Touch ID, or hardware security keys.
                 </p>
               </div>
@@ -495,13 +494,13 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
                         {status.passkeys!.map((passkey) => (
                           <li
                             key={passkey.id}
-                            className="border-border bg-bg/60 flex items-center justify-between gap-2 rounded-lg border px-3 py-2"
+                            className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/60 px-3 py-2"
                           >
                             <div className="min-w-0">
-                              <p className="text-foreground truncate text-xs font-medium">
+                              <p className="truncate text-xs font-medium text-foreground">
                                 {passkey.deviceName || 'Passkey'}
                               </p>
-                              <p className="text-foreground-muted text-[10px]">
+                              <p className="text-[10px] text-foreground-muted">
                                 {passkey.createdAt
                                   ? `Registered ${new Date(passkey.createdAt).toLocaleDateString()}`
                                   : 'Registered'}
@@ -511,7 +510,7 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
                               type="button"
                               onClick={() => handleRemovePasskey(passkey.credentialId)}
                               disabled={loading}
-                              className="text-foreground-muted flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg transition-colors hover:text-red-400 disabled:opacity-50"
+                              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-foreground-muted transition-colors hover:text-red-400 disabled:opacity-50"
                               title={`Remove ${passkey.deviceName || 'passkey'}`}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -553,23 +552,23 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
 
       {mode === 'enrollingTotp' && (
         <form onSubmit={handleVerifyEnrollTotp} className="mt-6 space-y-6">
-          <div className="border-border bg-bg/60 space-y-4 rounded-xl border p-4">
-            <h4 className="text-foreground flex items-center gap-2 text-sm font-semibold">
-              <Key className="text-accent h-4 w-4" />
+          <div className="space-y-4 rounded-xl border border-border bg-bg/60 p-4">
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Key className="h-4 w-4 text-accent" />
               1. Add secret key to your authenticator app
             </h4>
-            <p className="text-foreground-muted text-xs leading-relaxed">
+            <p className="text-xs leading-relaxed text-foreground-muted">
               Open your authenticator app and choose <strong>Add Account via Secret Key</strong>, or copy the URI below.
             </p>
 
             <div className="flex items-center gap-2">
-              <code className="border-border bg-bg-dark/80 text-accent flex-1 overflow-x-auto rounded-lg border px-3 py-2 font-mono text-xs tracking-wider select-all">
+              <code className="bg-bg-dark/80 flex-1 overflow-x-auto rounded-lg border border-border px-3 py-2 font-mono text-xs tracking-wider text-accent select-all">
                 {secret}
               </code>
               <button
                 type="button"
                 onClick={handleCopySecret}
-                className="border-border bg-bg-light hover:bg-border text-foreground flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
+                className="bg-bg-light flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-border"
                 title="Copy Secret"
               >
                 {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
@@ -578,14 +577,14 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
 
             {uri && (
               <div className="pt-2">
-                <p className="text-foreground-muted font-mono text-[11px] break-all opacity-70">{uri}</p>
+                <p className="font-mono text-[11px] break-all text-foreground-muted opacity-70">{uri}</p>
               </div>
             )}
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-foreground flex items-center gap-2 text-sm font-semibold">
-              <QrCode className="text-accent h-4 w-4" />
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <QrCode className="h-4 w-4 text-accent" />
               2. Enter the 6-digit verification code
             </h4>
             <div className="max-w-xs">
@@ -610,7 +609,7 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
                 setMode('idle')
                 setError('')
               }}
-              className="text-foreground-muted hover:text-foreground px-3 py-2 text-xs font-medium transition-colors"
+              className="px-3 py-2 text-xs font-medium text-foreground-muted transition-colors hover:text-foreground"
             >
               Cancel
             </button>
@@ -620,12 +619,12 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
 
       {mode === 'enrollingPin' && (
         <form onSubmit={handleEnrollPin} className="mt-6 space-y-5">
-          <div className="border-border bg-bg/60 space-y-3 rounded-xl border p-4">
-            <h4 className="text-foreground flex items-center gap-2 text-sm font-semibold">
-              <Lock className="text-accent h-4 w-4" />
+          <div className="space-y-3 rounded-xl border border-border bg-bg/60 p-4">
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Lock className="h-4 w-4 text-accent" />
               Set Up PIN Code Authentication
             </h4>
-            <p className="text-foreground-muted text-xs leading-relaxed">
+            <p className="text-xs leading-relaxed text-foreground-muted">
               Enter a 4 to 8 digit numerical PIN code. You can use this PIN as an alternative during two-factor
               authentication sign-in.
             </p>
@@ -652,7 +651,7 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
                 setError('')
                 setPinInput('')
               }}
-              className="text-foreground-muted hover:text-foreground px-3 py-2 text-xs font-medium transition-colors"
+              className="px-3 py-2 text-xs font-medium text-foreground-muted transition-colors hover:text-foreground"
             >
               Cancel
             </button>
@@ -698,7 +697,7 @@ export default function TwoFactorSettingsPanel({ initialEnabled = false }: TwoFa
                 setMode('idle')
                 setError('')
               }}
-              className="text-foreground-muted hover:text-foreground px-3 py-2 text-xs font-medium transition-colors"
+              className="px-3 py-2 text-xs font-medium text-foreground-muted transition-colors hover:text-foreground"
             >
               Cancel
             </button>

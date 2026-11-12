@@ -112,13 +112,13 @@ export default function Tools({ libraryItem, className }: ToolsProps) {
       ) : (
         <>
           {/* M4b Maker Section */}
-          <section className="border-border my-8 w-full border p-4" aria-labelledby={elementIds.m4bHeader}>
+          <section className="my-8 w-full border border-border p-4" aria-labelledby={elementIds.m4bHeader}>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h3 className="text-lg" id={elementIds.m4bHeader}>
                   {t('LabelToolsMakeM4b')}
                 </h3>
-                <p className="text-foreground-muted max-w-sm pt-2 text-sm" id={elementIds.m4bDescription}>
+                <p className="max-w-sm pt-2 text-sm text-foreground-muted" id={elementIds.m4bDescription}>
                   {t('LabelToolsMakeM4bDescription')}
                 </p>
               </div>
@@ -136,13 +136,13 @@ export default function Tools({ libraryItem, className }: ToolsProps) {
           </section>
 
           {/* Embed Metadata Section */}
-          <section className="border-border my-8 w-full border p-4" aria-labelledby={elementIds.embedHeader}>
+          <section className="my-8 w-full border border-border p-4" aria-labelledby={elementIds.embedHeader}>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h3 className="text-lg" id={elementIds.embedHeader}>
                   {t('LabelToolsEmbedMetadata')}
                 </h3>
-                <p className="text-foreground-muted max-w-sm pt-2 text-sm" id={elementIds.embedDescription}>
+                <p className="max-w-sm pt-2 text-sm text-foreground-muted" id={elementIds.embedDescription}>
                   {t('LabelToolsEmbedMetadataDescription')}
                 </p>
               </div>

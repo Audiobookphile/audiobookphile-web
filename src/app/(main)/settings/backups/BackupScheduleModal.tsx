@@ -56,7 +56,7 @@ export default function BackupScheduleModal({
         </div>
 
         {/* Footer */}
-        <div className="border-border border-t px-4 py-3">
+        <div className="border-t border-border px-4 py-3">
           <div className="flex items-center justify-end">
             <Btn onClick={handleSave} disabled={!hasChanges} loading={isPending}>
               {t('ButtonSave')}

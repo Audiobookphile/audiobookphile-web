@@ -147,13 +147,13 @@ export default function MatchCard({
         {/* Desktop: cover image on the left */}
         <div className="flex justify-between md:block">
           <div className="max-w-12 min-w-12 shrink-0 md:max-w-20 md:min-w-20 md:pt-1 md:pl-2">
-            <div className="bg-primary w-full" style={{ aspectRatio: '1' }}>
+            <div className="w-full bg-primary" style={{ aspectRatio: '1' }}>
               {finalSelectedCover ? (
                 <div className="relative h-full w-full">
                   <Image src={finalSelectedCover} alt="" fill className="object-contain" unoptimized />
                 </div>
               ) : (
-                <div className="bg-primary h-12 w-12 md:h-20 md:w-20" />
+                <div className="h-12 w-12 bg-primary md:h-20 md:w-20" />
               )}
             </div>
           </div>
@@ -188,15 +188,15 @@ export default function MatchCard({
             <div className="flex items-center">
               <div>
                 {book.author && (
-                  <p className="text-foreground-muted text-xs md:text-sm">{t('LabelByAuthor', { 0: book.author })}</p>
+                  <p className="text-xs text-foreground-muted md:text-sm">{t('LabelByAuthor', { 0: book.author })}</p>
                 )}
                 {narratorText && (
-                  <p className="text-foreground-subdued text-xs">
+                  <p className="text-xs text-foreground-subdued">
                     {t('LabelNarrators')}: {narratorText}
                   </p>
                 )}
                 {bookDurationSeconds > 0 && (
-                  <p className="text-foreground-subdued text-xs">
+                  <p className="text-xs text-foreground-subdued">
                     {t('LabelDuration')}: {formatDuration(bookDurationSeconds, t)} {durationComparison}
                   </p>
                 )}
@@ -219,7 +219,7 @@ export default function MatchCard({
               <div className="-mx-1 flex py-1">
                 {book.series.map((series, index) => (
                   <div key={index} className="mx-1 rounded-full bg-white/10 px-1 py-0.5">
-                    <p className="text-foreground-subdued text-xs leading-3">
+                    <p className="text-xs leading-3 text-foreground-subdued">
                       {t('ButtonOpenManager')}
                       <ExternalLink size={16} className="ms-2" />
                     </p>
@@ -229,7 +229,7 @@ export default function MatchCard({
             )}
             {book.descriptionPlain && (
               <div className="max-h-12 w-full overflow-hidden">
-                <p className="text-foreground-subdued text-xs">{book.descriptionPlain}</p>
+                <p className="text-xs text-foreground-subdued">{book.descriptionPlain}</p>
               </div>
             )}
           </div>
@@ -242,13 +242,13 @@ export default function MatchCard({
               </div>
             </h1>
             {book.author && (
-              <p className="text-foreground-muted truncate text-base whitespace-nowrap">
+              <p className="truncate text-base whitespace-nowrap text-foreground-muted">
                 {t('LabelByAuthor', { 0: book.author })}
               </p>
             )}
-            {genresText && <p className="text-foreground-subdued text-xs leading-5">{genresText}</p>}
+            {genresText && <p className="text-xs leading-5 text-foreground-subdued">{genresText}</p>}
             {'trackCount' in book && book.trackCount !== undefined && (
-              <p className="text-foreground-subdued text-xs leading-5">
+              <p className="text-xs leading-5 text-foreground-subdued">
                 {book.trackCount} {t('LabelEpisodes')}
               </p>
             )}

@@ -253,7 +253,7 @@ export default function MediaIconPicker({
             id={listboxId}
             role="listbox"
             aria-label={t('LabelIconOptions', { label: defaultLabel })}
-            className={`bg-primary border-dropdown-menu-border absolute z-10 mt-0.5 max-h-56 w-48 overflow-auto rounded-md border py-1 shadow-lg focus:outline-hidden sm:text-sm ${getMenuAlignmentClasses()}`}
+            className={`absolute z-10 mt-0.5 max-h-56 w-48 overflow-auto rounded-md border border-dropdown-menu-border bg-primary py-1 shadow-lg focus:outline-hidden sm:text-sm ${getMenuAlignmentClasses()}`}
             onKeyDown={handleKeyDown}
             onClick={(e) => e.stopPropagation()}
           >

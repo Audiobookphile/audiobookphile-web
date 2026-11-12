@@ -127,7 +127,7 @@ export default function AuthorEditModal({ isOpen, user, author: authorProp, onCl
                     <div className="absolute top-0 right-0 h-full w-full opacity-0 focus-within:opacity-100 hover:opacity-100">
                       <IconBtn
                         borderless={true}
-                        className="text-error hover:not-disabled:text-error absolute top-0 right-0 transform cursor-pointer transition-transform hover:scale-125"
+                        className="absolute top-0 right-0 transform cursor-pointer text-error transition-transform hover:scale-125 hover:not-disabled:text-error"
                         onClick={handleRemoveImageWrapper}
                         ariaLabel={t('ButtonRemove')}
                         icon={Trash2}
@@ -198,7 +198,7 @@ export default function AuthorEditModal({ isOpen, user, author: authorProp, onCl
           </div>
 
           {/* Footer */}
-          <div className="border-border border-t px-4 py-3">
+          <div className="border-t border-border px-4 py-3">
             <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-4">
               {user.permissions.delete && (
                 <Btn color="bg-error" className="mr-auto" onClick={handleOnDelete}>

@@ -33,11 +33,11 @@ export default function ForgotPasswordForm() {
   if (success) {
     return (
       <AuthCard title="Check your email" icon="mail-check">
-        <p className="text-foreground-muted mb-6 text-sm">
+        <p className="mb-6 text-sm text-foreground-muted">
           We sent a password reset link to <strong>{email}</strong>. Check your inbox and follow the link to reset your
           password.
         </p>
-        <Link href="/login" className="text-accent text-sm hover:underline">
+        <Link href="/login" className="text-sm text-accent hover:underline">
           Back to login
         </Link>
       </AuthCard>
@@ -61,7 +61,7 @@ export default function ForgotPasswordForm() {
           Send reset link
         </Btn>
 
-        <p className="text-foreground-muted text-center text-sm">
+        <p className="text-center text-sm text-foreground-muted">
           <Link href="/login" className="text-accent hover:underline">
             Back to login
           </Link>

@@ -1,4 +1,4 @@
-import { CheckCircle, ChevronDown, ChevronUp, Download, Search } from 'lucide-react'
+import { CheckCircle, ChevronDown, ChevronUp, Download } from 'lucide-react'
 import { useFormatter } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { downloadPodcastEpisodesAction } from '@/features/player/actions/mediaActions'
@@ -251,7 +251,7 @@ export default function EpisodeFeedModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      className="bg-background/90 border border-white/10 backdrop-blur-xl"
+      className="border border-white/10 bg-background/90 backdrop-blur-xl"
       outerContent={
         <div className="pointer-events-none absolute top-0 left-0 w-2/3 overflow-hidden p-5">
           <p className="truncate text-3xl text-white drop-shadow-md">{libraryItem.media?.metadata?.title}</p>
@@ -276,7 +276,7 @@ export default function EpisodeFeedModal({
               onClick={() => setSortDescending(!sortDescending)}
             >
               <span className="pr-4 text-[11px] font-black tracking-widest uppercase">{t('LabelSortPubDate')}</span>
-              <span className="text-primary absolute inset-y-0 right-0 flex items-center pr-2">
+              <span className="absolute inset-y-0 right-0 flex items-center pr-2 text-primary">
                 {sortDescending ? <ChevronDown size={18} strokeWidth={3} /> : <ChevronUp size={18} strokeWidth={3} />}
               </span>
             </Btn>
@@ -306,7 +306,7 @@ export default function EpisodeFeedModal({
             return (
               <div
                 key={episode.guid || episode.cleanUrl}
-                className={`border-border relative flex cursor-pointer items-center border-b last:border-0 ${bgClass}`}
+                className={`relative flex cursor-pointer items-center border-b border-border last:border-0 ${bgClass}`}
                 onClick={() => toggleSelectEpisode(episode)}
               >
                 <div className="flex w-12 flex-none items-center justify-center p-3 sm:w-16">
@@ -316,7 +316,7 @@ export default function EpisodeFeedModal({
                       className="text-success drop-shadow-[0_0_8px_rgba(var(--success-rgb),0.4)]"
                     />
                   ) : episode.isDownloading ? (
-                    <Download size={20} className="text-primary animate-pulse" />
+                    <Download size={20} className="animate-pulse text-primary" />
                   ) : (
                     <div
                       onClick={(e) => {
@@ -340,7 +340,7 @@ export default function EpisodeFeedModal({
                     {episode.episodeType &&
                       (episode.episodeType.toLowerCase() === 'trailer' ||
                       episode.episodeType.toLowerCase() === 'bonus' ? (
-                        <span className="bg-info rounded-full px-2 py-0.5 text-xs text-white capitalize">
+                        <span className="rounded-full bg-info px-2 py-0.5 text-xs text-white capitalize">
                           {episode.episodeType}
                         </span>
                       ) : null)}
@@ -390,7 +390,7 @@ export default function EpisodeFeedModal({
               </Btn>
             </>
           ) : (
-            <p className="text-success px-2 py-4 text-base">{t('LabelAllEpisodesDownloaded')}</p>
+            <p className="px-2 py-4 text-base text-success">{t('LabelAllEpisodesDownloaded')}</p>
           )}
         </div>
       </div>

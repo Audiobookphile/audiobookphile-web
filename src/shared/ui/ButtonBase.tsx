@@ -1,7 +1,8 @@
 'use client'
+import type { TargetAndTransition, Transition, VariantLabels } from 'framer-motion'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import React, { forwardRef } from 'react'
+import React from 'react'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 
 const MotionLink = motion.create(Link)
@@ -21,10 +22,36 @@ interface ButtonBaseProps {
   ariaLabel?: string
   className?: string
   ref?: React.Ref<HTMLButtonElement>
-  whileHover?: any
-  whileTap?: any
-  transition?: any
-  [key: string]: any
+  whileHover?: TargetAndTransition | VariantLabels
+  whileTap?: TargetAndTransition | VariantLabels
+  transition?: Transition
+
+  // The standard attributes a button or an anchor accepts.
+  //
+  // These were previously covered by an `[key: string]: any` index
+  // signature, which accepted any prop at all -- including a misspelled one.
+  // Declaring them means a typo is a type error, and the spread onto the
+  // motion element is checked rather than assumed.
+  role?: React.AriaRole
+  tabIndex?: number
+  style?: React.CSSProperties
+  title?: string
+  name?: string
+  form?: string
+  autoFocus?: boolean
+  onFocus?: React.FocusEventHandler<HTMLButtonElement | HTMLAnchorElement>
+  onBlur?: React.FocusEventHandler<HTMLButtonElement | HTMLAnchorElement>
+  onMouseEnter?: React.MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>
+  onMouseLeave?: React.MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>
+  'aria-label'?: string
+  'aria-checked'?: boolean
+  'aria-pressed'?: boolean | 'mixed'
+  'aria-expanded'?: boolean
+  'aria-hidden'?: boolean
+  'aria-describedby'?: string
+  'aria-labelledby'?: string
+  'aria-controls'?: string
+  'data-cyid'?: string
 }
 
 const ButtonBase = ({

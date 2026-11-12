@@ -1,12 +1,14 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { apiRequest } from '@/shared/lib/api/client'
 import type { SyncReport } from '@/shared/lib/storageSync'
+import type { Database } from '@/types/supabase'
 import { verifyAdminOrThrow } from '@/shared/utils/supabase/server'
 
 // ---------------------------------------------------------------------------
 // Shared: build the sync report
 // ---------------------------------------------------------------------------
 
-export async function buildSyncReport(db: any): Promise<SyncReport> {
+export async function buildSyncReport(_db?: SupabaseClient<Database>): Promise<SyncReport> {
   await verifyAdminOrThrow()
   console.log('[storage-sync] Building sync report via Edge API...')
   return await apiRequest<SyncReport>('/api/storage-sync', {
@@ -18,9 +20,9 @@ export async function buildSyncReport(db: any): Promise<SyncReport> {
 // Action: import-orphans
 // ---------------------------------------------------------------------------
 
-export async function handleImportOrphans(db: any) {
+export async function handleImportOrphans(_db?: SupabaseClient<Database>): Promise<unknown> {
   await verifyAdminOrThrow()
-  return await apiRequest<any>('/api/storage-sync?action=import-orphans', {
+  return await apiRequest<unknown>('/api/storage-sync?action=import-orphans', {
     method: 'POST',
   })
 }
@@ -29,9 +31,9 @@ export async function handleImportOrphans(db: any) {
 // Action: mark-missing
 // ---------------------------------------------------------------------------
 
-export async function handleMarkMissing(db: any) {
+export async function handleMarkMissing(_db?: SupabaseClient<Database>): Promise<unknown> {
   await verifyAdminOrThrow()
-  return await apiRequest<any>('/api/storage-sync?action=mark-missing', {
+  return await apiRequest<unknown>('/api/storage-sync?action=mark-missing', {
     method: 'POST',
   })
 }
@@ -40,9 +42,9 @@ export async function handleMarkMissing(db: any) {
 // Action: cleanup-orphans
 // ---------------------------------------------------------------------------
 
-export async function handleCleanupOrphans(db: any) {
+export async function handleCleanupOrphans(_db?: SupabaseClient<Database>): Promise<unknown> {
   await verifyAdminOrThrow()
-  return await apiRequest<any>('/api/storage-sync?action=cleanup-orphans', {
+  return await apiRequest<unknown>('/api/storage-sync?action=cleanup-orphans', {
     method: 'POST',
   })
 }

@@ -18,11 +18,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     // Redirect to the signed URL (307 Temporary Redirect)
     return NextResponse.redirect(data.url, 307)
-  } catch (error: any) {
+  } catch (error) {
     console.error('[FileView] Error retrieving signed URL:', error)
-    if (error?.status === 401) {
+    // The thrown value is an HTTP-shaped error: the API layer throws one
+    // with a status and a message. Naming that shape is better than
+    // `any`, which would accept anything and check nothing.
+    const httpError = error as { status?: number; message?: string }
+    if (httpError.status === 401) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: error?.status || 500 })
+    return NextResponse.json(
+      { error: httpError.message || 'Internal Server Error' },
+      { status: httpError.status || 500 }
+    )
   }
 }

@@ -211,7 +211,7 @@ export default function MediaCardOverlay({
                 onClick={handleSelectClick}
                 ariaLabel={selected ? t('ButtonDeselect') : t('ButtonSelect')}
                 selected={selected}
-                className={selected ? '!bg-primary !border-primary !text-black' : ''}
+                className={selected ? '!border-primary !bg-primary !text-black' : ''}
               />
             )}
 
@@ -296,7 +296,7 @@ export default function MediaCardOverlay({
           )}
           style={{ width: `${ICON_SIZE.SMALL}em`, height: `${ICON_SIZE.SMALL}em` }}
         >
-          <Rss size={14} className="text-primary fill-current" aria-hidden="true" />
+          <Rss size={14} className="fill-current text-primary" aria-hidden="true" />
         </div>
       )}
       {mediaItemShare && !isSelectionMode && !isHovering && (

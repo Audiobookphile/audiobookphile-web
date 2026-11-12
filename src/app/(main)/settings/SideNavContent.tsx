@@ -103,7 +103,7 @@ export default function SideNavContent({ handleItemClick, serverVersion, install
               <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
               <span>Return to Library</span>
             </span>
-            <span className="text-xxs rounded-md bg-white/10 px-1.5 py-0.5 font-semibold tracking-wider text-white/70 uppercase">
+            <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-xxs font-semibold tracking-wider text-white/70 uppercase">
               Back
             </span>
           </Link>
@@ -118,7 +118,7 @@ export default function SideNavContent({ handleItemClick, serverVersion, install
                 <Shield className="h-4 w-4 text-amber-400" />
                 <span>Admin Dashboard</span>
               </span>
-              <span className="text-xxs rounded-md bg-amber-500/20 px-1.5 py-0.5 font-semibold tracking-wider text-amber-300 uppercase">
+              <span className="rounded-md bg-amber-500/20 px-1.5 py-0.5 text-xxs font-semibold tracking-wider text-amber-300 uppercase">
                 Admin
               </span>
             </Link>
@@ -129,7 +129,7 @@ export default function SideNavContent({ handleItemClick, serverVersion, install
         <div className="space-y-6">
           {visibleGroups.map((group) => (
             <div key={group.title} className="space-y-1">
-              <p className="text-xxs px-2 font-bold tracking-wider text-white/40 uppercase">{group.title}</p>
+              <p className="px-2 text-xxs font-bold tracking-wider text-white/40 uppercase">{group.title}</p>
               <div className="space-y-0.5">
                 {group.items.map((item) => {
                   const isSelected = pathname === item.href

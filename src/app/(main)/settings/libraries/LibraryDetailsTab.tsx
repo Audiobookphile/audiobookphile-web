@@ -2,7 +2,6 @@
 
 import { Folder, FolderPlus, X } from 'lucide-react'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
-import Btn from '@/shared/ui/Btn'
 import Dropdown, { DropdownItem } from '@/shared/ui/Dropdown'
 import MediaIconPicker from '@/shared/ui/MediaIconPicker'
 import TextInput from '@/shared/ui/TextInput'
@@ -93,8 +92,8 @@ export default function LibraryDetailsTab({
               key={index}
               className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-2 shadow-sm backdrop-blur-md transition-all hover:border-white/20"
             >
-              <div className="bg-primary/20 border-primary/20 rounded-xl border p-2">
-                <Folder size={18} className="text-primary fill-current" />
+              <div className="rounded-xl border border-primary/20 bg-primary/20 p-2">
+                <Folder size={18} className="fill-current text-primary" />
               </div>
               <TextInput
                 value={folder.fullPath}
@@ -104,7 +103,7 @@ export default function LibraryDetailsTab({
               />
               <button
                 type="button"
-                className="hover:text-error hover:bg-error/10 rounded-xl p-2 text-white/20 transition-all"
+                className="rounded-xl p-2 text-white/20 transition-all hover:bg-error/10 hover:text-error"
                 onClick={() => onRemoveFolder(index)}
                 aria-label={t('ButtonRemove')}
               >
@@ -115,8 +114,8 @@ export default function LibraryDetailsTab({
 
           {/* Always-visible new folder input */}
           <div className="flex items-center gap-3 rounded-2xl border border-dashed border-white/10 bg-white/5 p-2 backdrop-blur-md transition-all hover:border-white/20">
-            <div className="bg-success/20 border-success/20 rounded-xl border p-2">
-              <FolderPlus size={18} className="text-success fill-current" />
+            <div className="rounded-xl border border-success/20 bg-success/20 p-2">
+              <FolderPlus size={18} className="fill-current text-success" />
             </div>
             <TextInput
               value={newFolderPath}

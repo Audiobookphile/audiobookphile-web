@@ -35,12 +35,12 @@ export default function CollectionCardSkeleton({ bookshelfView, sizeMultiplier }
       tabIndex={0}
       aria-busy="true"
       aria-live="polite"
-      className="focus-visible:outline-foreground-muted relative z-30 rounded-xs focus-visible:outline-1 focus-visible:outline-offset-8"
+      className="relative z-30 rounded-xs focus-visible:outline-1 focus-visible:outline-offset-8 focus-visible:outline-foreground-muted"
       style={{ minWidth: `${coverWidth}px`, maxWidth: `${coverWidth}px` }}
     >
       {/* Cover skeleton with two book cover effect */}
       <div
-        className="bg-primary box-shadow-book relative z-10 w-full animate-pulse overflow-hidden rounded-sm"
+        className="box-shadow-book relative z-10 w-full animate-pulse overflow-hidden rounded-sm bg-primary"
         style={{ height: `${coverHeight}px` }}
         aria-hidden="true"
       >

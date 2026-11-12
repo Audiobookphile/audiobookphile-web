@@ -61,7 +61,7 @@ export default function GlobalSearchInput({
     setIsTyping(true)
     const timeoutId = setTimeout(() => {
       setIsTyping(false)
-      handleSearch()
+      void handleSearch()
     }, 500) // 500ms debounce
 
     return () => clearTimeout(timeoutId)
@@ -171,13 +171,13 @@ export default function GlobalSearchInput({
     <div className="relative w-full" ref={containerRef}>
       <InputWrapper
         size="small"
-        className="group-focus-within:border-primary/50 w-full border-white/10 bg-white/5 transition-all duration-300 group-focus-within:bg-white/10"
+        className="w-full border-white/10 bg-white/5 transition-all duration-300 group-focus-within:border-primary/50 group-focus-within:bg-white/10"
         inputRef={inputRef}
       >
         <input
           ref={inputRef}
           type="text"
-          className="placeholder:text-foreground/30 text-foreground h-full w-full bg-transparent text-sm font-medium outline-none"
+          className="h-full w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-foreground/30"
           placeholder={t('PlaceholderSearch')}
           value={searchQuery}
           onInput={(e) => setSearchQuery(e.currentTarget.value)}
@@ -206,7 +206,7 @@ export default function GlobalSearchInput({
           className={`flex items-center justify-center rounded-md p-1.5 transition-all duration-300 ${
             useSemanticSearch
               ? 'bg-accent/20 text-accent shadow-[0_0_10px_rgba(var(--accent),0.3)]'
-              : 'text-foreground/30 hover:text-foreground/70 hover:bg-white/5'
+              : 'text-foreground/30 hover:bg-white/5 hover:text-foreground/70'
           }`}
           aria-label="Toggle Smart AI Search"
           title="Toggle Smart AI Search"
@@ -215,11 +215,11 @@ export default function GlobalSearchInput({
         </button>
 
         {isSearching || isTyping ? (
-          <LoadingSpinner size="la-sm" className="text-primary scale-75 opacity-80" />
+          <LoadingSpinner size="la-sm" className="scale-75 text-primary opacity-80" />
         ) : searchQuery ? (
           <button
             onClick={handleClear}
-            className="text-foreground/40 hover:text-foreground cursor-pointer rounded-md p-1.5 transition-all hover:bg-white/10"
+            className="cursor-pointer rounded-md p-1.5 text-foreground/40 transition-all hover:bg-white/10 hover:text-foreground"
             aria-label="Clear search"
           >
             <X size={16} strokeWidth={3} aria-hidden="true" />
@@ -229,7 +229,7 @@ export default function GlobalSearchInput({
             <Search
               size={16}
               strokeWidth={2.5}
-              className="text-foreground/30 group-focus-within:text-primary pointer-events-none transition-colors duration-300"
+              className="pointer-events-none text-foreground/30 transition-colors duration-300 group-focus-within:text-primary"
               aria-hidden="true"
             />
           </div>

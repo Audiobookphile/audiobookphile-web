@@ -30,11 +30,11 @@ export default function RestoreBackupModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="w-full max-w-[675px] md:max-w-[675px]">
       <div className="max-h-[90vh] overflow-y-auto px-4 py-6 sm:px-6">
-        <p className="text-error text-lg font-semibold">{t('MessageImportantNotice')}</p>
-        <div className="text-foreground py-1 text-base">
+        <p className="text-lg font-semibold text-error">{t('MessageImportantNotice')}</p>
+        <div className="py-1 text-base text-foreground">
           {t.rich('MessageRestoreBackupWarning', { br: () => <br /> })}
         </div>
-        <p className="text-foreground my-8 text-center text-lg">
+        <p className="my-8 text-center text-lg text-foreground">
           {t('MessageRestoreBackupConfirm')} {formatJsDatetime(new Date(backup.createdAt), dateFormat, timeFormat)}?
         </p>
         <div className="flex items-center">

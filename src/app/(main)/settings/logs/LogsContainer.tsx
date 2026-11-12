@@ -18,6 +18,12 @@ const LOG_LEVEL_NAMES: Record<number, string> = {
   [LogLevel.NOTE]: 'Note',
 }
 
+// The levels the dropdown offers by default. The server sends the selected
+// level as a plain number, so the state is a number; listing the defaults in
+// an array keeps the comparison away from a bare `number === LogLevel.X`,
+// which compares two different types.
+const DEFAULT_LOG_LEVELS: number[] = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN]
+
 interface LogsContainerProps {
   currentDailyLogs: LoggerDataLog[]
   logLevel?: number
@@ -60,7 +66,7 @@ export default function LogsContainer({
       { text: t('LabelLogLevelWarn'), value: LogLevel.WARN },
     ]
 
-    const isDefault = logLevel === LogLevel.DEBUG || logLevel === LogLevel.INFO || logLevel === LogLevel.WARN
+    const isDefault = DEFAULT_LOG_LEVELS.includes(logLevel)
     // If log level is not debug, info or warn, then show it in the dropdown
     if (!isDefault) {
       const name = LOG_LEVEL_NAMES[logLevel] ?? `Level ${logLevel}`
@@ -101,7 +107,7 @@ export default function LogsContainer({
 
     startTransition(async () => {
       try {
-        await updateServerSettings({ logLevel: newLevel as LogLevel })
+        await updateServerSettings({ logLevel: newLevel })
       } catch (error) {
         setLogLevel(logLevel)
         console.error('Failed to update log level:', error)
@@ -179,7 +185,7 @@ export default function LogsContainer({
       </div>
       <div
         ref={containerRef}
-        className="border-border h-[calc(100vh-20rem)] min-h-60 w-full overflow-x-hidden overflow-y-auto rounded-md border"
+        className="h-[calc(100vh-20rem)] min-h-60 w-full overflow-x-hidden overflow-y-auto rounded-md border border-border"
       >
         <div className="flex flex-col">
           {visibleLogs.map((log, index) => (
@@ -195,7 +201,7 @@ function LogsRow({ log, isEven }: { log: LoggerDataLog; isEven: boolean }) {
   const logLevelColor = getLogLevelColor(log.levelName)
   return (
     <div className={`flex items-start gap-2 p-2 ${isEven ? 'bg-table-row-bg-even' : ''}`}>
-      <div className="text-foreground-subdued w-36 text-xs leading-5">{log.timestamp}</div>
+      <div className="w-36 text-xs leading-5 text-foreground-subdued">{log.timestamp}</div>
       <div className={`w-12 text-xs leading-5 ${logLevelColor}`}>{log.levelName}</div>
       <div className={`text-sm ${log.level < 2 ? 'text-foreground-subdued' : 'text-foreground'} w-[calc(100%-13rem)]`}>
         {log.message}

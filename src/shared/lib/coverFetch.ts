@@ -31,12 +31,78 @@ export interface FetchResult {
 }
 
 /**
+ * One document from Open Library's search API.
+ *
+ * The API is a third party and returns JSON, so `response.json()` is
+ * `any`. These are the members this file reads; anything else in the
+ * response is ignored, which is what the code did before the types existed.
+ */
+interface OpenLibraryDoc {
+  title?: string
+  author_name?: string[]
+  first_publish_year?: number
+  subject?: string[]
+  cover_i?: number
+}
+
+interface OpenLibrarySearchResponse {
+  docs?: OpenLibraryDoc[]
+}
+
+/**
+ * One volume from the Google Books API.
+ *
+ * `thumbnail` is the one image link the API always sends, and the code
+ * falls back through `extraLarge` and `large` to it, so it is the one
+ * member that is not optional.
+ */
+interface GoogleBooksVolumeInfo {
+  title?: string
+  authors?: string[]
+  description?: string
+  publishedDate?: string
+  publisher?: string
+  categories?: string[]
+  language?: string
+  imageLinks?: {
+    extraLarge?: string
+    large?: string
+    thumbnail: string
+  }
+}
+
+interface GoogleBooksVolume {
+  volumeInfo?: GoogleBooksVolumeInfo
+}
+
+interface GoogleBooksSearchResponse {
+  items?: GoogleBooksVolume[]
+}
+
+/**
+ * One result from the iTunes search API.
+ */
+interface ITunesResult {
+  trackName?: string
+  artistName?: string
+  description?: string
+  releaseDate?: string
+  primaryGenreName?: string
+  artworkUrl100?: string
+}
+
+interface ITunesSearchResponse {
+  resultCount?: number
+  results?: ITunesResult[]
+}
+
+/**
  * Aggressively cleans up messy titles/authors for better API matching.
  */
 function normalizeString(str: string): string {
   if (!str) return ''
 
-  let cleaned = str
+  const cleaned = str
     // 1. Split CamelCase/PascalCase
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     // 2. Remove bracketed content
@@ -135,8 +201,8 @@ async function fetchFromITunes(title: string, author?: string): Promise<FetchRes
     )
     if (!searchRes.ok) return null
 
-    const data = await searchRes.json()
-    if (!data?.results?.length) {
+    const data = (await searchRes.json()) as ITunesSearchResponse
+    if (!data.results?.length) {
       if (author) return fetchFromITunes(title)
       return null
     }
@@ -180,9 +246,9 @@ async function fetchFromOpenLibrary(title: string, author?: string): Promise<Fet
     })
     if (!searchRes.ok) return null
 
-    const data = await searchRes.json()
-    const docs = data?.docs as any[]
-    if (!docs?.length) return null
+    const data = (await searchRes.json()) as OpenLibrarySearchResponse
+    const docs = data.docs ?? []
+    if (!docs.length) return null
 
     const withCover = docs.find((d) => d.cover_i) || docs[0]
 
@@ -226,12 +292,12 @@ async function fetchFromGoogleBooks(title: string, author?: string): Promise<Fet
     )
     if (!searchRes.ok) return null
 
-    const data = await searchRes.json()
-    const items = data?.items as any[]
-    if (!items?.length) return null
+    const data = (await searchRes.json()) as GoogleBooksSearchResponse
+    const items = data.items ?? []
+    if (!items.length) return null
 
     const item = items.find((it) => it.volumeInfo?.imageLinks?.thumbnail) || items[0]
-    const info = item.volumeInfo
+    const info = item.volumeInfo ?? {}
 
     const metadata: BookMetadata = {
       title: info.title || title,

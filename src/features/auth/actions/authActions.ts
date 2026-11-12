@@ -3,6 +3,7 @@
 import { createClient as createSupabaseJsClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/shared/utils/supabase/server'
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/shared/utils/supabase/env'
 
 /**
  * Resolves the canonical site URL at request time.
@@ -39,7 +40,7 @@ function getSiteUrl(): string {
  * backend's /api/auth/magic-link route.
  */
 function createEmailLinkClient() {
-  return createSupabaseJsClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  return createSupabaseJsClient(getSupabaseUrl(), getSupabaseAnonKey(), {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 }
@@ -106,7 +107,7 @@ export async function resetPassword(password: string) {
     return { error: ssrError.message }
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseUrl = getSupabaseUrl()
   const res = await fetch(`${supabaseUrl}/functions/v1/api/auth/reset-password`, {
     method: 'POST',
     headers: {
@@ -160,7 +161,7 @@ export async function inviteUserByEmail(email: string, username?: string, userTy
     return { error: 'You must be logged in as an admin to invite users.' }
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseUrl = getSupabaseUrl()
   const res = await fetch(`${supabaseUrl}/functions/v1/api/auth/invite`, {
     method: 'POST',
     headers: {
@@ -186,7 +187,7 @@ export async function signOut() {
   } = await supabase.auth.getSession()
 
   if (session?.access_token) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseUrl = getSupabaseUrl()
     await fetch(`${supabaseUrl}/functions/v1/api/auth/logout`, {
       method: 'POST',
       headers: {

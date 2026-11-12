@@ -42,7 +42,7 @@ export default function LibraryEmptyState({ library, showScanButton }: LibraryEm
       className="mx-auto flex w-full max-w-lg flex-col items-center justify-center gap-6 px-4 py-20 text-center"
     >
       <div className="relative">
-        <div className="bg-primary/20 absolute inset-0 scale-150 animate-pulse rounded-full blur-3xl"></div>
+        <div className="absolute inset-0 scale-150 animate-pulse rounded-full bg-primary/20 blur-3xl"></div>
         <motion.div
           animate={{ rotate: isLibraryTaskRunning ? 360 : 0 }}
           transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
@@ -60,10 +60,10 @@ export default function LibraryEmptyState({ library, showScanButton }: LibraryEm
       </div>
 
       <div className="space-y-2">
-        <h2 className="from-foreground to-foreground/60 bg-gradient-to-br bg-clip-text text-3xl font-black tracking-tight text-transparent">
+        <h2 className="bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-3xl font-black tracking-tight text-transparent">
           {t('MessageXLibraryIsEmpty', { 0: library.name })}
         </h2>
-        <p className="text-foreground-muted max-w-md text-lg">
+        <p className="max-w-md text-lg text-foreground-muted">
           {isLibraryTaskRunning
             ? 'We are currently scanning your files. This might take a moment.'
             : 'It looks like there are no items here yet. Scan your library folder to discover media.'}

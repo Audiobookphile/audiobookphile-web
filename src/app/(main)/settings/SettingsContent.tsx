@@ -35,20 +35,20 @@ export default function SettingsContent(props: {
         onClick={toggle}
         icon={Menu}
       />
-      <div className="bg-primary/95 mb-8 rounded-2xl border border-white/10 p-4 shadow-2xl backdrop-blur-xl sm:p-8">
+      <div className="mb-8 rounded-2xl border border-white/10 bg-primary/95 p-4 shadow-2xl backdrop-blur-xl sm:p-8">
         <div className="mb-6 flex items-center gap-4">
           {props.backLink && (
             <Link
               aria-label={t('ButtonBack')}
               href={props.backLink}
-              className="hover:text-primary text-white/40 transition-colors"
+              className="text-white/40 transition-colors hover:text-primary"
             >
               <ArrowLeft size={22} strokeWidth={2.5} />
             </Link>
           )}
           <h1 className="text-xl font-black tracking-widest text-white/90 uppercase">{props.title}</h1>
           {props.entityCount !== undefined && (
-            <div className="bg-primary/10 text-primary flex h-6 min-w-[24px] items-center justify-center rounded-full px-2 text-[10px] font-black tracking-widest uppercase">
+            <div className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-primary/10 px-2 text-[10px] font-black tracking-widest text-primary uppercase">
               {props.entityCount}
             </div>
           )}
@@ -58,7 +58,7 @@ export default function SettingsContent(props: {
             <Btn
               size="small"
               onClick={props.addButton.onClick}
-              className="bg-primary shadow-primary/20 px-6 text-[11px] font-black tracking-widest text-white uppercase shadow-lg transition-all hover:scale-105 active:scale-95"
+              className="bg-primary px-6 text-[11px] font-black tracking-widest text-white uppercase shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
             >
               <Plus size={14} className="mr-2" strokeWidth={3} />
               {props.addButton.label}

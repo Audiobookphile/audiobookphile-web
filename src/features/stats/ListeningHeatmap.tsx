@@ -108,12 +108,12 @@ export default function ListeningHeatmap({ daysListening }: ListeningHeatmapProp
       ) : (
         <>
           <div className="mx-auto overflow-x-auto" style={{ maxWidth: heatmapLayout.innerWidthPx + 52 }}>
-            <p className="text-foreground-muted mb-2 px-1 text-sm">
+            <p className="mb-2 px-1 text-sm text-foreground-muted">
               {heatmapLayout.daysListenedInTheLastYear} days with listening in the last year
             </p>
 
             <div
-              className="border-border bg-read-only relative w-full rounded border py-3"
+              className="relative w-full rounded border border-border bg-read-only py-3"
               style={{ height: outerHeight }}
             >
               <div
@@ -125,7 +125,7 @@ export default function ListeningHeatmap({ daysListening }: ListeningHeatmapProp
                 {dayLabels.map((d) => (
                   <div
                     key={d.label}
-                    className="text-foreground-muted absolute top-0 left-0 text-[10px] leading-[10px]"
+                    className="absolute top-0 left-0 text-[10px] leading-[10px] text-foreground-muted"
                     style={{
                       transform: `translate(${-28}px, ${d.row * HEATMAP_BLOCK_PX}px)`,
                     }}
@@ -138,7 +138,7 @@ export default function ListeningHeatmap({ daysListening }: ListeningHeatmapProp
                 {heatmapLayout.monthLabels.map((m) => (
                   <div
                     key={m.id}
-                    className="text-foreground-muted absolute top-0 left-0 text-[10px] leading-[10px]"
+                    className="absolute top-0 left-0 text-[10px] leading-[10px] text-foreground-muted"
                     style={{
                       transform: `translate(${m.col * HEATMAP_BLOCK_PX}px, -14px)`,
                     }}
@@ -167,7 +167,7 @@ export default function ListeningHeatmap({ daysListening }: ListeningHeatmapProp
                 {/* Legend */}
                 <div className="flex items-center px-1" style={{ marginTop: HEATMAP_INNER_HEIGHT + 12 }}>
                   <div className="grow" />
-                  <span className="text-foreground-muted px-1 text-[10px]">Less</span>
+                  <span className="px-1 text-[10px] text-foreground-muted">Less</span>
                   {HEATMAP_INTENSITY_LEVELS.map((level) => (
                     <div
                       key={level}
@@ -176,7 +176,7 @@ export default function ListeningHeatmap({ daysListening }: ListeningHeatmapProp
                       aria-hidden
                     />
                   ))}
-                  <span className="text-foreground-muted px-1 text-[10px]">More</span>
+                  <span className="px-1 text-[10px] text-foreground-muted">More</span>
                 </div>
               </div>
             </div>
@@ -188,7 +188,7 @@ export default function ListeningHeatmap({ daysListening }: ListeningHeatmapProp
               <div
                 ref={tooltipRef}
                 role="tooltip"
-                className="bg-bg-read-only text-foreground pointer-events-none fixed z-[1000] max-w-xs rounded px-2 py-1 text-[10px] shadow-lg"
+                className="pointer-events-none fixed z-[1000] max-w-xs rounded bg-bg-read-only px-2 py-1 text-[10px] text-foreground shadow-lg"
                 style={{
                   left: tooltipPos?.left ?? -9999,
                   top: tooltipPos?.top ?? 0,

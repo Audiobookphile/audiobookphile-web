@@ -51,7 +51,7 @@ export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdat
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="sm:max-w-md md:max-w-md lg:max-w-md">
       <div className="flex flex-col gap-6 p-6">
-        <h2 className="text-foreground text-xl font-semibold">{t('HeaderPlayerSettings')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('HeaderPlayerSettings')}</h2>
 
         <div className="flex flex-col gap-5">
           {/* Use chapter track toggle */}

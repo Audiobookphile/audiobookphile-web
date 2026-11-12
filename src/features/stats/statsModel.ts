@@ -129,7 +129,7 @@ export function buildDailyChartModel(daysListening: Record<string, number>, now:
   const rawStep = maxVal / 6
   const niceStep = Math.ceil(rawStep / 5) * 5
   const yTickValues = Array.from({ length: 7 }, (_, i) => i * niceStep).reverse()
-  const yMax = yTickValues[0]!
+  const yMax = yTickValues[0]
   const lineSpacing = CHART_PLOT_HEIGHT / 7
 
   // SVG points — x evenly spread, y mapped from 0..yMax to plotHeight..0

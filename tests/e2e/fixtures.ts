@@ -1,15 +1,13 @@
-/* eslint-disable react-hooks/rules-of-hooks */
-import path from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
 import { test as base, expect, Page } from '@playwright/test'
-import dotenv from 'dotenv'
+import { loadEnv } from '../../scripts/load-env'
 
-// Playwright workers are plain node — Next.js .env.local auto-loading does
-// not apply. Load repo env explicitly so NEXT_PUBLIC_SUPABASE_URL (and the
-// PLAYWRIGHT_* creds) resolve without manual exports. Explicit process env
-// wins over files; .env.local wins over .env.
-dotenv.config({ path: path.resolve(__dirname, '../../.env.local') })
-dotenv.config({ path: path.resolve(__dirname, '../../.env') })
+// Playwright workers do not load .env.local the way the Next.js dev server
+// does -- and `bun x`, which the delivery gate uses to launch the suite, does
+// not load it either. Load the repo env explicitly so NEXT_PUBLIC_SUPABASE_URL
+// (and the PLAYWRIGHT_* creds) resolve without manual exports. Explicit
+// process env wins over files; .env.local wins over .env.
+await loadEnv(`${import.meta.dir}/../..`)
 
 const adminEmail = process.env.PLAYWRIGHT_ADMIN_EMAIL
 const adminPassword = process.env.PLAYWRIGHT_ADMIN_PASSWORD
@@ -63,7 +61,7 @@ export const test = base.extend<MyFixtures>({
     await performLogin(page, memberEmail, memberPassword)
     await use(page)
   },
-  api: async ({ request }, use) => {
+  api: async ({ request: _request }, use) => {
     // Optionally create a dedicated context or reuse default request, configuring the base URL correctly
     const LOCAL_IP = ['127', '0', '0', '1'].join('.')
     const rawBase = process.env.NEXT_PUBLIC_SUPABASE_URL

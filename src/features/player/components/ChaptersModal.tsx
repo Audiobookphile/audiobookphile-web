@@ -78,9 +78,9 @@ const ChapterRow = memo(function ChapterRow({ chapter, isCurrentChapter, isListe
         >
           {chapter.title}
         </p>
-        <div className="text-foreground-muted mt-0.5 flex items-center gap-1.5 text-xs">
+        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-foreground-muted">
           <span className="font-mono">{startTimestamp}</span>
-          <span className="text-foreground-muted/60 font-mono">({durationTimestamp})</span>
+          <span className="font-mono text-foreground-muted/60">({durationTimestamp})</span>
         </div>
       </div>
     </button>
@@ -121,7 +121,7 @@ export default function ChaptersModal({ isOpen, playerHandler, onClose }: Chapte
       <div className="flex max-h-[80vh] flex-col">
         <div ref={listRef} className="flex-1 overflow-y-auto p-2">
           {chapters.length === 0 ? (
-            <div className="text-foreground-muted flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-12 text-foreground-muted">
               <p>{t('MessageNoChapters')}</p>
             </div>
           ) : (

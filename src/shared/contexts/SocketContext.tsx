@@ -28,5 +28,7 @@ export function useSocketEvent<T>(
 
 // No-op emit
 export function useSocketEmit() {
-  return { emit: <T extends unknown>(_event: string, _data?: T) => {} }
+  // The trailing comma is required: in a .tsx file, `<T>` parses as a JSX
+  // element, not a type parameter.
+  return { emit: <T,>(_event: string, _data?: T) => {} }
 }

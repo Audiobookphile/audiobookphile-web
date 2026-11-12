@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures'
-import { audioElement, openPlayableItemPage, playerPanel } from './helpers/playableItem'
+import { audioElement, openPlayableItemPage, playerPanel, startPlayback } from './helpers/playableItem'
 
 /**
  * Guards the GPU track layer's contract in a real browser.
@@ -17,10 +17,29 @@ test('the track keeps a single accessible slider and the GPU layer stays inert w
   test.setTimeout(120_000)
   await openPlayableItemPage(adminPage)
   // The track only exists once the player panel is mounted, so start playback
-  // the same way the playback spec does.
-  await adminPage.getByRole('button', { name: 'Play', exact: true }).first().click()
+  // the same way the playback spec does. The retry inside startPlayback
+  // covers a session round trip that came back 500 -- the backend serves the
+  // session as well as the library, and it returns 500s under load.
+  await startPlayback(adminPage)
   await expect(playerPanel(adminPage)).toBeVisible({ timeout: 60_000 })
   await expect(audioElement(adminPage)).toHaveCount(1, { timeout: 30_000 })
+
+  // The seek only takes effect once the media has metadata. Setting
+  // currentTime on an element that has not loaded is a no-op, so the
+  // playhead stays at zero and the assertion below fails for a reason that
+  // has nothing to do with the track -- which is exactly what it did, on and
+  // off, before this wait existed.
+  //
+  // readyState 2 is HAVE_CURRENT_DATA: real bytes arrived and were parsed
+  // into a decodable buffer. It is the same precondition
+  // playback-progress.spec.ts waits for, and it is the difference between
+  // "the panel mounted" and "there is media to seek within".
+  await expect
+    .poll(async () => audioElement(adminPage).evaluate((el) => (el as HTMLAudioElement).readyState), {
+      timeout: 60_000,
+      message: 'the audio element never received decodable data from the stream',
+    })
+    .toBeGreaterThanOrEqual(2)
 
   const slider = adminPage.getByRole('slider', { name: 'Playback position' })
   await expect(slider).toBeVisible()

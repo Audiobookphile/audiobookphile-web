@@ -232,7 +232,7 @@ describe('mapLibrary row mapping invariant (Property 1)', () => {
     id: 'lib1',
     name: 'My Library',
     created_at: '2024-01-01T00:00:00Z',
-  } as any
+  } as unknown as Parameters<typeof mapLibrary>[0]
   const fullRow = {
     id: 'lib2',
     name: 'Full Library',
@@ -250,7 +250,7 @@ describe('mapLibrary row mapping invariant (Property 1)', () => {
         updated_at: '2024-01-01T00:00:00Z',
       },
     ],
-  } as any
+  } as unknown as Parameters<typeof mapLibrary>[0]
 
   it('always returns id, name, mediaType, createdAt, updatedAt', () => {
     for (const row of [minimalRow, fullRow]) {
@@ -293,7 +293,7 @@ describe('mapLibraryItem row mapping invariant (Property 2)', () => {
     audio_files: [],
     book_authors: [],
     book_series: [],
-  } as any
+  } as unknown as Parameters<typeof mapLibraryItem>[0]
 
   it('always returns all required LibraryItem fields with correct types', () => {
     const item = mapLibraryItem(baseItem)
@@ -326,7 +326,7 @@ describe('mapLibrarySettings null-safety invariant (Property 3)', () => {
 
   it('always defines coverAspectRatio and disableWatcher regardless of input', () => {
     for (const input of inputs) {
-      const settings = mapLibrarySettings(input as any)
+      const settings = mapLibrarySettings(input as unknown as Parameters<typeof mapLibrarySettings>[0])
       expect(settings.coverAspectRatio).toBeDefined()
       expect(typeof settings.disableWatcher).toBe('boolean')
     }

@@ -21,11 +21,11 @@ interface DetailRowProps {
 function DetailRow({ label, value, filterKey, libraryId }: DetailRowProps) {
   if (!value || (Array.isArray(value) && value.length === 0)) return null
 
-  let displayValue = null
+  let displayValue: React.ReactNode
   if (filterKey) {
     // Create library filter links
     if (Array.isArray(value)) {
-      displayValue = (value as string[]).map((v, index) => (
+      displayValue = value.map((v, index) => (
         <Fragment key={v}>
           <a
             href={`/library/${libraryId}/items?filter=${filterKey}.${filterEncode(v)}`}
@@ -33,7 +33,7 @@ function DetailRow({ label, value, filterKey, libraryId }: DetailRowProps) {
           >
             {v}
           </a>
-          {index < (value as string[]).length - 1 && <span className="text-foreground">, </span>}
+          {index < value.length - 1 && <span className="text-foreground">, </span>}
         </Fragment>
       ))
     } else {
@@ -52,7 +52,7 @@ function DetailRow({ label, value, filterKey, libraryId }: DetailRowProps) {
 
   return (
     <div className="flex">
-      <div className="text-foreground-subdued w-32 text-sm font-medium uppercase">{label}</div>
+      <div className="w-32 text-sm font-medium text-foreground-subdued uppercase">{label}</div>
       <div className="flex-1 text-base">{displayValue}</div>
     </div>
   )
@@ -60,12 +60,9 @@ function DetailRow({ label, value, filterKey, libraryId }: DetailRowProps) {
 
 function getLibraryItemDuration(libraryItem: BookLibraryItem | PodcastLibraryItem): number | undefined {
   if (libraryItem.mediaType === 'book') {
-    return (libraryItem.media as BookLibraryItem['media'])?.duration
+    return libraryItem.media?.duration
   } else if (libraryItem.mediaType === 'podcast') {
-    return (libraryItem.media as PodcastLibraryItem['media'])?.episodes?.reduce(
-      (acc, episode) => acc + (episode.audioTrack?.duration || 0),
-      0
-    )
+    return libraryItem.media?.episodes?.reduce((acc, episode) => acc + (episode.audioTrack?.duration || 0), 0)
   }
   return undefined
 }

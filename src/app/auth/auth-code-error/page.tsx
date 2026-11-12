@@ -16,10 +16,10 @@ export default function AuthCodeErrorPage() {
         icon="alert-triangle"
       >
         <div className="mb-6 flex flex-col gap-3">
-          <p className="text-foreground-muted text-sm">
+          <p className="text-sm text-foreground-muted">
             Email links are single-use and expire quickly. Please request a new link:
           </p>
-          <ul className="text-foreground-muted list-inside list-disc space-y-1 text-left text-sm">
+          <ul className="list-inside list-disc space-y-1 text-left text-sm text-foreground-muted">
             <li>
               <Link href="/forgot-password" className="text-accent hover:underline">
                 Request a new password reset link
@@ -31,7 +31,7 @@ export default function AuthCodeErrorPage() {
               </Link>
             </li>
           </ul>
-          <p className="text-foreground-muted text-sm">If the link still fails, sign in with your password instead.</p>
+          <p className="text-sm text-foreground-muted">If the link still fails, sign in with your password instead.</p>
         </div>
 
         <Btn to="/login" className="w-full">

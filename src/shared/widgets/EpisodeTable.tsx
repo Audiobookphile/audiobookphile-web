@@ -138,7 +138,7 @@ export default function EpisodeTable({
         return
       }
 
-      playItem({
+      void playItem({
         libraryItem,
         episodeId: episode.id,
         queueItems: [],
@@ -185,12 +185,14 @@ export default function EpisodeTable({
 
     startFetchingRSSTransition(async () => {
       try {
-        const payload = await fetchPodcastFeedAction(feedUrl)
-        if (!payload || !(payload as any).podcast?.episodes?.length) {
+        const payload = (await fetchPodcastFeedAction(feedUrl)) as {
+          podcast?: { episodes?: RssPodcastEpisode[] }
+        } | null
+        if (!payload?.podcast?.episodes?.length) {
           showToast(t('ToastPodcastNoEpisodesInFeed'), { type: 'info' })
           return
         }
-        setPodcastFeedEpisodes((payload as any).podcast.episodes)
+        setPodcastFeedEpisodes(payload.podcast.episodes)
         setIsEpisodeFeedModalOpen(true)
       } catch (error) {
         console.error('Failed to get feed', error)
@@ -222,7 +224,7 @@ export default function EpisodeTable({
       startTransition(async () => {
         try {
           await deleteLibraryItemMediaEpisodeAction(libraryItem.id, episode.id, hardDelete)
-        } catch (err: any) {
+        } catch (err) {
           console.error('Failed to remove episode', err)
           showToast(t('ToastItemDeletedFailed'), { type: 'error' })
         }
@@ -315,12 +317,12 @@ export default function EpisodeTable({
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <p className="text-xl font-medium">{t('HeaderEpisodes')}</p>
         {count !== undefined && (
-          <div className="bg-foreground/10 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full">
+          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-foreground/10">
             <span className="font-mono text-sm">{count}</span>
           </div>
         )}
         {badge && (
-          <div className="bg-foreground/10 flex h-6 items-center justify-center rounded-full px-3 text-sm">
+          <div className="flex h-6 items-center justify-center rounded-full bg-foreground/10 px-3 text-sm">
             <span className="font-mono">{badge}</span>
           </div>
         )}

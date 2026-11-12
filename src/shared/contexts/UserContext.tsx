@@ -15,7 +15,16 @@ export interface AppUser {
   id: string
   email: string | undefined
   username: string
-  userType: 'admin' | 'user' | string
+  /**
+   * 'admin' and 'user' are the values the application checks for, and
+   * 'root' is one the database has been seen to hold. The column itself is
+   * unconstrained -- it is `string | null` in the schema -- so the honest
+   * type is `string`.
+   *
+   * This used to be written as `'admin' | 'user' | string`, which reads as a
+   * constraint and is not one: the trailing `string` absorbs the other two.
+   */
+  userType: string
   language: string
   theme: string
   defaultLibraryId: string | null

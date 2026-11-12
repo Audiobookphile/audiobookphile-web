@@ -84,7 +84,7 @@ function AuthorCard(props: AuthorCardProps) {
     (event: React.MouseEvent) => {
       event.preventDefault()
       event.stopPropagation()
-      handleQuickMatch(author)
+      void handleQuickMatch(author)
     },
     [author, handleQuickMatch]
   )

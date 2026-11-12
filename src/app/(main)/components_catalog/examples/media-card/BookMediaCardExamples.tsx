@@ -280,18 +280,16 @@ export function BookMediaCardExamples({ selectedBook }: BookMediaCardExamplesPro
                   dateFormat={defaultProps.dateFormat}
                   timeFormat={defaultProps.timeFormat}
                   showSubtitles={defaultProps.showSubtitles}
-                  libraryItem={
-                    {
-                      ...selectedBook,
-                      collapsedSeries: {
-                        id: 'series-123',
-                        name: 'The Example Series',
-                        nameIgnorePrefix: 'Example Series',
-                        numBooks: 5,
-                        seriesSequenceList: '1-3',
-                      },
-                    } as BookLibraryItem
-                  }
+                  libraryItem={{
+                    ...selectedBook,
+                    collapsedSeries: {
+                      id: 'series-123',
+                      name: 'The Example Series',
+                      nameIgnorePrefix: 'Example Series',
+                      numBooks: 5,
+                      seriesSequenceList: '1-3',
+                    },
+                  }}
                   isSelectionMode={isBookSelectionMode}
                   selected={selectedBookId === selectedBook.id}
                   onSelect={handleBookSelect}
@@ -326,18 +324,16 @@ export function BookMediaCardExamples({ selectedBook }: BookMediaCardExamplesPro
                   dateFormat={defaultProps.dateFormat}
                   timeFormat={defaultProps.timeFormat}
                   showSubtitles={defaultProps.showSubtitles}
-                  libraryItem={
-                    {
-                      ...selectedBook,
-                      collapsedSeries: {
-                        id: 'series-456',
-                        name: 'The Example Series',
-                        nameIgnorePrefix: 'Example Series',
-                        numBooks: 5,
-                        seriesSequenceList: undefined,
-                      },
-                    } as BookLibraryItem
-                  }
+                  libraryItem={{
+                    ...selectedBook,
+                    collapsedSeries: {
+                      id: 'series-456',
+                      name: 'The Example Series',
+                      nameIgnorePrefix: 'Example Series',
+                      numBooks: 5,
+                      seriesSequenceList: undefined,
+                    },
+                  }}
                   isSelectionMode={isBookSelectionMode}
                   selected={selectedBookId === selectedBook.id}
                   onSelect={handleBookSelect}
@@ -424,12 +420,10 @@ export function BookMediaCardExamples({ selectedBook }: BookMediaCardExamplesPro
               <div ref={bookMissingCardRef}>
                 <BookMediaCard
                   {...defaultProps}
-                  libraryItem={
-                    {
-                      ...selectedBook,
-                      isMissing: true,
-                    } as BookLibraryItem
-                  }
+                  libraryItem={{
+                    ...selectedBook,
+                    isMissing: true,
+                  }}
                   bookshelfView={BookshelfView.DETAIL}
                   isSelectionMode={isBookSelectionMode}
                   selected={selectedBookId === selectedBook.id}
@@ -447,15 +441,13 @@ export function BookMediaCardExamples({ selectedBook }: BookMediaCardExamplesPro
               <div ref={bookNoCoverCardRef}>
                 <BookMediaCard
                   {...defaultProps}
-                  libraryItem={
-                    {
-                      ...selectedBook,
-                      media: {
-                        ...selectedBook.media,
-                        coverPath: undefined,
-                      },
-                    } as BookLibraryItem
-                  }
+                  libraryItem={{
+                    ...selectedBook,
+                    media: {
+                      ...selectedBook.media,
+                      coverPath: undefined,
+                    },
+                  }}
                   bookshelfView={BookshelfView.DETAIL}
                   isSelectionMode={isBookSelectionMode}
                   selected={selectedBookId === selectedBook.id}
@@ -473,19 +465,17 @@ export function BookMediaCardExamples({ selectedBook }: BookMediaCardExamplesPro
               <div>
                 <BookMediaCard
                   {...defaultProps}
-                  libraryItem={
-                    {
-                      ...selectedBook,
-                      media: {
-                        ...selectedBook.media,
-                        metadata: {
-                          ...selectedBook.media.metadata,
-                          title:
-                            'The Incredibly Long and Extraordinarily Detailed Title of This Audiobook That Should Definitely Be Truncated',
-                        },
+                  libraryItem={{
+                    ...selectedBook,
+                    media: {
+                      ...selectedBook.media,
+                      metadata: {
+                        ...selectedBook.media.metadata,
+                        title:
+                          'The Incredibly Long and Extraordinarily Detailed Title of This Audiobook That Should Definitely Be Truncated',
                       },
-                    } as BookLibraryItem
-                  }
+                    },
+                  }}
                   bookshelfView={BookshelfView.DETAIL}
                   isSelectionMode={isBookSelectionMode}
                   selected={selectedBookId === selectedBook.id}

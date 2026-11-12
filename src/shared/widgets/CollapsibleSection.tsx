@@ -142,7 +142,7 @@ export default function CollapsibleSection({
         ) : (
           <button
             type="button"
-            className="flex min-w-0 flex-1 items-center rounded-lg text-left text-inherit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            className="flex min-w-0 flex-1 items-center rounded-lg text-left text-inherit focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent focus-visible:outline-none"
             aria-expanded={isExpanded}
             aria-controls={contentId}
             onClick={handleToggle}

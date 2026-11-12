@@ -48,7 +48,7 @@ export default function ViewEpisodeModal({ isOpen, onClose, episode, libraryItem
     }
 
     return description
-      .replace(timeMarkerLinkRegex, (match, href, displayTime) => {
+      .replace(timeMarkerLinkRegex, (match: string, _href: string, displayTime: string) => {
         const timeMatch = displayTime.match(timeMarkerRegex)
         if (!timeMatch) return match
         const time = timeMatch[0]
@@ -70,7 +70,7 @@ export default function ViewEpisodeModal({ isOpen, onClose, episode, libraryItem
         if (timeStr) {
           const time = parseInt(timeStr, 10)
           if (!isNaN(time) && episode && libraryItem) {
-            playItem({
+            void playItem({
               libraryItem,
               episodeId: episode.id,
               startTime: time,
@@ -96,7 +96,7 @@ export default function ViewEpisodeModal({ isOpen, onClose, episode, libraryItem
           <p className="truncate text-3xl text-white">{t('LabelEpisode')}</p>
         </div>
       }
-      className="bg-bg relative max-h-[80vh] w-full overflow-y-auto rounded-lg p-4 text-sm shadow-lg"
+      className="relative max-h-[80vh] w-full overflow-y-auto rounded-lg bg-bg p-4 text-sm shadow-lg"
     >
       <div className="mb-4 flex">
         <div className="relative h-12 w-12 flex-shrink-0">
@@ -104,7 +104,7 @@ export default function ViewEpisodeModal({ isOpen, onClose, episode, libraryItem
         </div>
         <div className="grow overflow-hidden px-2">
           <p className="mb-1 truncate text-base">{podcastTitle}</p>
-          <p className="text-foreground-muted truncate text-xs">{podcastAuthor}</p>
+          <p className="truncate text-xs text-foreground-muted">{podcastAuthor}</p>
         </div>
       </div>
 
@@ -123,7 +123,7 @@ export default function ViewEpisodeModal({ isOpen, onClose, episode, libraryItem
         <p className="mb-2">{t('MessageNoDescription')}</p>
       )}
 
-      <div className="bg-border my-4 h-px w-full" />
+      <div className="my-4 h-px w-full bg-border" />
 
       <div className="flex flex-wrap items-center gap-y-4">
         <div className="w-full grow sm:w-auto">

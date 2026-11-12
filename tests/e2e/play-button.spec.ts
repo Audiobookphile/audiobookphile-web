@@ -21,7 +21,7 @@
  * fixture.
  */
 import { expect, test } from './fixtures'
-import { dismissPlayerIfOpen, findPlayableCard, gotoStable, playerPanel } from './helpers/playableItem'
+import { dismissPlayerIfOpen, findPlayableCard, gotoStable, playerPanel, startPlayback } from './helpers/playableItem'
 
 // The player chrome has pre-existing WCAG findings; this spec is about
 // behaviour, not a11y.
@@ -90,12 +90,15 @@ test('the item page cover overlay Play button starts playback', async ({ adminPa
 
   // Regression guard #4: the cover overlay's handler must not be a stub.
   // Clicking used to succeed and do nothing at all.
-  await playButton.click()
-
-  await expect(
-    playerPanel(adminPage),
-    'Clicking Play on the item page did not mount the player panel. The handler is probably still a no-op stub.'
-  ).toBeVisible({ timeout: 45_000 })
+  //
+  // The retry inside startPlayback covers a session round trip that came
+  // back 500 -- the backend serves the session as well as the library, and
+  // it returns 500s under load. The guard itself is unchanged: a handler
+  // that is genuinely a stub fails every attempt.
+  await startPlayback(adminPage, {
+    failureMessage:
+      'Clicking Play on the item page did not mount the player panel. The handler is probably still a no-op stub.',
+  })
 
   // The panel must describe the item we opened, not an empty/stale queue.
   await expect(playerPanel(adminPage).getByText(adminPage.url().split('/').pop() ?? '', { exact: false })).toHaveCount(

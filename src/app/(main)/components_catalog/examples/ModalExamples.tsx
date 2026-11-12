@@ -233,7 +233,7 @@ export function ModalExamples() {
                     </p>
                   </div>
                 </div>
-                <div className="border-border flex justify-end border-t pt-4">
+                <div className="flex justify-end border-t border-border pt-4">
                   <Btn onClick={() => setIsResponsiveModalOpen(false)} color="bg-gray-600">
                     Close
                   </Btn>

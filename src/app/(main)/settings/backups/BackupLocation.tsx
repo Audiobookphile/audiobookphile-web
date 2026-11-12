@@ -74,18 +74,18 @@ export default function BackupLocation({ backupLocation, backupPathEnvSet }: Bac
               {t('ButtonCancel')}
             </Btn>
           </div>
-          <p className="text-foreground-subdued text-sm">
+          <p className="text-sm text-foreground-subdued">
             {backupPathEnvSet ? t('MessageBackupsLocationNoEditNote') : t('MessageBackupsLocationEditNote')}
           </p>
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <p className="text-foreground text-base break-all">{backupLocation}</p>
+          <p className="text-base break-all text-foreground">{backupLocation}</p>
           <IconBtn
             ariaLabel={t('LabelEdit')}
             borderless
             size="small"
-            className="hover:text-primary cursor-pointer text-white/40 transition-colors"
+            className="cursor-pointer text-white/40 transition-colors hover:text-primary"
             onClick={() => {
               setIsEditing(true)
             }}

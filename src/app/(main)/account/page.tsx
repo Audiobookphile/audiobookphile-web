@@ -57,7 +57,7 @@ export default async function AccountPage() {
         <div className="w-full">
           <ThemeSelector value={currentTheme} label={t('LabelTheme')} />
         </div>
-        <div className="bg-border h-px w-full" />
+        <div className="h-px w-full bg-border" />
         <div className="flex w-full items-center justify-between">
           <Btn to="/account/change-password">{t('LabelChangePassword')}</Btn>
           <LogoutBtn />

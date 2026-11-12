@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { getRequestConfig } from 'next-intl/server'
+import { TIME_ZONE } from './timeZone'
 
 export default getRequestConfig(async () => {
   // Read locale from cookies with priority:
@@ -30,5 +31,14 @@ export default getRequestConfig(async () => {
   return {
     locale,
     messages,
+    // next-intl v4 requires a time zone, and it warns on the server when
+    // there is no global default -- which it did on every render, because
+    // the client providers in this app do not pass one either. The warning
+    // is next-intl saying that the server render and the browser render may
+    // disagree, which React reports as a hydration mismatch.
+    //
+    // See src/shared/lib/timeZone.ts for why a fixed zone is the only safe
+    // default, and why UTC.
+    timeZone: TIME_ZONE,
   }
 })

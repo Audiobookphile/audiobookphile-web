@@ -1,10 +1,10 @@
-@import "tailwindcss" source(none);
-@source "../"; /* used for launching nextjs from another directory */
-@source "../../cypress/tests/**/*.cy.tsx";
+@import 'tailwindcss' source(none);
+@source '../'; /* used for launching nextjs from another directory */
+@source '../../cypress/tests/**/*.cy.tsx';
 
-@import "./tokens.generated.css"; /* generated from design-system/tokens.json */
-@import "./app.css";
-@import "./themes.css";
+@import './tokens.generated.css'; /* generated from design-system/tokens.json */
+@import './app.css';
+@import './themes.css';
 
 :root {
   --header-height: 64px;

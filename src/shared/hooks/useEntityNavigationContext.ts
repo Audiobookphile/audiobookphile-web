@@ -19,7 +19,7 @@ export function useEntityNavigationContext(navigationContext: EntityNavigationCo
   }, [isOpen, initialIndex])
 
   const safeIndex = Math.min(Math.max(0, navIndex), Math.max(0, entityIds.length - 1))
-  const currentEntityId = entityIds.length > 0 ? entityIds[safeIndex]! : null
+  const currentEntityId = entityIds.length > 0 ? entityIds[safeIndex] : null
   const canGoPrev = entityIds.length > 0 && safeIndex > 0
   const canGoNext = entityIds.length > 0 && safeIndex < entityIds.length - 1
 

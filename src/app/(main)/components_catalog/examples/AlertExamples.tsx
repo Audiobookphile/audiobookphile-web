@@ -21,7 +21,7 @@ export function AlertExamples() {
           &apos;warning&apos;, the alert will be focused when rendered), <Code>className</Code> (optional)
         </p>
         <p className="mb-2">
-          <span className="font-bold">Note:</span> Uses Material Symbols icons.
+          <span className="font-bold">Note:</span> Uses lucide-react icons.
         </p>
         <p className="mb-2">
           <span className="font-bold">Note:</span> <Code>autoFocus</Code> is always set to false in the examples, so as
@@ -100,7 +100,7 @@ export function AlertExamples() {
               </div>
               <button
                 type="button"
-                className="bg-warning hover:bg-warning/90 ml-4 rounded-md px-4 py-2 text-sm font-medium text-gray-900 transition-colors"
+                className="ml-4 rounded-md bg-warning px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-warning/90"
               >
                 Update Now
               </button>

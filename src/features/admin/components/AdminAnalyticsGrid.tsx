@@ -84,17 +84,17 @@ export function AdminAnalyticsGrid({ data }: { data: AdminAnalyticsData }) {
         <motion.div
           key={kpi.title}
           variants={itemVariants}
-          className="border-border bg-primary/80 hover:border-accent/40 hover:bg-primary-hover relative overflow-hidden rounded-2xl border p-6 shadow-xl backdrop-blur-md transition-all"
+          className="relative overflow-hidden rounded-2xl border border-border bg-primary/80 p-6 shadow-xl backdrop-blur-md transition-all hover:border-accent/40 hover:bg-primary-hover"
         >
           <div className="flex items-center justify-between">
-            <p className="text-foreground-muted text-sm font-medium">{kpi.title}</p>
+            <p className="text-sm font-medium text-foreground-muted">{kpi.title}</p>
             <div className={`rounded-lg p-2 ${kpi.color}/15`}>
               <kpi.icon className={`h-5 w-5 ${kpi.iconColor}`} />
             </div>
           </div>
 
           <div className="mt-4 flex flex-col gap-1">
-            <h2 className="text-foreground text-4xl font-bold tracking-tight">
+            <h2 className="text-4xl font-bold tracking-tight text-foreground">
               {kpi.value === null || kpi.value === undefined ? '—' : kpi.value.toLocaleString()}
             </h2>
             <span

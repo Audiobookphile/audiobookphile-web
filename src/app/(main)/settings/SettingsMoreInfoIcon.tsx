@@ -13,7 +13,7 @@ export default function SettingsMoreInfoIcon(props: { moreInfoUrl: string }) {
       <Link
         href={props.moreInfoUrl}
         target="_blank"
-        className="hover:text-primary leading-0 text-white/40 transition-colors"
+        className="leading-0 text-white/40 transition-colors hover:text-primary"
       >
         <HelpCircle size={18} strokeWidth={2.5} />
       </Link>

@@ -7,10 +7,13 @@ import { fetchBookCover } from '@/shared/lib/coverFetch'
  * Server Action: Upload a cover image file for a library item
  */
 export async function uploadCoverAction(libraryItemId: string, base64Data: string, fileName: string) {
-  const buffer = Buffer.from(base64Data, 'base64')
+  // atob + Uint8Array instead of Buffer: the base64 payload arrives as a raw
+  // string (btoa on the client) and decoding it this way works on every
+  // runtime this action can land on — Bun, the edge runtime, or a browser.
+  const bytes = Uint8Array.from(atob(base64Data), (char) => char.charCodeAt(0))
   const extension = fileName.split('.').pop() || 'jpg'
   const contentType = `image/${extension === 'jpg' ? 'jpeg' : extension}`
-  const file = new File([buffer], fileName, { type: contentType })
+  const file = new File([bytes], fileName, { type: contentType })
   return uploadCover(libraryItemId, file)
 }
 

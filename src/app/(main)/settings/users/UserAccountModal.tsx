@@ -126,10 +126,10 @@ export default function UserAccountModal({ isOpen, user, onClose, onSubmit, onUn
   useEffect(() => {
     if (isOpen && user) {
       if (!user.permissions.accessAllLibraries) {
-        loadLibraries()
+        void loadLibraries()
       }
       if (!user.permissions.accessAllTags) {
-        loadTags()
+        void loadTags()
       }
     }
   }, [isOpen, user, loadLibraries, loadTags])
@@ -179,10 +179,10 @@ export default function UserAccountModal({ isOpen, user, onClose, onSubmit, onUn
 
     // When disabling "access all", load the data if not already loaded
     if (key === 'accessAllLibraries' && !value) {
-      loadLibraries()
+      void loadLibraries()
     }
     if (key === 'accessAllTags' && !value) {
-      loadTags()
+      void loadTags()
     }
   }
 
@@ -290,7 +290,7 @@ export default function UserAccountModal({ isOpen, user, onClose, onSubmit, onUn
           {/* Permissions Section */}
           {!isRootUser && (
             <>
-              <div className="border-border mt-6 border-t pt-6">
+              <div className="mt-6 border-t border-border pt-6">
                 <h3 className="mb-4 text-lg font-semibold">{t('HeaderPermissions')}</h3>
                 <div>
                   {basicPermissionsList.map(({ key, label }) => (
@@ -388,7 +388,7 @@ export default function UserAccountModal({ isOpen, user, onClose, onSubmit, onUn
         </div>
 
         {/* Footer Actions */}
-        <div className="border-border border-t px-4 py-3">
+        <div className="border-t border-border px-4 py-3">
           <div className="flex items-center justify-end gap-4">
             {/* Unlink OpenID button */}
             {isEditing && user?.hasOpenIDLink && (

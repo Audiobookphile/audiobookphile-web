@@ -87,7 +87,7 @@ export default function SharePlayer({ slug, startTime: startTimeParam }: SharePl
       }
     }
 
-    fetchShareData()
+    void fetchShareData()
     return () => {
       cancelled = true
     }
@@ -462,7 +462,7 @@ export default function SharePlayer({ slug, startTime: startTimeParam }: SharePl
   if (isLoading) {
     return (
       <div
-        className="text-foreground flex h-dvh w-full items-center justify-center bg-neutral-900"
+        className="flex h-dvh w-full items-center justify-center bg-neutral-900 text-foreground"
         role="status"
         aria-live="polite"
       >
@@ -476,7 +476,7 @@ export default function SharePlayer({ slug, startTime: startTimeParam }: SharePl
 
   if (fetchError || !shareData || !playbackSession) {
     return (
-      <div className="text-foreground flex h-dvh w-full items-center justify-center bg-neutral-900">
+      <div className="flex h-dvh w-full items-center justify-center bg-neutral-900 text-foreground">
         <div className="flex flex-col items-center gap-6 rounded-3xl border border-white/10 bg-white/5 p-12 backdrop-blur-xl">
           <AlertCircle size={64} className="text-error drop-shadow-[0_0_15px_rgba(var(--error-rgb),0.5)]" />
           <p className="text-2xl font-black tracking-widest text-white/90 uppercase">
@@ -504,7 +504,7 @@ export default function SharePlayer({ slug, startTime: startTimeParam }: SharePl
           )}
 
           {/* Title */}
-          <p className="text-foreground mb-1 line-clamp-2 text-center text-2xl font-semibold lg:text-3xl">
+          <p className="mb-1 line-clamp-2 text-center text-2xl font-semibold text-foreground lg:text-3xl">
             {playbackSession.displayTitle || 'No title'}
           </p>
 
@@ -590,7 +590,7 @@ export default function SharePlayer({ slug, startTime: startTimeParam }: SharePl
                 size="custom"
                 loading={playerState === PlayerState.LOADING}
                 outlined={false}
-                className="bg-accent h-16 w-16 rounded-full text-white shadow-[0_0_20px_rgba(245,158,11,0.3)] transition-all hover:scale-110 active:scale-95"
+                className="h-16 w-16 rounded-full bg-accent text-white shadow-[0_0_20px_rgba(245,158,11,0.3)] transition-all hover:scale-110 active:scale-95"
                 onClick={playPause}
                 ariaLabel={isPlaying ? 'Pause' : 'Play'}
               >

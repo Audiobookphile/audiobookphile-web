@@ -55,7 +55,7 @@ export default function CollectionClient({ collection }: CollectionClientProps) 
         <CollectionGroupCover books={collection.books ?? []} width={coverWidth * 2} height={coverHeight} />
         <div className="flex w-full min-w-0 flex-1 flex-col gap-2">
           <div className="flex min-w-0 items-center gap-4">
-            <h1 className="text-foreground min-w-0 flex-1 truncate text-2xl font-bold">{collection.name}</h1>
+            <h1 className="min-w-0 flex-1 truncate text-2xl font-bold text-foreground">{collection.name}</h1>
             {showHeaderActions && (
               <div className="flex shrink-0 items-center gap-1">
                 {userCanUpdate && (
@@ -77,7 +77,7 @@ export default function CollectionClient({ collection }: CollectionClientProps) 
                     items={moreMenuItems}
                     processing={processing}
                     onAction={handleMoreAction}
-                    className="border-border bg-primary text-button-foreground hover:not-disabled:text-button-foreground mx-0.5 h-9 w-9 border"
+                    className="mx-0.5 h-9 w-9 border border-border bg-primary text-button-foreground hover:not-disabled:text-button-foreground"
                   />
                 )}
               </div>

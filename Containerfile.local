@@ -2,19 +2,27 @@
 # Local development build - optimized for fast iteration
 # Build: podman build -f Containerfile.local -t audiobookphile-local .
 # Run: podman run -p 3000:3000 audiobookphile-local
+#
+# Bun only: no Node.js runtime ships in this image.
 
 ### STAGE 0: Install dependencies ###
-FROM oven/bun:1.3.9-alpine AS deps
+FROM oven/bun:canary-alpine AS deps
 
 WORKDIR /app
 
-COPY package.json bun.lock .npmrc ./
+COPY package.json bun.lock bunfig.toml ./
 
-# Override engine-strict for container builds
-RUN echo "" > .npmrc && bun install --frozen-lockfile
+# Two files have to be here before the install, not after it: the security
+# scanner bunfig.toml configures (`bun install` refuses to run when it is
+# missing) and the project's own `prepare` lifecycle hook, which `bun install`
+# runs when the install finishes. Both are self-contained.
+COPY scripts/security-scanner.ts scripts/prepare.ts ./scripts/
+
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
 
 ### STAGE 1: Build ###
-FROM oven/bun:1.3.9-alpine AS builder
+FROM oven/bun:canary-alpine AS builder
 
 WORKDIR /app
 
@@ -29,10 +37,11 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-RUN echo "" > .npmrc && bun run build
+RUN bun run build
 
 ### STAGE 2: Runtime ###
-FROM node:22-alpine AS runner
+# Bun only — the image ships no Node.js runtime.
+FROM oven/bun:canary-alpine AS runner
 
 WORKDIR /app
 
@@ -40,13 +49,13 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user (Podman best practice)
-RUN addgroup --system --gid 1001 nodejs \
+RUN addgroup --system --gid 1001 bun \
  && adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:bun /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:bun /app/.next/static ./.next/static
 
 USER nextjs
 
@@ -57,4 +66,4 @@ ENV HOSTNAME=0.0.0.0
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://localhost:3000/ || exit 1
 
-CMD ["node", "server.js"]
+CMD ["bun", "server.js"]

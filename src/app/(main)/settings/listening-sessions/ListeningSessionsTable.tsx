@@ -149,7 +149,7 @@ export default function ListeningSessionsTable({
     setSortBy(nextSortBy)
     setSortDesc(nextSortDesc)
 
-    loadSessions(currentPage, { sortBy: nextSortBy, sortDesc: nextSortDesc })
+    void loadSessions(currentPage, { sortBy: nextSortBy, sortDesc: nextSortDesc })
   }
 
   const handleSetSelectionForAll = (selected: boolean) => {
@@ -237,6 +237,13 @@ export default function ListeningSessionsTable({
 
   const handleStartPlaybackAtTime = async () => {
     if (!resumePlaybackSession) return
+    setStartingPlayback(true)
+    try {
+      setShowResumePlaybackPrompt(false)
+      setResumePlaybackSession(null)
+    } finally {
+      setStartingPlayback(false)
+    }
   }
 
   const listeningSessionColumns = useMemo<DataTableColumn<PlaybackSession>[]>(
@@ -247,8 +254,8 @@ export default function ListeningSessionsTable({
         sortable: true,
         accessor: (session) => (
           <div className="min-w-0 py-1">
-            <TruncatingTooltipText text={session.displayTitle} className="text-foreground text-xs" />
-            <TruncatingTooltipText text={session.displayAuthor} className="text-foreground-muted text-xs" />
+            <TruncatingTooltipText text={session.displayTitle} className="text-xs text-foreground" />
+            <TruncatingTooltipText text={session.displayAuthor} className="text-xs text-foreground-muted" />
           </div>
         ),
         headerClassName: 'w-auto text-start px-2',
@@ -311,7 +318,7 @@ export default function ListeningSessionsTable({
         sortable: true,
         accessor: (session) => (
           <Tooltip text={formatJsDatetime(new Date(session.updatedAt), dateFormat, timeFormat)} position="top">
-            <p className="text-foreground-muted text-xs">{getRelativeTime(session.updatedAt)}</p>
+            <p className="text-xs text-foreground-muted">{getRelativeTime(session.updatedAt)}</p>
           </Tooltip>
         ),
         headerClassName: 'w-24 hidden sm:table-cell text-left',
@@ -382,8 +389,8 @@ export default function ListeningSessionsTable({
               totalPages: Math.max(numPages, 1),
               rowsPerPage: itemsPerPage,
               rowsPerPageOptions: ITEMS_PER_PAGE_OPTIONS,
-              onPageChange: (page) => loadSessions(page - 1),
-              onRowsPerPageChange: handleUpdateItemsPerPage,
+              onPageChange: (page) => void loadSessions(page - 1),
+              onRowsPerPageChange: (value) => void handleUpdateItemsPerPage(value),
               rowsPerPageLabel: t('LabelRowsPerPage'),
               pageLabel,
             }}
@@ -395,7 +402,7 @@ export default function ListeningSessionsTable({
         {(deletingSessions || loading) && <LoadingIndicator />}
       </div>
 
-      {openListeningSessions.length > 0 && <div className="bg-border my-8 h-px w-full" />}
+      {openListeningSessions.length > 0 && <div className="my-8 h-px w-full bg-border" />}
 
       {openListeningSessions.length > 0 && <p className="my-4 text-lg">{t('HeaderOpenListeningSessions')}</p>}
       {openListeningSessions.length > 0 && (
@@ -407,7 +414,7 @@ export default function ListeningSessionsTable({
         />
       )}
 
-      {openShareListeningSessions.length > 0 && <div className="bg-border my-8 h-px w-full" />}
+      {openShareListeningSessions.length > 0 && <div className="my-8 h-px w-full bg-border" />}
 
       {openShareListeningSessions.length > 0 && <p className="my-4 text-lg">Open Share Listening Sessions</p>}
       {openShareListeningSessions.length > 0 && (
@@ -483,8 +490,8 @@ function SessionListTable({
         label: t('LabelItem'),
         accessor: (session) => (
           <div className="min-w-0 py-1">
-            <TruncatingTooltipText text={session.displayTitle} className="text-foreground text-xs" />
-            <TruncatingTooltipText text={session.displayAuthor} className="text-foreground-muted text-xs" />
+            <TruncatingTooltipText text={session.displayTitle} className="text-xs text-foreground" />
+            <TruncatingTooltipText text={session.displayAuthor} className="text-xs text-foreground-muted" />
           </div>
         ),
         headerClassName: 'w-32 text-left px-2',
@@ -541,7 +548,7 @@ function SessionListTable({
         label: t('LabelLastUpdate'),
         accessor: (session) => (
           <Tooltip text={formatJsDatetime(new Date(session.updatedAt), dateFormat, timeFormat)} position="top">
-            <p className="text-foreground-muted text-xs">{getRelativeTime(session.updatedAt)}</p>
+            <p className="text-xs text-foreground-muted">{getRelativeTime(session.updatedAt)}</p>
           </Tooltip>
         ),
         headerClassName: 'w-24 hidden sm:table-cell text-left px-2',

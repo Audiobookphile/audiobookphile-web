@@ -107,7 +107,7 @@ export default function AddCustomMetadataProviderModal({
           </div>
         </div>
 
-        <div className="border-border border-t px-4 py-3">
+        <div className="border-t border-border px-4 py-3">
           <div className="flex items-center justify-end">
             <Btn color="bg-success" disabled={processing} onClick={handleSubmit}>
               {t('ButtonAdd')}

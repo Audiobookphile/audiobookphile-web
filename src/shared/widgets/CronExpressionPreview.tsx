@@ -55,7 +55,7 @@ export default function CronExpressionPreview({
     >
       <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-[auto_1fr]">
         <div className="flex items-center gap-2">
-          <div className="bg-primary/20 border-primary/20 rounded-lg border p-1.5">
+          <div className="rounded-lg border border-primary/20 bg-primary/20 p-1.5">
             <Clock size={16} className="text-primary" />
           </div>
           <p className="text-[10px] font-black tracking-widest text-white/60 uppercase">{t('LabelSchedule')}</p>
@@ -65,7 +65,7 @@ export default function CronExpressionPreview({
         </p>
 
         <div className="flex items-center gap-2">
-          <div className="bg-success/20 border-success/20 rounded-lg border p-1.5">
+          <div className="rounded-lg border border-success/20 bg-success/20 p-1.5">
             <Calendar size={16} className="text-success" />
           </div>
           <p className="text-[10px] font-black tracking-widest text-white/60 uppercase">{t('LabelNextRun')}</p>

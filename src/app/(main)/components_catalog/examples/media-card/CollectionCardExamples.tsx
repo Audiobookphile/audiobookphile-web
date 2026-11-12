@@ -105,76 +105,72 @@ export function CollectionCardExamples({ collectionData }: CollectionCardExample
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Standard View</p>
               <CollectionCard
-                collection={
-                  {
-                    ...collectionData,
-                    rssFeed: {
-                      id: 'feed-demo',
-                      slug: 'collection-feed',
-                      entityId: collectionData.id,
-                      entityType: 'collection',
-                      entityUpdatedAt: Date.now(),
-                      coverPath: '/placeholder.png',
+                collection={{
+                  ...collectionData,
+                  rssFeed: {
+                    id: 'feed-demo',
+                    slug: 'collection-feed',
+                    entityId: collectionData.id,
+                    entityType: 'collection',
+                    entityUpdatedAt: Date.now(),
+                    coverPath: '/placeholder.png',
+                    feedUrl: 'https://example.com/feed',
+                    serverAddress: 'https://example.com',
+                    userId: 'demo-user',
+                    meta: {
+                      author: 'Demo',
+                      description: 'Demo feed',
+                      explicit: false,
                       feedUrl: 'https://example.com/feed',
-                      serverAddress: 'https://example.com',
-                      userId: 'demo-user',
-                      meta: {
-                        author: 'Demo',
-                        description: 'Demo feed',
-                        explicit: false,
-                        feedUrl: 'https://example.com/feed',
-                        imageUrl: 'https://example.com/image.png',
-                        language: 'en',
-                        link: 'https://example.com',
-                        ownerEmail: null,
-                        ownerName: null,
-                        preventIndexing: false,
-                        title: 'Collection Feed',
-                        type: 'episodic',
-                      },
-                      createdAt: Date.now(),
-                      updatedAt: Date.now(),
+                      imageUrl: 'https://example.com/image.png',
+                      language: 'en',
+                      link: 'https://example.com',
+                      ownerEmail: null,
+                      ownerName: null,
+                      preventIndexing: false,
+                      title: 'Collection Feed',
+                      type: 'episodic',
                     },
-                  } as Collection
-                }
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                  },
+                }}
                 bookshelfView={BookshelfView.STANDARD}
               />
             </div>
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Detail View</p>
               <CollectionCard
-                collection={
-                  {
-                    ...collectionData,
-                    rssFeed: {
-                      id: 'feed-demo-2',
-                      slug: 'collection-feed-2',
-                      entityId: collectionData.id,
-                      entityType: 'collection',
-                      entityUpdatedAt: Date.now(),
-                      coverPath: '/placeholder.png',
+                collection={{
+                  ...collectionData,
+                  rssFeed: {
+                    id: 'feed-demo-2',
+                    slug: 'collection-feed-2',
+                    entityId: collectionData.id,
+                    entityType: 'collection',
+                    entityUpdatedAt: Date.now(),
+                    coverPath: '/placeholder.png',
+                    feedUrl: 'https://example.com/feed2',
+                    serverAddress: 'https://example.com',
+                    userId: 'demo-user',
+                    meta: {
+                      author: 'Demo',
+                      description: 'Demo feed',
+                      explicit: false,
                       feedUrl: 'https://example.com/feed2',
-                      serverAddress: 'https://example.com',
-                      userId: 'demo-user',
-                      meta: {
-                        author: 'Demo',
-                        description: 'Demo feed',
-                        explicit: false,
-                        feedUrl: 'https://example.com/feed2',
-                        imageUrl: 'https://example.com/image2.png',
-                        language: 'en',
-                        link: 'https://example.com',
-                        ownerEmail: null,
-                        ownerName: null,
-                        preventIndexing: false,
-                        title: 'Collection Feed 2',
-                        type: 'episodic',
-                      },
-                      createdAt: Date.now(),
-                      updatedAt: Date.now(),
+                      imageUrl: 'https://example.com/image2.png',
+                      language: 'en',
+                      link: 'https://example.com',
+                      ownerEmail: null,
+                      ownerName: null,
+                      preventIndexing: false,
+                      title: 'Collection Feed 2',
+                      type: 'episodic',
                     },
-                  } as Collection
-                }
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                  },
+                }}
                 bookshelfView={BookshelfView.DETAIL}
               />
             </div>
@@ -185,17 +181,11 @@ export function CollectionCardExamples({ collectionData }: CollectionCardExample
           <div className="flex flex-wrap gap-4">
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Standard View</p>
-              <CollectionCard
-                collection={{ ...collectionData, books: [] } as Collection}
-                bookshelfView={BookshelfView.STANDARD}
-              />
+              <CollectionCard collection={{ ...collectionData, books: [] }} bookshelfView={BookshelfView.STANDARD} />
             </div>
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Detail View</p>
-              <CollectionCard
-                collection={{ ...collectionData, books: [] } as Collection}
-                bookshelfView={BookshelfView.DETAIL}
-              />
+              <CollectionCard collection={{ ...collectionData, books: [] }} bookshelfView={BookshelfView.DETAIL} />
             </div>
           </div>
         </Example>
@@ -207,14 +197,14 @@ export function CollectionCardExamples({ collectionData }: CollectionCardExample
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Standard View</p>
               <CollectionCard
-                collection={{ ...collectionData, books: collectionData.books?.slice(0, 1) } as Collection}
+                collection={{ ...collectionData, books: collectionData.books?.slice(0, 1) }}
                 bookshelfView={BookshelfView.STANDARD}
               />
             </div>
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Detail View</p>
               <CollectionCard
-                collection={{ ...collectionData, books: collectionData.books?.slice(0, 1) } as Collection}
+                collection={{ ...collectionData, books: collectionData.books?.slice(0, 1) }}
                 bookshelfView={BookshelfView.DETAIL}
               />
             </div>

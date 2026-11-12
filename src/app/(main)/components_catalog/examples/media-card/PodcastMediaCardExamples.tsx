@@ -5,7 +5,7 @@ import { useComponentsCatalog } from '@/shared/contexts/ComponentsCatalogContext
 import MediaCardSkeleton from '@/shared/widgets/media-card/MediaCardSkeleton'
 import PodcastEpisodeCard from '@/shared/widgets/media-card/PodcastEpisodeCard'
 import PodcastMediaCard from '@/shared/widgets/media-card/PodcastMediaCard'
-import { BookshelfView, EReaderDevice, PodcastEpisode, PodcastLibraryItem } from '@/types/api'
+import { BookshelfView, EReaderDevice, PodcastLibraryItem } from '@/types/api'
 import { Code, ComponentExamples, ComponentInfo, Example } from '../../ComponentExamples'
 import { DimensionComparison, Dimensions, useDimensionMeasurement } from './mediaCardExamplesUtils'
 
@@ -268,23 +268,21 @@ export function PodcastMediaCardExamples({ selectedPodcast }: PodcastMediaCardEx
               <div ref={podcastRecentEpisodeCardRef}>
                 <PodcastEpisodeCard
                   {...defaultProps}
-                  libraryItem={
-                    {
-                      ...selectedPodcast,
-                      recentEpisode: {
-                        libraryItemId: selectedPodcast.id,
-                        podcastId: selectedPodcast.id,
-                        id: 'episode-123',
-                        episode: '#42',
-                        title: 'Recent Episode Title',
-                        subtitle: 'Episode Subtitle',
-                        description: 'This is a recent episode',
-                        chapters: [],
-                        addedAt: Date.now(),
-                        updatedAt: Date.now(),
-                      } as PodcastEpisode,
-                    } as PodcastLibraryItem
-                  }
+                  libraryItem={{
+                    ...selectedPodcast,
+                    recentEpisode: {
+                      libraryItemId: selectedPodcast.id,
+                      podcastId: selectedPodcast.id,
+                      id: 'episode-123',
+                      episode: '#42',
+                      title: 'Recent Episode Title',
+                      subtitle: 'Episode Subtitle',
+                      description: 'This is a recent episode',
+                      chapters: [],
+                      addedAt: Date.now(),
+                      updatedAt: Date.now(),
+                    },
+                  }}
                   bookshelfView={BookshelfView.DETAIL}
                   isSelectionMode={isPodcastSelectionMode}
                   selected={selectedPodcastId === selectedPodcast.id}
@@ -391,15 +389,13 @@ export function PodcastMediaCardExamples({ selectedPodcast }: PodcastMediaCardEx
               <div ref={podcastNumEpisodesCardRef}>
                 <PodcastMediaCard
                   {...defaultProps}
-                  libraryItem={
-                    {
-                      ...selectedPodcast,
-                      media: {
-                        ...selectedPodcast.media,
-                        numEpisodes: 42,
-                      },
-                    } as PodcastLibraryItem
-                  }
+                  libraryItem={{
+                    ...selectedPodcast,
+                    media: {
+                      ...selectedPodcast.media,
+                      numEpisodes: 42,
+                    },
+                  }}
                   bookshelfView={BookshelfView.DETAIL}
                   isSelectionMode={isPodcastSelectionMode}
                   selected={selectedPodcastId === selectedPodcast.id}
@@ -431,12 +427,10 @@ export function PodcastMediaCardExamples({ selectedPodcast }: PodcastMediaCardEx
               <div ref={podcastNumEpisodesIncompleteCardRef}>
                 <PodcastMediaCard
                   {...defaultProps}
-                  libraryItem={
-                    {
-                      ...selectedPodcast,
-                      numEpisodesIncomplete: 5,
-                    } as PodcastLibraryItem
-                  }
+                  libraryItem={{
+                    ...selectedPodcast,
+                    numEpisodesIncomplete: 5,
+                  }}
                   bookshelfView={BookshelfView.DETAIL}
                   isSelectionMode={isPodcastSelectionMode}
                   selected={selectedPodcastId === selectedPodcast.id}

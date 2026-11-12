@@ -20,7 +20,7 @@ type Action<TDetails> =
 
 // Generic reducer factory
 
-export function createDetailsReducer<TDetails extends Record<string, any>>(
+export function createDetailsReducer<TDetails extends Record<string, unknown>>(
   batchAppendLogic?: (state: EditState<TDetails>, detailsToUpdate: Partial<TDetails>) => TDetails
 ) {
   return (state: EditState<TDetails>, action: Action<TDetails>): EditState<TDetails> => {
@@ -105,7 +105,7 @@ interface UseDetailsEditOptions<TDetails> {
   useLooseEquality?: boolean
 }
 
-export function useDetailsEdit<TDetails extends Record<string, any>>({
+export function useDetailsEdit<TDetails extends Record<string, unknown>>({
   metadata,
   tags,
   libraryItemId,

@@ -1,5 +1,3 @@
-import type { LibraryItem } from '@/types/api'
-
 /**
  * Build cover URL for a library item
  *

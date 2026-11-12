@@ -57,12 +57,10 @@ export default function AddToCollectionModal({
 
   const sortedCollections = useMemo((): CollectionRow[] => {
     return [...collections]
-      .map(
-        (c): CollectionRow => ({
-          ...c,
-          isBookIncluded: collectionHasItem(c, libraryItemId),
-        })
-      )
+      .map((c): CollectionRow => ({
+        ...c,
+        isBookIncluded: collectionHasItem(c, libraryItemId),
+      }))
       .sort((a, b) => {
         if (a.isBookIncluded !== b.isBookIncluded) {
           return a.isBookIncluded ? -1 : 1
@@ -84,7 +82,7 @@ export default function AddToCollectionModal({
       try {
         // TODO: This matches the legacy Vue implement, but we should be using pagination
         const res = await fetchCollectionsAction(libraryId, '')
-        if (!cancelled) setCollections(res.results as any)
+        if (!cancelled) setCollections(res.results)
       } catch (error) {
         if (!cancelled) {
           console.error('Failed to load collections', error)
@@ -209,7 +207,7 @@ export default function AddToCollectionModal({
                       key={collection.id}
                       className="relative flex items-center justify-start px-4 py-2 transition-colors hover:bg-white/10"
                     >
-                      {included && <div className="bg-success absolute start-0 top-0 z-10 h-full w-1" aria-hidden />}
+                      {included && <div className="absolute start-0 top-0 z-10 h-full w-1 bg-success" aria-hidden />}
                       <div className="w-20 max-w-20 shrink-0 text-center">
                         <CollectionGroupCover books={books} width={coverWidth} height={coverHeight} />
                       </div>
@@ -228,7 +226,7 @@ export default function AddToCollectionModal({
                             ariaLabel={t('ButtonRemove')}
                             size="auto"
                             outlined={false}
-                            className="bg-error/80 hover:bg-error h-9 min-w-10 px-3 text-white"
+                            className="h-9 min-w-10 bg-error/80 px-3 text-white hover:bg-error"
                             disabled={controlsDisabled}
                             onClick={() => handleRemove(collection)}
                           >
@@ -239,7 +237,7 @@ export default function AddToCollectionModal({
                             ariaLabel={t('ButtonAdd')}
                             size="auto"
                             outlined={false}
-                            className="bg-success/80 hover:bg-success h-9 min-w-10 px-3 text-white"
+                            className="h-9 min-w-10 bg-success/80 px-3 text-white hover:bg-success"
                             disabled={controlsDisabled}
                             onClick={() => handleAdd(collection)}
                             icon={Plus}
@@ -263,7 +261,7 @@ export default function AddToCollectionModal({
                         href="https://www.audiobookphile.org/guides/collections"
                         target="_blank"
                         rel="noreferrer"
-                        className="hover:text-primary inline-flex text-white/40 transition-colors"
+                        className="inline-flex text-white/40 transition-colors hover:text-primary"
                       >
                         <HelpCircle size={18} strokeWidth={2.5} />
                       </a>
@@ -273,7 +271,7 @@ export default function AddToCollectionModal({
               </div>
             )}
 
-            <div className="border-border h-px w-full border-t" />
+            <div className="h-px w-full border-t border-border" />
 
             <form onSubmit={handleCreateCollection}>
               <div className="flex items-center px-4 py-2 text-center">

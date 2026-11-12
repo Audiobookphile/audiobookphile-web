@@ -49,13 +49,13 @@ export default function CollapsibleTable({
   const countAriaLabel = useMemo(() => t('LabelItemsPlural', { count }), [count, t])
 
   return (
-    <div className="bg-primary/5 my-4 w-full overflow-hidden rounded-2xl border border-white/10 shadow-lg">
+    <div className="my-4 w-full overflow-hidden rounded-2xl border border-white/10 bg-primary/5 shadow-lg">
       <div className="flex w-full items-center gap-4 bg-white/5 px-6 py-4 backdrop-blur-md transition-colors">
         {keepOpen ? (
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <span className="text-foreground/80 truncate text-sm font-bold tracking-wider uppercase">{title}</span>
+            <span className="truncate text-sm font-bold tracking-wider text-foreground/80 uppercase">{title}</span>
             <span
-              className="bg-primary/20 text-primary flex h-6 w-8 items-center justify-center rounded-full text-[10px] font-black shadow-inner"
+              className="flex h-6 w-8 items-center justify-center rounded-full bg-primary/20 text-[10px] font-black text-primary shadow-inner"
               aria-label={countAriaLabel}
             >
               {count}
@@ -69,9 +69,9 @@ export default function CollapsibleTable({
             aria-expanded={isExpanded}
             aria-controls={`${id}-content`}
           >
-            <span className="text-foreground/80 truncate text-sm font-bold tracking-wider uppercase">{title}</span>
+            <span className="truncate text-sm font-bold tracking-wider text-foreground/80 uppercase">{title}</span>
             <span
-              className="bg-primary/20 text-primary flex h-6 w-8 items-center justify-center rounded-full text-[10px] font-black shadow-inner"
+              className="flex h-6 w-8 items-center justify-center rounded-full bg-primary/20 text-[10px] font-black text-primary shadow-inner"
               aria-label={countAriaLabel}
             >
               {count}

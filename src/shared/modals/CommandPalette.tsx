@@ -42,7 +42,7 @@ export default function CommandPalette() {
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
-      handleSearch()
+      void handleSearch()
     }, 300)
     return () => clearTimeout(timer)
   }, [searchQuery, handleSearch])
@@ -133,7 +133,7 @@ export default function CommandPalette() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="bg-background/80 fixed inset-0 backdrop-blur-sm"
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm"
           onClick={() => setIsOpen(false)}
         />
 
@@ -143,14 +143,14 @@ export default function CommandPalette() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -20 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="bg-primary relative mx-4 w-full max-w-2xl overflow-hidden rounded-xl border border-white/10 shadow-2xl"
+          className="relative mx-4 w-full max-w-2xl overflow-hidden rounded-xl border border-white/10 bg-primary shadow-2xl"
         >
           {/* Search Input */}
           <div className="relative flex items-center border-b border-white/10 px-4 py-4">
-            <Search className="text-foreground-muted mr-3 h-5 w-5" />
+            <Search className="mr-3 h-5 w-5 text-foreground-muted" />
             <input
               ref={inputRef}
-              className="text-foreground placeholder:text-foreground-muted flex-1 bg-transparent text-lg outline-none"
+              className="flex-1 bg-transparent text-lg text-foreground outline-none placeholder:text-foreground-muted"
               placeholder={useSemanticSearch ? "Describe what you're looking for..." : t('PlaceholderSearch') + '...'}
               value={searchQuery}
               onChange={(e) => {
@@ -159,14 +159,14 @@ export default function CommandPalette() {
               }}
             />
             {isSearching && (
-              <div className="border-foreground mr-3 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+              <div className="mr-3 h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
             )}
 
             {/* Semantic Search Toggle */}
             <button
               onClick={() => {
                 setUseSemanticSearch(!useSemanticSearch)
-                if (searchQuery) handleSearch()
+                if (searchQuery) void handleSearch()
               }}
               className={mergeClasses(
                 'mr-3 flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
@@ -191,7 +191,7 @@ export default function CommandPalette() {
             </button>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-foreground-muted hover:text-foreground ml-3 rounded-md p-1 transition-colors hover:bg-white/10"
+              className="ml-3 rounded-md p-1 text-foreground-muted transition-colors hover:bg-white/10 hover:text-foreground"
             >
               <X className="h-5 w-5" />
             </button>
@@ -203,7 +203,7 @@ export default function CommandPalette() {
             className="max-h-[60vh] scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent overflow-y-auto p-2"
           >
             {items.length === 0 && searchQuery.length > 0 && !isSearching && (
-              <div className="text-foreground-muted py-14 text-center text-sm">{t('MessageNoItems')}</div>
+              <div className="py-14 text-center text-sm text-foreground-muted">{t('MessageNoItems')}</div>
             )}
 
             {items.map((item, index) => {
@@ -252,7 +252,7 @@ export default function CommandPalette() {
           </div>
 
           {/* Footer */}
-          <div className="text-foreground-muted flex justify-between border-t border-white/10 bg-black/20 px-4 py-2 text-xs">
+          <div className="flex justify-between border-t border-white/10 bg-black/20 px-4 py-2 text-xs text-foreground-muted">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
                 <kbd className="rounded bg-white/10 px-1.5 font-sans font-semibold">↑</kbd>{' '}

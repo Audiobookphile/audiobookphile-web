@@ -1,12 +1,6 @@
 'use client'
 
-import { Eye, Folder, Image as ImageIcon, Info, RefreshCw, Search, Upload, X } from 'lucide-react'
-import { startTransition, useEffect, useMemo, useState } from 'react'
-import { useBookProviders, useMetadata } from '@/features/metadata/contexts/MetadataContext'
-import { useMediaContext } from '@/features/player/contexts/MediaContext'
-import { useUser } from '@/shared/contexts/UserContext'
-import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
-import { SupportedFileTypes, sanitizeFileName } from '@/shared/lib/fileUtils'
+import { Info, RefreshCw, X } from 'lucide-react'
 import { bytesPretty } from '@/shared/lib/string'
 import Btn from '@/shared/ui/Btn'
 import CollapsibleTable from '@/shared/ui/CollapsibleTable'
@@ -21,15 +15,12 @@ import Tooltip from '@/shared/ui/Tooltip'
 import Alert from '@/shared/widgets/Alert'
 import DragDrop from '@/shared/widgets/DragDrop'
 import FilePicker from '@/shared/widgets/FilePicker'
-import { Library } from '@/types/api'
-import { fetchBookMetadata, fetchPodcastMetadata, getCookie } from './actions'
-import { CleanedItem, FileWithMetadata, getItemsFromFilelist, UploadProgressInfo, upload } from './UploadHelper'
+import type { Library } from '@/types/api'
+import { useUploader } from './useUploader'
 
 interface LibraryClientProps {
   libraries: Library[]
 }
-
-import { ItemToUpload, useUploader } from './useUploader'
 
 export default function UploadClient({ libraries }: LibraryClientProps) {
   const {
@@ -112,7 +103,7 @@ export default function UploadClient({ libraries }: LibraryClientProps) {
               onChange={setAutoFetch}
             />
             <Tooltip maxWidth={300} text={t('LabelAutoFetchMetadataHelp')}>
-              <Info size={18} className="hover:text-primary cursor-help text-white/40 transition-colors" />
+              <Info size={18} className="cursor-help text-white/40 transition-colors hover:text-primary" />
             </Tooltip>
           </div>
 
@@ -142,10 +133,10 @@ export default function UploadClient({ libraries }: LibraryClientProps) {
                 {t('ButtonChooseAFolder')}
               </FilePicker>
             </div>
-            <p className="text-foreground-subdued p-6 text-xs">
+            <p className="p-6 text-xs text-foreground-subdued">
               <strong>{t('LabelSupportedFileTypes')}:</strong> {supFileTypes}
             </p>
-            <p className="text-foreground-subdued px-6 pb-6 text-sm">
+            <p className="px-6 pb-6 text-sm text-foreground-subdued">
               {t('NoteUploaderFoldersWithMediaFiles')}{' '}
               {currentLibraryMediaType === 'book' ? t('NoteUploaderOnlyAudioFiles') : ''}
             </p>
@@ -156,7 +147,7 @@ export default function UploadClient({ libraries }: LibraryClientProps) {
       {/* 'staging' area */}
       {(uploadItems.length > 0 || ignoredFiles.length > 0 || errors !== '') && (
         <>
-          <div className="border-border flex w-full items-center border-b py-4">
+          <div className="flex w-full items-center border-b border-border py-4">
             <p className="flex-1 text-lg">{t('LabelXItems', { 0: uploadItems.length })}</p>
             <Btn disabled={uploadProcessing} size="small" onClick={resetUpload}>
               {t('ButtonReset')}
@@ -198,7 +189,7 @@ export default function UploadClient({ libraries }: LibraryClientProps) {
                     ))}
                   </CollapsibleTable>
                 </div>
-                <p className="text-foreground-subdued text-xs">
+                <p className="text-xs text-foreground-subdued">
                   <strong>{t('LabelSupportedFileTypes')}:</strong> {supFileTypes}
                 </p>
               </div>
@@ -207,7 +198,7 @@ export default function UploadClient({ libraries }: LibraryClientProps) {
           {uploadItems.map((item, index) => (
             <div
               key={index}
-              className="border-border relative my-6 flex w-full flex-col gap-1 rounded-md border px-2 py-4 shadow-lg md:px-6"
+              className="relative my-6 flex w-full flex-col gap-1 rounded-md border border-border px-2 py-4 shadow-lg md:px-6"
             >
               <>
                 {!item.uploadComplete && !item.uploadFailed && (
@@ -215,20 +206,20 @@ export default function UploadClient({ libraries }: LibraryClientProps) {
                     {item.isUploading && (
                       <LoadingIndicator label={'MessageUploading'}>
                         <ProgressIndicator progress={item.uploadProgress || 0} />
-                        <p className="text-foreground-muted mt-2 text-center text-xs">
+                        <p className="mt-2 text-center text-xs text-foreground-muted">
                           ({bytesPretty(item.uploadBytesLoaded || 0)}/{bytesPretty(item.uploadBytesTotal || 0)})
                         </p>
                       </LoadingIndicator>
                     )}
                     {item.isFetchingMetadata && <LoadingIndicator label="LabelFetchingMetadata" />}
                     {/* floating # on left */}
-                    <div className="bg-bg border-border absolute -top-3 -left-3 flex h-8 w-8 items-center justify-center rounded-full border">
+                    <div className="absolute -top-3 -left-3 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-bg">
                       <p className="text-base">{'#' + (index + 1)}</p>
                     </div>
                     {/* floating x on right */}
                     {!uploadProcessing && !item.isUploading && (
                       <IconBtn
-                        className="bg-primary absolute -top-3 -right-3 h-8 w-8 rounded-full border border-white/10 shadow-xl"
+                        className="absolute -top-3 -right-3 h-8 w-8 rounded-full border border-white/10 bg-primary shadow-xl"
                         onClick={() => handleRemoveStagedItem(index)}
                       >
                         <X size={16} />

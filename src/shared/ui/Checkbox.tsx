@@ -26,7 +26,7 @@ export default function Checkbox({
   size = 'medium',
   checkboxBgClass = 'bg-primary/20',
   borderColorClass = 'border-white/10 group-hover:border-primary/50',
-  checkColorClass = 'text-primary',
+  checkColorClass = 'text-primary-foreground',
   labelClass = '',
   disabled = false,
   partial = false,
@@ -89,7 +89,7 @@ export default function Checkbox({
                 exit={{ scale: 0.5, opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               >
-                <Minus size={sizePx - 4} strokeWidth={4} className="text-primary-foreground" />
+                <Minus size={sizePx - 4} strokeWidth={4} className={checkColorClass} />
               </motion.div>
             ) : value ? (
               <motion.div
@@ -99,7 +99,7 @@ export default function Checkbox({
                 exit={{ scale: 0.5, opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               >
-                <Check size={sizePx - 4} strokeWidth={4} className="text-primary-foreground" />
+                <Check size={sizePx - 4} strokeWidth={4} className={checkColorClass} />
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -119,7 +119,7 @@ export default function Checkbox({
           disabled={disabled}
           aria-label={ariaLabel || label}
           onChange={handleChange}
-          className="focus-visible:ring-primary focus-visible:ring-offset-background absolute inset-0 h-full w-full cursor-pointer rounded-md opacity-0 focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none"
+          className="absolute inset-0 h-full w-full cursor-pointer rounded-md opacity-0 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none"
         />
       </div>
     </InputWrapper>

@@ -1,6 +1,6 @@
 'use client'
 
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import DOMPurify from 'isomorphic-dompurify'
 import { ChevronDown } from 'lucide-react'
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react'
@@ -101,7 +101,7 @@ function ExpandableHtml({ html, lineClamp = 4, className = '' }: ExpandableHtmlP
       {isClamped && (
         <button
           type="button"
-          className="group text-foreground/40 hover:text-primary mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1 text-[0.8em] font-black tracking-widest uppercase transition-all duration-300 select-none hover:bg-white/5 active:scale-95"
+          className="group mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1 text-[0.8em] font-black tracking-widest text-foreground/40 uppercase transition-all duration-300 select-none hover:bg-white/5 hover:text-primary active:scale-95"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           {isExpanded ? t('ButtonReadLess') : t('ButtonReadMore')}

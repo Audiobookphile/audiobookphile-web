@@ -8,13 +8,9 @@ export function useMultiSelect<T = string>({
   items,
   disabled = false,
   showEdit = false,
-  showInput = true,
   allowNew = true,
   menuDisabled = false,
   editingPillIndex: controlledEditingPillIndex,
-  getEditableText,
-  getReadOnlyPrefix,
-  getFullText,
   getItemTextId: getItemTextIdProp,
   onMutate: onMutateProp,
   onValidate,
@@ -71,7 +67,7 @@ export function useMultiSelect<T = string>({
   const inputRef = useRef<HTMLInputElement>(null)
   const sizerRef = useRef<HTMLSpanElement>(null)
 
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const showMenu = isMenuOpen && !menuDisabled
 

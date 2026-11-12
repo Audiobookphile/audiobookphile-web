@@ -91,7 +91,7 @@ export default function AudioFileDataModal({ isOpen, audioFile, libraryItemId, o
     (e: React.KeyboardEvent<HTMLButtonElement | HTMLAnchorElement>) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
-        handleCopyToClipboard()
+        void handleCopyToClipboard()
       }
     },
     [handleCopyToClipboard]
@@ -118,7 +118,7 @@ export default function AudioFileDataModal({ isOpen, audioFile, libraryItemId, o
             ffprobeData && 'shrink-0'
           )}
         >
-          <h2 className="text-foreground truncate text-base" title={metadata?.filename}>
+          <h2 className="truncate text-base text-foreground" title={metadata?.filename}>
             {metadata?.filename}
           </h2>
           {ffprobeData ? (
@@ -141,50 +141,50 @@ export default function AudioFileDataModal({ isOpen, audioFile, libraryItemId, o
             <dl className="flex flex-col gap-4 text-sm sm:flex-row">
               <div className="w-full sm:w-1/2">
                 <div className="mb-1 flex flex-row gap-0">
-                  <dt className="text-foreground-subdued w-32 min-w-24 shrink-0">{t('LabelSize')}</dt>
+                  <dt className="w-32 min-w-24 shrink-0 text-foreground-subdued">{t('LabelSize')}</dt>
                   <dd className="break-words">{bytesPretty(metadata?.size || 0)}</dd>
                 </div>
                 <div className="mb-1 flex flex-row gap-0">
-                  <dt className="text-foreground-subdued w-32 min-w-24 shrink-0">{t('LabelDuration')}</dt>
+                  <dt className="w-32 min-w-24 shrink-0 text-foreground-subdued">{t('LabelDuration')}</dt>
                   <dd className="break-words">{secondsToTimestamp(audioFile.duration)}</dd>
                 </div>
                 <div className="mb-1 flex flex-row gap-0">
-                  <dt className="text-foreground-subdued w-32 min-w-24 shrink-0">{t('LabelFormat')}</dt>
+                  <dt className="w-32 min-w-24 shrink-0 text-foreground-subdued">{t('LabelFormat')}</dt>
                   <dd className="break-words">{audioFile.codec}</dd>
                 </div>
                 <div className="mb-1 flex flex-row gap-0">
-                  <dt className="text-foreground-subdued w-32 min-w-24 shrink-0">{t('HeaderChapters')}</dt>
+                  <dt className="w-32 min-w-24 shrink-0 text-foreground-subdued">{t('HeaderChapters')}</dt>
                   <dd className="break-words">{audioFile.chapters?.length || 0}</dd>
                 </div>
                 {audioFile.embeddedCoverArt && (
                   <div className="mb-1 flex flex-row gap-0">
-                    <dt className="text-foreground-subdued w-32 min-w-24 shrink-0">{t('LabelEmbeddedCover')}</dt>
+                    <dt className="w-32 min-w-24 shrink-0 text-foreground-subdued">{t('LabelEmbeddedCover')}</dt>
                     <dd className="break-words">{audioFile.embeddedCoverArt}</dd>
                   </div>
                 )}
               </div>
               <div className="w-full sm:w-1/2">
                 <div className="mb-1 flex flex-row gap-0">
-                  <dt className="text-foreground-subdued w-32 min-w-24 shrink-0">{t('LabelCodec')}</dt>
+                  <dt className="w-32 min-w-24 shrink-0 text-foreground-subdued">{t('LabelCodec')}</dt>
                   <dd className="break-words">{audioFile.codec}</dd>
                 </div>
                 <div className="mb-1 flex flex-row gap-0">
-                  <dt className="text-foreground-subdued w-32 min-w-24 shrink-0">{t('LabelChannels')}</dt>
+                  <dt className="w-32 min-w-24 shrink-0 text-foreground-subdued">{t('LabelChannels')}</dt>
                   <dd className="break-words">
                     {audioFile.channels} ({audioFile.channelLayout})
                   </dd>
                 </div>
                 <div className="mb-1 flex flex-row gap-0">
-                  <dt className="text-foreground-subdued w-32 min-w-24 shrink-0">{t('LabelBitrate')}</dt>
+                  <dt className="w-32 min-w-24 shrink-0 text-foreground-subdued">{t('LabelBitrate')}</dt>
                   <dd className="break-words">{bytesPretty(audioFile.bitRate || 0, 0)}</dd>
                 </div>
                 <div className="mb-1 flex flex-row gap-0">
-                  <dt className="text-foreground-subdued w-32 min-w-24 shrink-0">{t('LabelTimeBase')}</dt>
+                  <dt className="w-32 min-w-24 shrink-0 text-foreground-subdued">{t('LabelTimeBase')}</dt>
                   <dd className="break-words">{audioFile.timeBase}</dd>
                 </div>
                 {audioFile.language && (
                   <div className="mb-1 flex flex-row gap-0">
-                    <dt className="text-foreground-subdued w-32 min-w-24 shrink-0">{t('LabelLanguage')}</dt>
+                    <dt className="w-32 min-w-24 shrink-0 text-foreground-subdued">{t('LabelLanguage')}</dt>
                     <dd className="break-words">{audioFile.language}</dd>
                   </div>
                 )}
@@ -199,7 +199,7 @@ export default function AudioFileDataModal({ isOpen, audioFile, libraryItemId, o
               <dl className="text-sm">
                 {Object.entries(metaTags).map(([key, value]) => (
                   <div key={key} className="mb-1 flex flex-col gap-1 sm:flex-row sm:gap-2">
-                    <dt className="text-foreground-subdued w-32 min-w-24 shrink-0 sm:min-w-32 sm:break-words">
+                    <dt className="w-32 min-w-24 shrink-0 text-foreground-subdued sm:min-w-32 sm:break-words">
                       {key.replace('tag', '')}
                     </dt>
                     <dd className="min-w-0 flex-1 break-words">{value}</dd>
@@ -207,7 +207,7 @@ export default function AudioFileDataModal({ isOpen, audioFile, libraryItemId, o
                 ))}
               </dl>
             ) : (
-              <p className="text-foreground-subdued text-sm" role="status">
+              <p className="text-sm text-foreground-subdued" role="status">
                 {t('MessageNoItems')}
               </p>
             )}

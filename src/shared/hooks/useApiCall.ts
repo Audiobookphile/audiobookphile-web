@@ -28,7 +28,7 @@ export interface UseApiCallOptions {
   /** Delay between retries in milliseconds */
   retryDelay?: number
   /** Callback on successful response */
-  onSuccess?: (data: any) => void
+  onSuccess?: (data: unknown) => void
   /** Callback on error */
   onError?: (error: Error) => void
   /** Component context for Sentry tagging */
@@ -49,7 +49,7 @@ export interface UseApiCallOptions {
  * await execute('123')
  * ```
  */
-export function useApiCall<T, Args extends any[] = any[]>(
+export function useApiCall<T, Args extends unknown[] = unknown[]>(
   apiFunction: (...args: Args) => Promise<T>,
   options: UseApiCallOptions = {}
 ): {

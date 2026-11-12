@@ -26,7 +26,7 @@ export default async function PlaylistPage({ params }: { params: Promise<{ playl
 
   return (
     <div className="w-full p-8">
-      <PlaylistClient playlist={playlist as any} />
+      <PlaylistClient playlist={playlist} />
     </div>
   )
 }

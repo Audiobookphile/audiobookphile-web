@@ -90,7 +90,7 @@ export default function NotificationWidget({ className = '' }: NotificationWidge
       <button
         ref={triggerRef}
         type="button"
-        className="text-foreground/70 relative flex h-10 w-10 cursor-pointer items-center justify-center transition-all duration-300 hover:scale-110 hover:text-white active:scale-95"
+        className="relative flex h-10 w-10 cursor-pointer items-center justify-center text-foreground/70 transition-all duration-300 hover:scale-110 hover:text-white active:scale-95"
         aria-haspopup="listbox"
         aria-expanded={showMenu}
         onClick={clickShowMenu}
@@ -103,7 +103,7 @@ export default function NotificationWidget({ className = '' }: NotificationWidge
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="bg-success border-background pointer-events-none absolute -top-1 -right-0.5 h-2.5 w-2.5 rounded-full border-2"
+                  className="pointer-events-none absolute -top-1 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-success"
                 />
               )}
             </span>
@@ -116,7 +116,7 @@ export default function NotificationWidget({ className = '' }: NotificationWidge
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: [0, 1.2, 1] }}
-                  className="bg-success border-background pointer-events-none absolute -top-1 -right-0.5 h-2.5 w-2.5 rounded-full border-2 shadow-[0_0_12px_rgba(34,197,94,0.6)]"
+                  className="pointer-events-none absolute -top-1 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-success shadow-[0_0_12px_rgba(34,197,94,0.6)]"
                 />
               )}
             </span>
@@ -132,7 +132,7 @@ export default function NotificationWidget({ className = '' }: NotificationWidge
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="bg-primary/95 fixed top-16 right-4 left-auto z-[100] mt-0 w-auto max-w-[24rem] min-w-[20rem] overflow-hidden rounded-2xl border border-white/10 text-base shadow-2xl ring-1 ring-black/20 backdrop-blur-2xl focus:outline-none md:mt-1.5"
+            className="fixed top-16 right-4 left-auto z-[100] mt-0 w-auto max-w-[24rem] min-w-[20rem] overflow-hidden rounded-2xl border border-white/10 bg-primary/95 text-base shadow-2xl ring-1 ring-black/20 backdrop-blur-2xl focus:outline-none md:mt-1.5"
             style={{ maxHeight: '80vh', willChange: 'transform, opacity' }}
           >
             <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-3">

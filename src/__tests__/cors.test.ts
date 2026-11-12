@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { NextRequest } from 'next/server'
-import { ALLOWED_ORIGINS, isOriginAllowed, proxy } from '../proxy'
+import { isOriginAllowed, proxy } from '../proxy'
 
 describe('CORS Origin Validation', () => {
   test('allows production domains and subdomains', () => {

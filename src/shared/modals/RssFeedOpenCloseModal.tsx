@@ -91,9 +91,10 @@ export default function RssFeedOpenCloseModal({
           ownerEmail: metadataDetails.ownerEmail || '',
         },
       })
-      if (res) {
-        setCurrentFeed((res as any).feed)
-        onFeedChange?.((res as any).feed)
+      if (res && typeof res === 'object' && 'feed' in res) {
+        const feed = (res as { feed: RssFeed | null }).feed
+        setCurrentFeed(feed)
+        onFeedChange?.(feed)
       }
     } catch (error: unknown) {
       console.error('Failed to open RSS feed', error)
@@ -148,14 +149,14 @@ export default function RssFeedOpenCloseModal({
             {meta && (
               <div className="mt-4 space-y-2">
                 <div className="flex items-center">
-                  <span className="text-foreground-subdued w-48 shrink-0 text-xs uppercase">
+                  <span className="w-48 shrink-0 text-xs text-foreground-subdued uppercase">
                     {t('LabelPreventIndexingShort')}
                   </span>
                   <span className="text-foreground">{meta.preventIndexing ? 'Yes' : 'No'}</span>
                 </div>
                 {hasOwnerName && (
                   <div className="flex items-center">
-                    <span className="text-foreground-subdued w-48 shrink-0 text-xs uppercase">
+                    <span className="w-48 shrink-0 text-xs text-foreground-subdued uppercase">
                       {t('LabelRSSFeedCustomOwnerName')}
                     </span>
                     <span className="text-foreground">{meta.ownerName}</span>
@@ -163,7 +164,7 @@ export default function RssFeedOpenCloseModal({
                 )}
                 {hasOwnerEmail && (
                   <div className="flex items-center">
-                    <span className="text-foreground-subdued w-48 shrink-0 text-xs uppercase">
+                    <span className="w-48 shrink-0 text-xs text-foreground-subdued uppercase">
                       {t('LabelRSSFeedCustomOwnerEmail')}
                     </span>
                     <span className="text-foreground">{meta.ownerEmail}</span>
@@ -174,11 +175,11 @@ export default function RssFeedOpenCloseModal({
             {viewMode && (
               <>
                 {currentFeed.episodes && currentFeed.episodes.length > 0 ? (
-                  <div className="border-border mt-6 max-h-[300px] overflow-y-auto rounded-md border">
+                  <div className="mt-6 max-h-[300px] overflow-y-auto rounded-md border border-border">
                     <table className="w-full border-collapse text-sm">
-                      <thead className="bg-table-header-bg sticky top-0">
-                        <tr className="border-border border-b">
-                          <th className="text-foreground-muted px-2 py-2 text-start text-xs font-semibold">
+                      <thead className="sticky top-0 bg-table-header-bg">
+                        <tr className="border-b border-border">
+                          <th className="px-2 py-2 text-start text-xs font-semibold text-foreground-muted">
                             {t('LabelEpisodeTitle')}
                           </th>
                         </tr>
@@ -187,16 +188,16 @@ export default function RssFeedOpenCloseModal({
                         {currentFeed.episodes.map((episode, index) => (
                           <tr
                             key={episode.id}
-                            className={`border-border border-b last:border-b-0 ${index % 2 === 1 ? 'bg-table-row-bg-even' : ''}`}
+                            className={`border-b border-border last:border-b-0 ${index % 2 === 1 ? 'bg-table-row-bg-even' : ''}`}
                           >
-                            <td className="text-foreground px-2 py-2 text-sm">{episode.title}</td>
+                            <td className="px-2 py-2 text-sm text-foreground">{episode.title}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 ) : (
-                  <div className="text-foreground-muted mt-6 text-sm">{t('MessageNoEpisodes')}</div>
+                  <div className="mt-6 text-sm text-foreground-muted">{t('MessageNoEpisodes')}</div>
                 )}
               </>
             )}
@@ -212,9 +213,9 @@ export default function RssFeedOpenCloseModal({
           <>
             <p className="mb-4 text-lg font-semibold">{t('HeaderOpenRSSFeed')}</p>
             <div className="mb-2 space-y-2">
-              <label className="text-foreground-subdued block text-xs uppercase">{t('LabelRSSFeedSlug')}</label>
+              <label className="block text-xs text-foreground-subdued uppercase">{t('LabelRSSFeedSlug')}</label>
               <TextInput value={newFeedSlug} onChange={(value) => setNewFeedSlug(value)} className="text-sm" />
-              <p className="text-foreground-muted text-xs">{t('MessageFeedURLWillBe', { 0: demoFeedUrl })}</p>
+              <p className="text-xs text-foreground-muted">{t('MessageFeedURLWillBe', { 0: demoFeedUrl })}</p>
             </div>
             <div className="space-y-3 py-2">
               <Checkbox
@@ -223,7 +224,7 @@ export default function RssFeedOpenCloseModal({
                 label={t('LabelPreventIndexing')}
               />
               <div>
-                <label className="text-foreground-subdued mb-1 block text-xs uppercase">
+                <label className="mb-1 block text-xs text-foreground-subdued uppercase">
                   {t('LabelRSSFeedCustomOwnerName')}
                 </label>
                 <TextInput
@@ -233,7 +234,7 @@ export default function RssFeedOpenCloseModal({
                 />
               </div>
               <div>
-                <label className="text-foreground-subdued mb-1 block text-xs uppercase">
+                <label className="mb-1 block text-xs text-foreground-subdued uppercase">
                   {t('LabelRSSFeedCustomOwnerEmail')}
                 </label>
                 <TextInput
@@ -243,9 +244,9 @@ export default function RssFeedOpenCloseModal({
                 />
               </div>
             </div>
-            {isHttp && <p className="text-warning pt-2 text-xs">{t('NoteRSSFeedPodcastAppsHttps')}</p>}
+            {isHttp && <p className="pt-2 text-xs text-warning">{t('NoteRSSFeedPodcastAppsHttps')}</p>}
             {hasEpisodesWithoutPubDate && (
-              <p className="text-warning pt-2 text-xs">{t('NoteRSSFeedPodcastAppsPubDate')}</p>
+              <p className="pt-2 text-xs text-warning">{t('NoteRSSFeedPodcastAppsPubDate')}</p>
             )}
             {userIsAdminOrUp && (
               <div className="flex justify-end pt-6">

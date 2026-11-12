@@ -1,5 +1,6 @@
 'use client'
 
+import type { TargetAndTransition, Transition, VariantLabels } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import React, { memo } from 'react'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
@@ -26,16 +27,40 @@ interface IconBtnProps {
   className?: string
   ref?: React.Ref<HTMLButtonElement>
   tabIndex?: number
-  whileHover?: any
-  whileTap?: any
-  transition?: any
-  [key: string]: any
+  whileHover?: TargetAndTransition | VariantLabels
+  whileTap?: TargetAndTransition | VariantLabels
+  transition?: Transition
+
+  // The standard attributes a button or an anchor accepts.
+  //
+  // These were previously covered by an `[key: string]: any` index
+  // signature, which accepted any prop at all -- including a misspelled one.
+  // Declaring them means a typo is a type error, and the spread onto the
+  // motion element is checked rather than assumed.
+  role?: React.AriaRole
+  style?: React.CSSProperties
+  title?: string
+  name?: string
+  form?: string
+  autoFocus?: boolean
+  onFocus?: React.FocusEventHandler<HTMLButtonElement | HTMLAnchorElement>
+  onBlur?: React.FocusEventHandler<HTMLButtonElement | HTMLAnchorElement>
+  onMouseEnter?: React.MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>
+  onMouseLeave?: React.MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>
+  'aria-label'?: string
+  'aria-checked'?: boolean
+  'aria-expanded'?: boolean
+  'aria-hidden'?: boolean
+  'aria-describedby'?: string
+  'aria-labelledby'?: string
+  'aria-controls'?: string
+  'data-cyid'?: string
 }
 
 const LoadingSpinner = memo(() => (
   <div
     cy-id="icon-btn-loading-spinner"
-    className="text-current absolute start-0 top-0 flex h-full w-full items-center justify-center"
+    className="absolute start-0 top-0 flex h-full w-full items-center justify-center text-current"
     aria-hidden="true"
   >
     <svg className="animate-spin" style={{ width: '1.2em', height: '1.2em' }} viewBox="0 0 24 24">

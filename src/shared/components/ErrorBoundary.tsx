@@ -17,14 +17,14 @@ function ErrorFallback({ title }: { title: string }, { error, retry }: ErrorInfo
       <div className="flex gap-2">
         <button
           onClick={() => retry()}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2"
+          className="text-primary-foreground inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 hover:bg-primary/90"
         >
           <RefreshCw className="h-4 w-4" aria-hidden="true" />
           {t('retry')}
         </button>
         <Link
           href="/"
-          className="border-input bg-background text-foreground hover:bg-accent inline-flex items-center gap-2 rounded-lg border px-4 py-2"
+          className="border-input inline-flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-foreground hover:bg-accent"
         >
           <Home className="h-4 w-4" aria-hidden="true" />
           {t('goHome')}

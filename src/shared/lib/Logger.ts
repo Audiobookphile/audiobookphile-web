@@ -79,7 +79,10 @@ class Logger {
       }
       return JSON.stringify(arg, null, 2)
     } catch {
-      return String(arg)
+      // JSON.stringify threw -- a circular reference, most likely. The value
+      // cannot be rendered as JSON. Object.prototype.toString names the type
+      // instead of producing "[object Object]" for everything.
+      return Object.prototype.toString.call(arg)
     }
   }
 

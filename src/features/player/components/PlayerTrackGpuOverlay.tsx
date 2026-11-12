@@ -38,7 +38,7 @@ export default function PlayerTrackGpuOverlay({ trackRef }: PlayerTrackGpuOverla
         // `init()` resolves the adapter and device asynchronously in every
         // runtime (browser, Dawn, mock) even though the published type reads as
         // synchronous, so it is awaited unconditionally.
-        gpu = (await vgpu.init()) as unknown as { dispose: () => void }
+        gpu = await vgpu.init()
         if (cancelled) {
           gpu.dispose()
           gpu = null

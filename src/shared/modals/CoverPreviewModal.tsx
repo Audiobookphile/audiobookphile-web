@@ -59,10 +59,10 @@ export default function CoverPreviewModal({ isOpen, selectedCover, onClose, onAp
   const modalStyle = useMemo(() => {
     if (isLandscape) {
       const height = Math.min(currentWindowHeight - MODAL_VERTICAL_MARGIN, MODAL_LANDSCAPE_MAX_HEIGHT)
-      return { height: `${height}px` } as React.CSSProperties
+      return { height: `${height}px` }
     } else {
       const width = Math.min(currentWindowWidth - MODAL_HORIZONTAL_MARGIN, MODAL_PORTRAIT_MAX_WIDTH)
-      return { width: `${width}px` } as React.CSSProperties
+      return { width: `${width}px` }
     }
   }, [isLandscape, currentWindowHeight, currentWindowWidth])
 

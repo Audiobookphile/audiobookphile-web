@@ -25,7 +25,7 @@ export const isBlockActive = (editor: Editor, format: CustomElement['type']) => 
     }
     const [match] = Editor.nodes(editor, {
       at: Editor.unhangRange(editor, selection),
-      match: (n) => !Editor.isEditor(n) && Element.isElement(n) && n.type === format,
+      match: (n) => Element.isElement(n) && n.type === format,
     })
     return !!match
   } catch (error) {
@@ -44,7 +44,7 @@ export const toggleBlock = (editor: Editor, format: CustomElement['type']) => {
     const isList = ['bulleted-list', 'numbered-list'].includes(format)
 
     Transforms.unwrapNodes(editor, {
-      match: (n) => !Editor.isEditor(n) && Element.isElement(n) && ['bulleted-list', 'numbered-list'].includes(n.type),
+      match: (n) => Element.isElement(n) && ['bulleted-list', 'numbered-list'].includes(n.type),
       split: true,
     })
 

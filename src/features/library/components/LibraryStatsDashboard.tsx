@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { BookOpen, CalendarDays, Clock, HardDrive, Layers, Music, Users } from 'lucide-react'
+import { BookOpen, Clock, HardDrive, Music, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useLibraryStats } from '../hooks/useLibraryStats'
 
@@ -33,14 +33,14 @@ export function LibraryStatsDashboard({ libraryId }: { libraryId: string }) {
   if (isLoading) {
     return (
       <div className="flex h-[60vh] w-full items-center justify-center">
-        <div className="border-accent h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 opacity-60" />
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-accent opacity-60" />
       </div>
     )
   }
 
   if (isError || !stats) {
     return (
-      <div className="text-foreground-muted flex w-full items-center justify-center p-12">
+      <div className="flex w-full items-center justify-center p-12 text-foreground-muted">
         Failed to load library stats.
       </div>
     )
@@ -88,7 +88,7 @@ export function LibraryStatsDashboard({ libraryId }: { libraryId: string }) {
       {/* Summary Cards */}
       <motion.div variants={container} initial="hidden" animate="show" className="flex flex-wrap justify-center gap-6">
         <motion.div variants={itemAnim} className="flex p-2">
-          <BookOpen className="text-accent/80 mr-3 h-12 w-12" />
+          <BookOpen className="mr-3 h-12 w-12 text-accent/80" />
           <div className="flex flex-col">
             <p className="text-4xl leading-none font-bold text-white">{stats.totalItems.toLocaleString()}</p>
             <p className="text-sm text-white/50">Items in Library</p>
@@ -96,7 +96,7 @@ export function LibraryStatsDashboard({ libraryId }: { libraryId: string }) {
         </motion.div>
 
         <motion.div variants={itemAnim} className="flex p-2">
-          <Clock className="text-accent/80 mr-3 h-12 w-12" />
+          <Clock className="mr-3 h-12 w-12 text-accent/80" />
           <div className="flex flex-col">
             <p className="text-4xl leading-none font-bold text-white">{formatDuration(stats.totalDuration)}</p>
             <p className="text-sm text-white/50">Overall Runtime</p>
@@ -104,7 +104,7 @@ export function LibraryStatsDashboard({ libraryId }: { libraryId: string }) {
         </motion.div>
 
         <motion.div variants={itemAnim} className="flex p-2">
-          <Users className="text-accent/80 mr-3 h-12 w-12" />
+          <Users className="mr-3 h-12 w-12 text-accent/80" />
           <div className="flex flex-col">
             <p className="text-4xl leading-none font-bold text-white">{stats.totalAuthors.toLocaleString()}</p>
             <p className="text-sm text-white/50">Total Authors</p>
@@ -112,7 +112,7 @@ export function LibraryStatsDashboard({ libraryId }: { libraryId: string }) {
         </motion.div>
 
         <motion.div variants={itemAnim} className="flex p-2">
-          <HardDrive className="text-accent/80 mr-3 h-12 w-12" />
+          <HardDrive className="mr-3 h-12 w-12 text-accent/80" />
           <div className="flex flex-col">
             <p className="text-4xl leading-none font-bold text-white">{formatBytes(stats.totalSize)}</p>
             <p className="text-sm text-white/50">Total Size</p>
@@ -120,7 +120,7 @@ export function LibraryStatsDashboard({ libraryId }: { libraryId: string }) {
         </motion.div>
 
         <motion.div variants={itemAnim} className="flex p-2">
-          <Music className="text-accent/80 mr-3 h-12 w-12" />
+          <Music className="mr-3 h-12 w-12 text-accent/80" />
           <div className="flex flex-col">
             <p className="text-4xl leading-none font-bold text-white">{stats.numAudioTracks.toLocaleString()}</p>
             <p className="text-sm text-white/50">Audio Tracks</p>
@@ -153,7 +153,7 @@ export function LibraryStatsDashboard({ libraryId }: { libraryId: string }) {
                   initial={{ width: 0 }}
                   animate={{ width: `${stat.percentage}%` }}
                   transition={{ duration: 1, ease: 'easeOut' }}
-                  className="bg-accent h-full rounded-full"
+                  className="h-full rounded-full bg-accent"
                 />
               </div>
             </div>

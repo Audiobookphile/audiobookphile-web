@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
-import * as dotenv from 'dotenv'
+import { loadEnv } from '../scripts/load-env'
 
-dotenv.config({ path: '.env.local' })
+await loadEnv(`${import.meta.dir}/..`)
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -11,4 +11,4 @@ async function run() {
   const { data, error: _error } = await supabase.from('library_items').select('id, cover_path').limit(5)
   console.info(data)
 }
-run()
+void run()

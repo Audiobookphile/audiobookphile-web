@@ -50,7 +50,7 @@ export function useItemPageSocket({
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      void supabase.removeChannel(channel)
     }
   }, [libraryItemId, onItemUpdated])
 

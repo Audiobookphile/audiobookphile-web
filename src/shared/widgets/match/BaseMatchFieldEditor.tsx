@@ -37,7 +37,7 @@ export function BaseMatchFieldEditor({
       <div className={contentClass}>
         {children}
         {hasCurrentValue && currentValueDisplay && (
-          <p className="text-foreground-subdued ml-1 text-xs">{currentValueDisplay}</p>
+          <p className="ml-1 text-xs text-foreground-subdued">{currentValueDisplay}</p>
         )}
       </div>
     </div>

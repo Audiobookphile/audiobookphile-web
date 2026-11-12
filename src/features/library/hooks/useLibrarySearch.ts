@@ -171,14 +171,17 @@ export function useLibrarySearch(options: UseLibrarySearchOptions = {}): UseLibr
         }
 
         // Map results back to SearchLibraryResponse structure
-        const items = Array.isArray(data?.results) ? data.results : []
+        // The semantic search returns library items, the same shape the rest of the
+        // app uses. The edge function's response arrives as `any`, so the array is
+        // narrowed here rather than left unchecked all the way down.
+        const items = (Array.isArray(data?.results) ? data.results : []) as Array<BookLibraryItem | PodcastLibraryItem>
         result = {
           book: items
-            .filter((item: any) => item?.mediaType === 'book')
-            .map((item: any) => ({ libraryItem: item, matchKey: 'title', matchText: item?.media?.metadata?.title })),
+            .filter((item) => item?.mediaType === 'book')
+            .map((item) => ({ libraryItem: item, matchKey: 'title', matchText: item?.media?.metadata?.title })),
           podcast: items
-            .filter((item: any) => item?.mediaType === 'podcast')
-            .map((item: any) => ({ libraryItem: item, matchKey: 'title', matchText: item?.media?.metadata?.title })),
+            .filter((item) => item?.mediaType === 'podcast')
+            .map((item) => ({ libraryItem: item, matchKey: 'title', matchText: item?.media?.metadata?.title })),
           tags: [],
           authors: [],
           series: [],

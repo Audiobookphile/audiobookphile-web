@@ -21,6 +21,49 @@ type LibraryRow = Database['public']['Tables']['libraries']['Row'] & {
 
 type PodcastEpisodesRow = Database['public']['Tables']['podcast_episodes']['Row']
 
+/**
+ * One entry of the `audio_files` JSON column.
+ *
+ * The column holds a JSON array of track records, and the mapper reads both
+ * the record and its `metadata` object: the shape varies between the
+ * scanners that wrote it, which is why `mimeType` and `mime_type` are both
+ * read and why the metadata is the fallback for most of the fields.
+ */
+interface AudioFileRecord {
+  index?: number
+  ino?: string | number
+  size?: number
+  duration?: number
+  timeBase?: string
+  channels?: number
+  channelLayout?: string
+  chapters?: Chapter[]
+  embeddedCoverArt?: string | null
+  metaTags?: Record<string, unknown>
+  mimeType?: string
+  mime_type?: string
+  codec?: string
+  addedAt?: number
+  updatedAt?: number
+  bitRate?: number
+  metadata?: Record<string, unknown>
+}
+
+/**
+ * One entry of the `podcast_episodes` JSON column.
+ *
+ * The index signature is there because the record is spread into the
+ * episode it becomes, so it carries fields the mapper does not read.
+ */
+interface PodcastEpisodeRecord {
+  library_item_id?: string
+  podcast_id?: string
+  published_at?: string
+  created_at?: string
+  updated_at?: string
+  [key: string]: unknown
+}
+
 type LibraryItemRow = Database['public']['Tables']['library_items']['Row'] & {
   book_authors?: Array<{
     authors: Database['public']['Tables']['authors']['Row'] | null
@@ -41,7 +84,7 @@ type LibrarySettingsJson = Database['public']['Tables']['libraries']['Row']['set
  * Maps a raw Supabase library row (snake_case) to the canonical Library interface (camelCase).
  */
 export function mapLibrary(row: LibraryRow): Library {
-  if (!row) return row as any as Library
+  if (!row) return row
 
   return {
     id: row.id,
@@ -65,7 +108,7 @@ export function mapLibrary(row: LibraryRow): Library {
  * Maps a raw Supabase library item row to the canonical LibraryItem interface.
  */
 export function mapLibraryItem(row: LibraryItemRow): LibraryItem {
-  if (!row) return row as any as LibraryItem
+  if (!row) return row
 
   return {
     id: row.id,
@@ -245,23 +288,27 @@ function mapBook(book: LibraryItemRow): BookMedia {
     return createSkeletonBook({} as Pick<LibraryItemRow, 'id' | 'title'>)
   }
 
-  let audioFiles = (book.audio_files as any[] | null) || []
+  let audioFiles = (book.audio_files as AudioFileRecord[] | null) || []
   if (audioFiles.length === 0 && Array.isArray((book as Record<string, unknown>).library_files)) {
     const extracted = ((book as Record<string, unknown>).library_files as Record<string, unknown>[])
       .filter((lf) => {
         const metadata = (lf.metadata as Record<string, unknown>) || {}
-        const ext = String(metadata.ext || '').toLowerCase()
-        const relPath = String(metadata.relPath || metadata.filename || lf.path || '').toLowerCase()
-        return ALL_AUDIO_EXTENSIONS.some((e) => ext.endsWith(e) || relPath.endsWith(e))
+        const ext = typeof metadata.ext === 'string' ? metadata.ext.toLowerCase() : ''
+        const relPath = typeof metadata.relPath === 'string' ? metadata.relPath.toLowerCase() : ''
+        const filename = typeof metadata.filename === 'string' ? metadata.filename.toLowerCase() : ''
+        const path = typeof lf.path === 'string' ? lf.path.toLowerCase() : ''
+        return ALL_AUDIO_EXTENSIONS.some(
+          (e) => ext.endsWith(e) || relPath.endsWith(e) || filename.endsWith(e) || path.endsWith(e)
+        )
       })
       .map((lf, idx) => {
         const metadata = (lf.metadata as Record<string, unknown>) || {}
-        const ext = String(metadata.ext || '').toLowerCase()
+        const ext = typeof metadata.ext === 'string' ? metadata.ext.toLowerCase() : ''
         const { mimeType, codec } = resolveAudioMimeAndCodec(ext, metadata.mimeType as string, metadata.codec as string)
 
         return {
           index: idx,
-          ino: lf.ino,
+          ino: typeof lf.ino === 'string' || typeof lf.ino === 'number' ? lf.ino : undefined,
           metadata,
           size: Number(lf.size) || Number(metadata.size) || 0,
           duration: Number(lf.duration) || Number(metadata.duration) || 0,
@@ -276,15 +323,21 @@ function mapBook(book: LibraryItemRow): BookMedia {
 
   // Map raw audio_files JSONB to AudioTrack shape for the tracks table
   const tracks = (Array.isArray(audioFiles) ? audioFiles : [])
-    .map((af: any, i: number) => {
+    .map((af: AudioFileRecord, i: number) => {
       if (!af || typeof af !== 'object') return null
-      const a = af as Record<string, unknown>
-      const meta = a.metadata && typeof a.metadata === 'object' ? (a.metadata as Record<string, unknown>) : {}
-      const ext = String(meta?.ext || (meta?.filename as string)?.split('.').pop() || '').toLowerCase()
+      const a = af
+      const meta = a.metadata && typeof a.metadata === 'object' ? a.metadata : {}
+      const ext = String(
+        typeof meta.ext === 'string'
+          ? meta.ext
+          : typeof meta.filename === 'string'
+            ? (meta.filename.split('.').pop() ?? '')
+            : ''
+      ).toLowerCase()
       const { mimeType, codec } = resolveAudioMimeAndCodec(
         ext,
-        (a.mimeType as string) || (a.mime_type as string) || (meta?.mimeType as string),
-        (a.codec as string) || (meta?.codec as string)
+        a.mimeType || a.mime_type || (meta?.mimeType as string),
+        a.codec || (meta?.codec as string)
       )
 
       return {
@@ -309,7 +362,7 @@ function mapBook(book: LibraryItemRow): BookMedia {
         timeBase: (a.timeBase as string) ?? '1/1000',
         channels: (a.channels as number) ?? 2,
         channelLayout: (a.channelLayout as string) ?? 'stereo',
-        chapters: (a.chapters as any[]) ?? [],
+        chapters: a.chapters ?? [],
         embeddedCoverArt: (a.embeddedCoverArt as string | null) ?? null,
         metaTags: (a.metaTags as Record<string, unknown>) ?? {},
         isDirectPlaySupported: true,
@@ -317,7 +370,12 @@ function mapBook(book: LibraryItemRow): BookMedia {
         addedAt: (a.addedAt as number) ?? 0,
         updatedAt: (a.updatedAt as number) ?? 0,
         bitRate: (a.bitRate as number) ?? 0,
-      } as AudioTrack
+        // The record's metadata is the scanner's object, not the declared
+        // `AudioFile['metadata']` shape, and the code has always trusted it
+        // to be one. The `any` that used to carry this hid the assertion
+        // from the compiler; `as unknown as` says it out loud, and the
+        // fields the mapper reads are typed on the way in.
+      } as unknown as AudioTrack
     })
     .filter(Boolean)
 
@@ -328,7 +386,7 @@ function mapBook(book: LibraryItemRow): BookMedia {
           .map((ba) => ba.authors?.name)
           .filter(Boolean)
           .join(', ')
-      : ((book as any as Record<string, unknown>).author_names_first_last as string) || ''
+      : book.author_names_first_last || ''
 
   if (!rawAuthors || rawAuthors === 'Unknown Author') {
     const parsed = parseTitleAndAuthor(title)
@@ -352,7 +410,7 @@ function mapBook(book: LibraryItemRow): BookMedia {
     // read undefined -- which is what hid Play on the item detail page.
     numTracks: tracks.length,
     numAudioFiles: audioFiles.length,
-    chapters: (book.chapters as any as Chapter[]) || [],
+    chapters: (book.chapters as Chapter[] | null) || [],
     metadata: {
       title,
       subtitle: book.subtitle ?? undefined,
@@ -404,18 +462,18 @@ function mapPodcast(podcast: PodcastEpisodesRow): PodcastMedia {
     libraryItemId: p.library_item_id as string | undefined,
     coverPath: p.cover_path as string | undefined,
     tags: (p.tags as string[]) || [],
-    episodes: ((p.podcast_episodes as any[]) || [])
-      .map((ep: any) => {
+    episodes: ((p.podcast_episodes as PodcastEpisodeRecord[] | null) || [])
+      .map((ep: PodcastEpisodeRecord) => {
         if (!ep || typeof ep !== 'object') return null
-        const e = ep as Record<string, unknown>
+        const e = ep
         return {
           ...e,
-          libraryItemId: e.library_item_id as string,
-          podcastId: e.podcast_id as string,
-          pubDate: e.published_at ? new Date(e.published_at as string).toISOString() : undefined,
-          publishedAt: e.published_at ? new Date(e.published_at as string).getTime() : 0,
-          addedAt: e.created_at ? new Date(e.created_at as string).getTime() : 0,
-          updatedAt: e.updated_at ? new Date(e.updated_at as string).getTime() : 0,
+          libraryItemId: e.library_item_id,
+          podcastId: e.podcast_id,
+          pubDate: e.published_at ? new Date(e.published_at).toISOString() : undefined,
+          publishedAt: e.published_at ? new Date(e.published_at).getTime() : 0,
+          addedAt: e.created_at ? new Date(e.created_at).getTime() : 0,
+          updatedAt: e.updated_at ? new Date(e.updated_at).getTime() : 0,
         }
       })
       .filter(Boolean) as PodcastEpisode[],
@@ -438,7 +496,7 @@ export function mapLibrarySettings(settings: LibrarySettingsJson): LibrarySettin
     return {
       coverAspectRatio: 1,
       disableWatcher: false,
-    } as LibrarySettings
+    }
   }
 
   // Supabase types Json as a deep recursive type; cast to a plain record for field access

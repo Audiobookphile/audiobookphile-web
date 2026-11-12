@@ -115,26 +115,26 @@ export default function ListeningSessionModal({
         className="w-[calc(100vw-1rem)] md:max-w-[700px]"
         outerContent={
           <div className="absolute top-0 left-0 w-2/3 overflow-hidden p-5">
-            <p className="text-foreground truncate text-lg md:text-2xl">{sessionTitle}</p>
+            <p className="truncate text-lg text-foreground md:text-2xl">{sessionTitle}</p>
           </div>
         }
       >
         {currentSession && (
-          <div className="bg-bg w-full overflow-x-hidden overflow-y-auto rounded-lg p-6" style={{ maxHeight: '80vh' }}>
+          <div className="w-full overflow-x-hidden overflow-y-auto rounded-lg bg-bg p-6" style={{ maxHeight: '80vh' }}>
             <div className="flex items-center">
-              <p className="text-foreground text-base">{currentSession.displayTitle}</p>
+              <p className="text-base text-foreground">{currentSession.displayTitle}</p>
               {currentSession.displayAuthor && (
-                <p className="text-foreground-muted px-4 text-xs">
+                <p className="px-4 text-xs text-foreground-muted">
                   {t('LabelByAuthor', { 0: currentSession.displayAuthor })}
                 </p>
               )}
             </div>
 
-            <div className="bg-border my-4 h-px w-full" />
+            <div className="my-4 h-px w-full bg-border" />
 
             <div className="mb-4 flex flex-wrap">
               <div className="w-full md:w-2/3">
-                <p className="text-foreground-muted mb-2 text-xs font-semibold tracking-wide uppercase">
+                <p className="mb-2 text-xs font-semibold tracking-wide text-foreground-muted uppercase">
                   {t('HeaderDetails')}
                 </p>
 
@@ -153,7 +153,7 @@ export default function ListeningSessionModal({
                 <DetailsRow label={t('LabelStartTime')} value={secondsToTimestamp(currentSession.startTime)} />
                 <DetailsRow label={t('LabelLastTime')} value={secondsToTimestamp(currentSession.currentTime)} />
 
-                <p className="text-foreground-muted mt-6 mb-2 text-xs font-semibold tracking-wide uppercase">
+                <p className="mt-6 mb-2 text-xs font-semibold tracking-wide text-foreground-muted uppercase">
                   {t('LabelItem')}
                 </p>
                 {currentSession.libraryId && (
@@ -185,14 +185,14 @@ export default function ListeningSessionModal({
               <div className="w-full md:w-1/3">
                 {!isMediaItemShareSession && (
                   <>
-                    <p className="text-foreground-muted mt-6 mb-2 text-xs font-semibold tracking-wide uppercase md:mt-0">
+                    <p className="mt-6 mb-2 text-xs font-semibold tracking-wide text-foreground-muted uppercase md:mt-0">
                       {t('LabelUser')}
                     </p>
                     <p className="mb-1 text-xs">{currentSession.user?.username || currentSession.userId || ''}</p>
                   </>
                 )}
 
-                <p className="text-foreground-muted mt-6 mb-2 text-xs font-semibold tracking-wide uppercase">
+                <p className="mt-6 mb-2 text-xs font-semibold tracking-wide text-foreground-muted uppercase">
                   {t('LabelMediaPlayer')}
                 </p>
                 <p className="mb-1">{playMethodName}</p>
@@ -200,7 +200,7 @@ export default function ListeningSessionModal({
 
                 {deviceInfo && (
                   <>
-                    <p className="text-foreground-muted mt-6 mb-2 text-xs font-semibold tracking-wide uppercase">
+                    <p className="mt-6 mb-2 text-xs font-semibold tracking-wide text-foreground-muted uppercase">
                       {t('LabelDevice')}
                     </p>
                     {clientDisplayName && <p className="mb-1">{clientDisplayName}</p>}
@@ -255,7 +255,7 @@ export default function ListeningSessionModal({
 function DetailsRow({ label, value, valueClassName = '' }: { label: string; value: string; valueClassName?: string }) {
   return (
     <div className="-mx-1 mb-1 flex items-center">
-      <div className="text-foreground-muted w-40 px-1">{label}</div>
+      <div className="w-40 px-1 text-foreground-muted">{label}</div>
       <div className={`px-1 ${valueClassName}`}>{value}</div>
     </div>
   )

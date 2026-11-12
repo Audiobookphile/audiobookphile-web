@@ -4,22 +4,33 @@ A serverless, open-source audiobook and podcast client. Built with Next.js 16, S
 
 Audiobookphile is designed for users who want a beautiful, premium "Liquid Glass" UI for their audiobooks, without the hassle of managing servers or docker containers. It's an excellent, zero-maintenance alternative to traditional self-hosted solutions.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAudiobookphile%2Faudiobookphile-web&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,NEXT_PUBLIC_SITE_URL&project-name=audiobookphile&repository-name=audiobookphile-web)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAudiobookphile%2Faudiobookphile-web&project-name=audiobookphile&repository-name=audiobookphile-web&integration-ids=oac_VqOgBHqhEoFTPzGkPd7L0iH6&skippable-integrations=1&env=NEXT_PUBLIC_SITE_URL&envDescription=Optional%3A%20Canonical%20public%20URL%20for%20OAuth%20redirects%20(defaults%20to%20your%20Vercel%20deployment%20domain)&envLink=https%3A%2F%2Fgithub.com%2FAudiobookphile%2Faudiobookphile-web%23environment-variables)
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
+- **Framework**: Next.js 16 (App Router), tracking the canary channel
 - **Auth & Database**: [Supabase](https://supabase.com) (Postgres + Auth + Storage)
 - **Deployment**: [Vercel](https://vercel.com)
 - **Styling**: Tailwind CSS v4 (Liquid Glass Aesthetic)
 - **Package Manager**: [Bun](https://bun.sh)
+- **Runtime**: [Bun](https://bun.sh) canary — dev server, production build, unit tests, container images, and Vercel functions all run on Bun. Node.js is not used, and `bunfig.toml` sets `[run] bun = true` so that a `node` call from any script, dependency or shebang is answered with Bun. See [DEPLOYMENT.md §4](./DEPLOYMENT.md#4-runtime-bun).
+- **Toolchain**: [Bun](https://bun.sh) for the linter (`bun lint`), formatter (`bun fmt`), test runner (`bun test`) and dependency audit (`bun audit`); [tsrs](https://github.com/oxc-project/tsrs) — Cloudflare's Rust port of the TypeScript compiler — as the **only** type checker, in the editor, in every gate and in the build itself. One compiler means one verdict: "the build passed" and "the gate passed" cannot mean different things. The repository's own lint rule covers the one thing tsrs's looser DOM types cannot see. There is no ESLint, oxlint, Prettier or Biome in this repository, and no Node.js runtime anywhere in the toolchain.
+- **Supply chain**: a project-owned [install-time security scanner](./scripts/security-scanner.ts) runs on every `bun install` and cancels it — before the package is unpacked, and so before its `postinstall` script runs — if a package is below a security floor, resolves from somewhere other than the registry, or has an advisory the OSV database knows about. See [DEPLOYMENT.md §4.5.1](./DEPLOYMENT.md).
+- **Editor**: tsrs also ships a language server, so the editor re-checks a changed file in about 50 ms instead of 0.5-20 s. See [`docs/neovim-lsp.lua`](docs/neovim-lsp.lua) for Neovim 0.11+. The language server needs the native binary, which tsrs publishes for five platforms; where there is none, the type check still runs — from the WebAssembly build of the same compiler.
+- **First load**: the budget measures the *initial payload* — the chunks a route loads when it is first visited — because that is what a visitor waits for. A library in the app shell is paid for by every visitor on every page, so the two that used to be there (hls.js and posthog-js, 256 KB gzipped between them) are loaded on demand now, and the fonts are woff2 subsets rather than 246 KB TrueType files. See [DEPLOYMENT.md §4.8.9](./DEPLOYMENT.md).
+- **Every request**: the session refresh happens when the token needs it, not on every request — the proxy used to pay a 120–270 ms round trip to the auth server before the page did any work at all. See [DEPLOYMENT.md §4.9](./DEPLOYMENT.md).
 
-## One-Click Deployment
+## One-Click Deployment (Vercel Template)
 
-1. **Set up Supabase**: Create a free project on [Supabase](https://supabase.com).
-2. **Deploy to Vercel**: Click the "Deploy with Vercel" button above.
-3. **Configure Environment**: Provide your Supabase project URL and API keys during the Vercel deployment.
-4. **Push Database Schema**: See the [Database Setup](#database-setup) section below.
+Audiobookphile is optimized for 1-click deployment on Vercel with automatic Supabase provisioning:
+
+1. **Click Deploy**: Click the **Deploy with Vercel** button above.
+2. **Auto-Map Supabase**: During the deployment flow, Vercel will prompt you to connect the official **Supabase Integration**. You can create a new Supabase project or select an existing one with one click.
+3. **Automated Credentials**: Vercel and Supabase automatically map and inject all required environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, database connection strings) into your project.
+4. **Initialize Database**:
+   - In your [Supabase Dashboard](https://supabase.com/dashboard), open the **SQL Editor**.
+   - Paste and run [`supabase/schema.sql`](./supabase/schema.sql) (or run `bun run supabase db push`).
+   - Your database schema, tables, and Row Level Security policies are immediately active!
 
 ## Environment Variables
 
@@ -49,7 +60,8 @@ Feature flags are read from PostHog. Existing flags: `passkey_2fa` (kill-switch 
 ## Local Development
 
 ```bash
-# Install dependencies
+# Install the pinned Bun canary (see .mise.toml) and the dependencies
+mise install
 bun install
 
 # Start the development server
@@ -57,6 +69,40 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+> **The Bun canary is required.** `bun lint` and `bun fmt` — the linter and
+> formatter this project uses — exist only in canary builds; they are not in
+> any released Bun. `.mise.toml` pins the canary channel, and
+> `bun run lint` / `bun run format` fail with an actionable message rather
+> than "Script not found" if you are on a stable Bun.
+
+### Commands
+
+Everything is Bun. `bun run <script>` is the entry point for all of them.
+
+| Command | What it does |
+| --- | --- |
+| `bun dev` | Next.js dev server on Bun |
+| `bun run build` | Production build (standalone output) |
+| `bun start` | Serve the production build |
+| `bun run lint` | Lint with `bun lint` |
+| `bun run lint:fix` | Lint and apply fixes |
+| `bun run format` | Format with `bun fmt` and sort the translation catalogues |
+| `bun run format:check` | Check formatting without writing |
+| `bun run typecheck` | Type check with tsrs (the Rust port of the TypeScript compiler) |
+| `bun run test:unit` | Unit tests with `bun test`, in a random order |
+| `bun run test` | Playwright end-to-end tests |
+| `bun run size` | Client bundle budget — the total, and the initial payload a route loads |
+| `bun run audit` | Dependency vulnerability scan with `bun audit` |
+| `bun run scan` | The install-time security scanner, over the whole lockfile |
+| `bun run scripts/node-api-scan.ts` | Repo-wide scan for Node.js APIs |
+| `bun run lhci` | Lighthouse CI, running under Bun |
+| `bun run supabase` | The Supabase CLI, running under Bun |
+| `bun run types:sync` | Regenerate `src/types/supabase.ts` from the backend repo |
+
+Configuration lives in two files: [`bunfig.toml`](./bunfig.toml) for Bun
+itself — install policy, linter, formatter and test runner — and
+[`.mise.toml`](./.mise.toml) for the pinned Bun canary.
 
 ## Database Setup & Migration
 
@@ -87,17 +133,20 @@ To enable this, provide the `B2_*` environment variables. The client and backend
 
 The repository comes pre-configured with two GitHub Actions workflows:
 
-1. **Deploy Next.js Web App (`deploy-web.yml`)**: On pushes to `main` and PRs, runs the full verification pipeline (security audit, typecheck, lint, production build), then Lighthouse and bundle size-limit checks. On `main` pushes it deploys to Vercel via the Vercel CLI, runs a gated E2E smoke test against the preview deployment, and promotes it to production.
+1. **Deploy Next.js Web App (`deploy-web.yml`)**: On pushes to `main` and PRs, runs the full verification pipeline — the tsrs type gate, Bun's own checker as a second opinion, `bun lint`, `bun fmt --check`, the unit suite, the production dependency audit, the deploy file check, a production build, and the client bundle budget. A separate job then runs Lighthouse CI. On `main` pushes it deploys a preview to Vercel via the Vercel CLI, runs the end-to-end suite against that preview, and promotes it to production only if the suite passes.
 2. **CodeQL Security Scan (`codeql.yml`)**: Static security analysis on pushes, PRs, and a weekly schedule.
+
+Both workflows install the Bun **canary**, not a pinned version: `bun lint` and `bun fmt` exist only in canary builds, so a stable Bun cannot run this pipeline at all.
 
 Ensure you configure your GitHub Repository Secrets (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `LHCI_GITHUB_APP_TOKEN`, `PLAYWRIGHT_ADMIN_EMAIL`, `PLAYWRIGHT_ADMIN_PASSWORD`, `PLAYWRIGHT_MEMBER_EMAIL`, `PLAYWRIGHT_MEMBER_PASSWORD`) to enable production deploys and E2E verification.
 
-## Docker (Local / Self-Hosted)
+## Container Images (Local / Self-Hosted)
 
-A Docker setup is available if you prefer to host it yourself instead of Vercel.
+A container setup is available if you prefer to host it yourself instead of Vercel.
+The image contains Bun and nothing else — no Node.js runtime, no npm.
 
 ```bash
-docker compose up --build
+podman compose up -d --build
 ```
 
 The app will be available at [http://localhost:3000](http://localhost:3000).
@@ -109,22 +158,3 @@ Audiobookphile's web app descends from the [Audiobookshelf web client](https://g
 ## Contributing
 
 Pull requests are welcome. For major changes, open an issue first to discuss what you'd like to change. Please ensure you do not use any GPLv3 assets or proprietary logos from other projects when contributing.
-
-
-### Linux runner verification
-
-The `CI Web Verification` job runs on the existing self-hosted Linux pool with
-`ram-3g` placement. This is a resident-RAM requirement; adding swap does not make
-a smaller slot eligible. The pool still sets RAM and swap limits from current
-host capacity for each new worker.
-
-Before dependency installation, `scripts/host-pressure.sh` delegates Linux checks
-to `scripts/linux-host-pressure.sh`. It uses the lesser of host availability and
-remaining cgroup v2 allowance, accounting for already occupied RAM and swap.
-Unknown or inconsistent kernel counters fail the build preflight; `--report`
-remains diagnostic. The default requires 2 GiB of remaining resident headroom and
-retains the host memory/swap pressure thresholds. The macOS diagnostic fallback
-remains available for local use. No pressure check stops other jobs or services.
-
-Run `bun test scripts/host-capacity.test.ts` for isolated host/cgroup fixtures.
-The workflow includes these tests and reruns when the guard or its tests change.

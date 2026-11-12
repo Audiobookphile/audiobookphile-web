@@ -39,7 +39,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   }
 
   const copyDiagnostics = () => {
-    navigator.clipboard?.writeText(buildDiagnostics())
+    void navigator.clipboard?.writeText(buildDiagnostics())
   }
 
   const handleTryAgain = () => {
@@ -59,10 +59,10 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   }
 
   return (
-    <div className="bg-background text-foreground flex min-h-screen flex-col items-center justify-center p-6 text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center text-foreground">
       <div className="mb-8">
-        <div className="bg-error/10 mb-4 inline-flex h-20 w-20 items-center justify-center rounded-full">
-          <svg className="text-error h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-full bg-error/10">
+          <svg className="h-10 w-10 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -72,20 +72,20 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
           </svg>
         </div>
         <h1 className="mb-2 text-4xl font-bold">Something went wrong</h1>
-        <p className="text-foreground-muted mx-auto max-w-md">
+        <p className="mx-auto max-w-md text-foreground-muted">
           An unexpected error occurred. We&apos;ve been notified and are looking into it.
         </p>
-        <p className="text-foreground-subdued mx-auto mt-3 max-w-md font-mono text-xs break-words">{shortMessage}</p>
-        {error?.digest && <p className="text-foreground-subdued mt-4 font-mono text-xs">digest: {error.digest}</p>}
+        <p className="mx-auto mt-3 max-w-md font-mono text-xs break-words text-foreground-subdued">{shortMessage}</p>
+        {error?.digest && <p className="mt-4 font-mono text-xs text-foreground-subdued">digest: {error.digest}</p>}
         {typeof window !== 'undefined' && (
           <div className="mt-4 flex items-center justify-center gap-2">
             <button
               onClick={copyDiagnostics}
-              className="border-border text-foreground-subdued hover:text-foreground rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground-subdued transition-colors hover:text-foreground"
             >
               Copy diagnostics
             </button>
-            <span className="text-foreground-subdued font-mono text-xs">{window.location.pathname}</span>
+            <span className="font-mono text-xs text-foreground-subdued">{window.location.pathname}</span>
           </div>
         )}
       </div>
@@ -101,7 +101,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 
       {process.env.NODE_ENV === 'development' && (
         <div className="mt-12 max-w-2xl overflow-auto rounded-lg bg-black/20 p-4 text-left font-mono text-xs">
-          <p className="text-error mb-2 font-bold">Debug Info:</p>
+          <p className="mb-2 font-bold text-error">Debug Info:</p>
           <pre>{error.stack}</pre>
         </div>
       )}

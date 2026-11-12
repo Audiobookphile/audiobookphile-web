@@ -188,7 +188,7 @@ export default function LibraryItemActionButtons({
             loading={playerHandler.state.playerState === PlayerState.LOADING}
             color={isItemPlaying ? 'bg-primary' : 'bg-success'}
             size="small"
-            className="shadow-success/20 flex h-10 items-center rounded-xl px-6 text-[11px] font-black tracking-widest uppercase shadow-lg"
+            className="flex h-10 items-center rounded-xl px-6 text-[11px] font-black tracking-widest uppercase shadow-lg shadow-success/20"
           >
             {isItemPlaying ? (
               <Pause size={18} className="mr-2 fill-current" />
@@ -216,7 +216,7 @@ export default function LibraryItemActionButtons({
             onClick={handleReadEBook}
             color="bg-info"
             size="small"
-            className="shadow-info/20 flex h-10 items-center rounded-xl px-6 text-[11px] font-black tracking-widest uppercase shadow-lg"
+            className="flex h-10 items-center rounded-xl px-6 text-[11px] font-black tracking-widest uppercase shadow-lg shadow-info/20"
           >
             <BookOpen size={18} className="mr-2" />
             {t('ButtonRead')}

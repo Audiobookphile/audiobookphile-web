@@ -22,7 +22,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ author:
 
   return (
     <div className="w-full p-8">
-      <AuthorClient author={author as any} />
+      <AuthorClient author={author} />
     </div>
   )
 }

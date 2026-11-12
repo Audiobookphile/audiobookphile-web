@@ -1,3 +1,55 @@
+# Build context for the container images.
+#
+# The builder stage does `COPY . .`, so anything not listed here ends up in
+# an image layer -- including in the registry's layer cache, where it stays
+# readable to anyone who can pull the image.
+
+# Secrets and local environment.
+#
+# .env.local holds the Supabase service-role key. It must never be baked
+# into an image. The build already receives NEXT_PUBLIC_SUPABASE_URL and
+# NEXT_PUBLIC_SUPABASE_ANON_KEY as build arguments, which is the supported
+# way to pass them; the builder stage also runs `bun install`, whose
+# `prepare` hook deliberately skips a checkout with no .git.
+.env
+.env.*
+*.pem
+
+# Version control and CI
 .git
+.github
+
+# Dependencies: reinstalled inside the image from bun.lock.
 node_modules
+
+# Build output and test artifacts: regenerated inside the image.
 .next
+out
+build
+coverage
+playwright-report
+test-results
+blob-report
+playwright/.cache
+
+# Editor and OS noise
+.DS_Store
+.idea
+.vscode
+*.log
+
+# Local scratch and probe scripts. They are development tools, not part of
+# the application.
+#
+# scripts/ is deliberately NOT excluded: package.json's "prepare" lifecycle
+# hook runs scripts/prepare.ts on every `bun install`, including the one in
+# the image's dependency stage. It contains no secrets, and the runtime
+# stage copies neither it nor this builder layer.
+check_authors.ts
+query.ts
+mailflow-probe.ts
+playwright.config.ts
+tests
+# The unit tests for the repository's own tooling. They run on the
+# developer's machine and in CI; the image does not need them.
+scripts/__tests__

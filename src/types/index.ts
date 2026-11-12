@@ -25,41 +25,27 @@ export type MediaProgress = Tables<'media_progress'>
 export type Profile = Tables<'profiles'>
 export type Collection = Tables<'collections'>
 export type Playlist = Tables<'playlists'>
-export type Bookmark = any
-export type Narrator = any
 
 // ---------------------------------------------------------------------------
-// Expanded / joined types
+// Removed
 // ---------------------------------------------------------------------------
 
 /**
- * A `LibraryItem` with all related entities joined in a single query.
+ * `Bookmark`, `Narrator`, `LibraryItemExpanded` and `LibraryItemWithProgress`
+ * used to live here, and they have gone.
  *
- * Matches the Supabase select string used in `getLibraryItem()`:
- *   `*, audio_files(*), chapters(*), podcast_episodes(*),
- *    book_authors(authors(*)), book_series(series(*)), book_narrators(narrators(*))`
+ * The first two were `any`, which is what they had to be: there is no
+ * `bookmarks` table and no `narrators` table in the schema, so there was
+ * nothing to alias. The other two described a select string that included
+ * `book_narrators(narrators(*))` -- a join the database cannot serve.
  *
- * Requirement 13.3
+ * None of the four was imported anywhere: the application uses
+ * `AudioBookmark` and `NarratorObject` from `src/types/api`, which are the
+ * real shapes. So they were not documenting anything; they were standing in
+ * for a relation the schema no longer has, and an `any` is the worst way to
+ * leave that standing.
+ *
+ * If the schema regains those relations, put the types back -- as
+ * `Tables<'narrators'>`, so they follow the rule every other type in this
+ * file follows.
  */
-export type LibraryItemExpanded = LibraryItem & {
-  audio_files: AudioFile[]
-  chapters: Chapter[]
-  podcast_episodes: PodcastEpisode[]
-  /** Join rows from `book_authors` with the nested `authors` row. */
-  book_authors: { authors: Author }[]
-  /** Join rows from `book_series` with the nested `series` row and sequence. */
-  book_series: { series: Series; sequence: string | null }[]
-  /** Join rows from `book_narrators` with the nested `narrators` row. */
-  book_narrators: { narrators: Narrator }[]
-}
-
-/**
- * A `LibraryItem` with the current user's media progress attached.
- *
- * `media_progress` is `null` when the user has not started the item yet.
- *
- * Requirement 13.4
- */
-export type LibraryItemWithProgress = LibraryItem & {
-  media_progress: MediaProgress | null
-}

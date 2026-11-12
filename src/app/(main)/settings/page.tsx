@@ -54,9 +54,9 @@ export default async function SettingsPage() {
                 <Link
                   key={card.href}
                   href={card.href}
-                  className="hover:border-primary/50 group flex items-center gap-5 rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg backdrop-blur-md transition-all duration-300 hover:bg-white/10"
+                  className="group flex items-center gap-5 rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg backdrop-blur-md transition-all duration-300 hover:border-primary/50 hover:bg-white/10"
                 >
-                  <div className="bg-primary/10 text-primary flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-300 group-hover:scale-110">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110">
                     <Icon size={28} strokeWidth={2.5} />
                   </div>
                   <div>

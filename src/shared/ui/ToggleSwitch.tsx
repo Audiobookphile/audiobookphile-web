@@ -52,7 +52,6 @@ export default function ToggleSwitch({
   )
 
   const knobSize = size === 'small' ? 'h-3.5 w-3.5' : size === 'medium' ? 'h-5 w-5' : 'h-6.5 w-6.5'
-  const knobTranslate = size === 'small' ? 16 : size === 'medium' ? 16 : 18 // These are just used in the x: value below
 
   const triggerChange = () => {
     if (!disabled) {

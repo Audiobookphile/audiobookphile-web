@@ -8,16 +8,16 @@ export async function deleteUser(userId: string): Promise<void> {
   try {
     await apiDeleteUser(userId)
     revalidatePath('/settings/users')
-  } catch (error: any) {
-    throw new Error(error.message)
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : String(error), { cause: error })
   }
 }
 
 export async function fetchLibraries(): Promise<Library[]> {
   try {
     const response = await getLibraries()
-    return response.libraries as any as Library[]
-  } catch (e) {
+    return response.libraries
+  } catch {
     return []
   }
 }

@@ -2,8 +2,6 @@
 
 import { Redo2, Undo2 } from 'lucide-react'
 import React, { memo, useCallback } from 'react'
-import { Editor } from 'slate'
-import { HistoryEditor } from 'slate-history'
 import { useSlate } from 'slate-react'
 
 import IconBtn from '@/shared/ui/IconBtn'
@@ -23,7 +21,7 @@ export const UndoButton = memo(
     onFocus: () => void
     isUndoAvailable: boolean
   }) => {
-    const editor = useSlate() as Editor & HistoryEditor
+    const editor = useSlate()
 
     const handleKeyDown = useCallback(
       (event: React.KeyboardEvent) => {
@@ -80,7 +78,7 @@ export const RedoButton = memo(
     onFocus: () => void
     isRedoAvailable: boolean
   }) => {
-    const editor = useSlate() as Editor & HistoryEditor
+    const editor = useSlate()
 
     const handleKeyDown = useCallback(
       (event: React.KeyboardEvent) => {

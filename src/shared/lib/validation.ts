@@ -30,11 +30,16 @@ export const MAX_LENGTHS = {
  * Removes control characters and normalizes whitespace.
  */
 export function sanitizeString(input: string): string {
-  return input
-    .trim()
-    .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
-    .replace(/\s+/g, ' ') // Normalize whitespace
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
+  return (
+    input
+      .trim()
+      // Stripping control characters is the whole point of this replace, so
+      // no-control-regex is a false positive here.
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .replace(/<[^>]*>/g, '')
+  ) // Remove HTML tags
 }
 
 /**
@@ -44,7 +49,7 @@ export function sanitizeString(input: string): string {
  */
 export function sanitizeHTML(html: string): string {
   try {
-    return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } }) as unknown as string
+    return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } })
   } catch {
     // Fail-closed: strip all tags rather than returning raw HTML.
     return html.replace(/<[^>]*>/g, '')
@@ -137,7 +142,7 @@ export function debounceValidation<T>(
   validate: (value: T) => Promise<string | undefined>,
   delay: number
 ): (value: T) => Promise<string | undefined> {
-  let timeoutId: NodeJS.Timeout | null = null
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
 
   return (value: T) => {
     return new Promise((resolve) => {
@@ -145,9 +150,15 @@ export function debounceValidation<T>(
         clearTimeout(timeoutId)
       }
 
-      timeoutId = setTimeout(async () => {
-        const error = await validate(value)
-        resolve(error)
+      timeoutId = setTimeout(() => {
+        // The timer callback takes a void return, so the promise is not
+        // returned to it. A rejection resolves the outer promise with no
+        // error rather than becoming an unhandled rejection that would leave
+        // the caller waiting forever.
+        void validate(value).then(
+          (error) => resolve(error),
+          () => resolve(undefined)
+        )
       }, delay)
     })
   }

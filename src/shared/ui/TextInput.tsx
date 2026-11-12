@@ -32,7 +32,20 @@ export interface TextInputProps {
   className?: string
   ref?: React.Ref<HTMLInputElement>
   error?: string
-  autocomplete?: 'off' | 'username' | 'current-password' | 'new-password' | 'email' | 'tel' | string
+  /**
+   * The HTML `autocomplete` attribute.
+   *
+   * The values this app uses are 'off', 'username', 'current-password',
+   * 'new-password', 'email' and 'tel' -- plus 'one-time-code', which the
+   * two-factor forms use and which the previous list had forgotten. The
+   * attribute accepts any of the browser's tokens, so the honest type is
+   * `string`.
+   *
+   * This used to be written as a union of those values plus `string`, which
+   * reads as a constraint and is not one: the trailing `string` absorbs
+   * them all.
+   */
+  autocomplete?: string
   borderless?: boolean
 }
 
@@ -186,7 +199,7 @@ export default function TextInput({
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 type="button"
-                className="text-foreground/40 hover:text-foreground focus-visible:ring-primary rounded-lg p-1.5 transition-colors outline-none hover:bg-white/5 focus-visible:ring-1"
+                className="rounded-lg p-1.5 text-foreground/40 transition-colors outline-none hover:bg-white/5 hover:text-foreground focus-visible:ring-1 focus-visible:ring-primary"
                 onClick={handleClear}
                 aria-label={t('ButtonClearInput')}
                 cy-id="text-input-clear"
@@ -202,7 +215,7 @@ export default function TextInput({
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 type="button"
-                className="text-foreground/40 hover:text-foreground focus-visible:ring-primary rounded-lg p-1.5 transition-colors outline-none hover:bg-white/5 focus-visible:ring-1"
+                className="rounded-lg p-1.5 text-foreground/40 transition-colors outline-none hover:bg-white/5 hover:text-foreground focus-visible:ring-1 focus-visible:ring-primary"
                 onClick={togglePasswordVisibility}
                 aria-label={showPassword ? t('ButtonHidePassword') : t('ButtonShowPassword')}
                 aria-controls={inputId}

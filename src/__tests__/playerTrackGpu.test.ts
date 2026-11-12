@@ -43,7 +43,7 @@ describe('percentToFraction', () => {
     expect(percentToFraction(Number.POSITIVE_INFINITY)).toBe(0)
     expect(percentToFraction(undefined)).toBe(0)
     expect(percentToFraction(null)).toBe(0)
-    expect(percentToFraction('nonsense' as unknown)).toBe(0)
+    expect(percentToFraction('nonsense')).toBe(0)
   })
 })
 

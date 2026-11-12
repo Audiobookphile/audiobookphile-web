@@ -83,14 +83,9 @@ export function extractErrorMessage(text: string): string {
   try {
     const parsed = JSON.parse(text) as unknown
     if (typeof parsed === 'object' && parsed !== null && 'error' in parsed) {
-      const err = (parsed as { error: unknown }).error
+      const err = parsed.error
       if (typeof err === 'string') return err
-      if (
-        typeof err === 'object' &&
-        err !== null &&
-        'message' in err &&
-        typeof (err as { message: unknown }).message === 'string'
-      ) {
+      if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
         return (err as { message: string }).message
       }
     }

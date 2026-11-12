@@ -20,8 +20,15 @@ export type PodcastUpdatePayload = UpdatePayload<Details>
 
 interface PodcastDetailsEditProps {
   libraryItem: PodcastLibraryItem
-  availableGenres: MultiSelectItem<string>[]
-  availableTags: MultiSelectItem<string>[]
+  /**
+   * The pickable values for each facet. Optional, defaulting to an empty
+   * list.
+   *
+   * These were typed as required while the destructuring gave them
+   * defaults, which made the defaults unreachable for every typed caller.
+   */
+  availableGenres?: MultiSelectItem<string>[]
+  availableTags?: MultiSelectItem<string>[]
   onChange?: (details: { libraryItemId: string; hasChanges: boolean }) => void
   onSubmit?: (details: { updatePayload: UpdatePayload<Details>; hasChanges: boolean }) => void
   ref?: React.Ref<PodcastDetailsEditRef>
@@ -61,7 +68,7 @@ const PodcastDetailsEdit = ({
     submitForm,
     initialDetails,
   } = useDetailsEdit<Details>({
-    metadata: (media.metadata as Details) || {},
+    metadata: media.metadata || {},
     tags: media.tags || [],
     libraryItemId: libraryItem.id,
     ref,
@@ -82,7 +89,7 @@ const PodcastDetailsEdit = ({
 
   const handlePodcastTypeChange = useCallback(
     (value: string | number) => {
-      handleFieldUpdate('type')(String(value) as Details['type'])
+      handleFieldUpdate('type')(String(value))
     },
     [handleFieldUpdate]
   )
@@ -126,24 +133,16 @@ const PodcastDetailsEdit = ({
       >
         <div className="-mx-1 flex flex-wrap">
           <div className="w-full px-1 md:w-1/2">
-            <TextInput
-              value={details.title || ''}
-              onChange={handleFieldUpdate('title') as (value: string) => void}
-              label={t('LabelTitle')}
-            />
+            <TextInput value={details.title || ''} onChange={handleFieldUpdate('title')} label={t('LabelTitle')} />
           </div>
           <div className="mt-2 grow px-1 md:mt-0">
-            <TextInput
-              value={details.author || ''}
-              onChange={handleFieldUpdate('author') as (value: string) => void}
-              label={t('LabelAuthor')}
-            />
+            <TextInput value={details.author || ''} onChange={handleFieldUpdate('author')} label={t('LabelAuthor')} />
           </div>
         </div>
 
         <TextInput
           value={details.feedUrl || ''}
-          onChange={handleFieldUpdate('feedUrl') as (value: string) => void}
+          onChange={handleFieldUpdate('feedUrl')}
           label={t('LabelRSSFeedURL')}
           className="mt-2"
         />
@@ -182,21 +181,17 @@ const PodcastDetailsEdit = ({
           <div className="w-full px-1 md:w-1/4">
             <TextInput
               value={details.releaseDate || ''}
-              onChange={handleFieldUpdate('releaseDate') as (value: string) => void}
+              onChange={handleFieldUpdate('releaseDate')}
               label={t('LabelReleaseDate')}
             />
           </div>
           <div className="mt-2 w-full px-1 md:mt-0 md:w-1/4">
-            <TextInput
-              value={details.itunesId || ''}
-              onChange={handleFieldUpdate('itunesId') as (value: string | number) => void}
-              label="iTunes ID"
-            />
+            <TextInput value={details.itunesId || ''} onChange={handleFieldUpdate('itunesId')} label="iTunes ID" />
           </div>
           <div className="mt-2 w-full px-1 md:mt-0 md:w-1/4">
             <TextInput
               value={details.language || ''}
-              onChange={handleFieldUpdate('language') as (value: string) => void}
+              onChange={handleFieldUpdate('language')}
               label={t('LabelLanguage')}
             />
           </div>

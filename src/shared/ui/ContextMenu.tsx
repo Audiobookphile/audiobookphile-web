@@ -273,7 +273,7 @@ export default function ContextMenu<T = string>({
                 role="menuitem"
                 aria-label={t('LabelNoItems')}
                 id={`${menuId}-subitem-${index}-no-items`}
-                className="text-disabled flex w-full cursor-default items-center px-2 py-1.5 text-xs"
+                className="flex w-full cursor-default items-center px-2 py-1.5 text-xs text-disabled"
                 disabled
                 tabIndex={-1}
               >

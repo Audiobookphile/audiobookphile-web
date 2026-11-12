@@ -157,13 +157,13 @@ export default function EditList({
 
   // Empty state message
   if (!items.length) {
-    return <p className="text-foreground py-10 text-center text-xl">{t(listTypeEmptyString)}</p>
+    return <p className="py-10 text-center text-xl text-foreground">{t(listTypeEmptyString)}</p>
   }
 
   return (
-    <div role="list" className="border-border mx-auto max-w-2xl overflow-x-scroll border">
+    <div role="list" className="mx-auto max-w-2xl overflow-x-scroll border border-border">
       <table className="w-full table-auto">
-        <thead className="bg-primary/50 w-full">
+        <thead className="w-full bg-primary/50">
           <tr>
             <th className="px-3 py-2 text-left" title="Name">
               {t('LabelName')}
@@ -177,11 +177,11 @@ export default function EditList({
           {items.map((item) => (
             <Fragment key={item.id}>
               {item !== editedItem && (
-                <tr key={item.id} className="group even:bg-primary/20 p-2">
+                <tr key={item.id} className="group p-2 even:bg-primary/20">
                   <td className="p-3.5">
                     {showNumBooks ? (
                       <a
-                        className="text-foreground text-sm hover:underline md:text-base"
+                        className="text-sm text-foreground hover:underline md:text-base"
                         title={item.name}
                         // Only narrators can be clicked on, tags/genres don't have library info attached.
                         // href could be made an EditListItem prop that is passed in if other pages start using this
@@ -190,7 +190,7 @@ export default function EditList({
                         {item.name}
                       </a>
                     ) : (
-                      <span className="text-foreground text-sm md:text-base" title={item.name}>
+                      <span className="text-sm text-foreground md:text-base" title={item.name}>
                         {item.name}
                       </span>
                     )}
@@ -199,7 +199,7 @@ export default function EditList({
                     <td className="hidden w-1/6 md:table-cell">
                       <div className="flex justify-center">
                         <a
-                          className="text-foreground text-sm hover:underline md:text-base"
+                          className="text-sm text-foreground hover:underline md:text-base"
                           href={`/library/${libraryId}/items?filter=narrators.${item.id}`}
                         >
                           {item.numBooks}
@@ -232,7 +232,7 @@ export default function EditList({
                 </tr>
               )}
               {item === editedItem && (
-                <tr key={item.id} className="group even:bg-primary/20 p-2">
+                <tr key={item.id} className="group p-2 even:bg-primary/20">
                   <td className="p-0.5">
                     <TextInput
                       value={newName}
@@ -280,10 +280,10 @@ export default function EditList({
       >
         <div className="flex h-full flex-col p-6">
           {isDeleting ? (
-            <p className="text-foreground mb-6 flex-1">{t(listTypeDeleteString, { 0: delRef.current?.name || '' })}</p>
+            <p className="mb-6 flex-1 text-foreground">{t(listTypeDeleteString, { 0: delRef.current?.name || '' })}</p>
           ) : (
             <>
-              <p className="text-foreground mb-6 flex-1">{t(listTypeEditString, { 0: editedItem.name, 1: newName })}</p>
+              <p className="mb-6 flex-1 text-foreground">{t(listTypeEditString, { 0: editedItem.name, 1: newName })}</p>
               {/* Show warning if the new value already exists or has a different casing*/}
               {hasSameName && <p className="mb-6 flex-1 text-yellow-500">{t(listTypeMergeString)}</p>}
               {sameNameWithDifferentCase !== '' && (

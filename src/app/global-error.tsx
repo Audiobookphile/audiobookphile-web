@@ -11,9 +11,9 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   return (
     <html lang="en">
       <body>
-        <div className="bg-background text-foreground flex min-h-screen flex-col items-center justify-center p-6 text-center">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center text-foreground">
           <h1 className="mb-2 text-4xl font-bold">Something went critically wrong</h1>
-          <p className="text-foreground-muted mx-auto mb-6 max-w-md">
+          <p className="mx-auto mb-6 max-w-md text-foreground-muted">
             A critical error occurred. We&apos;ve been notified and are looking into it.
           </p>
           <button

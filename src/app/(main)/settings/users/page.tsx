@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic'
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
 
 export default async function UsersPage() {
-  const profiles = await getUsers()
+  const response = await getUsers()
+  const profiles = ('users' in response ? response.users : response) as unknown as import('@/types').Profile[]
 
-  return <UsersClient profiles={(profiles as any).users || profiles} />
+  return <UsersClient profiles={profiles} />
 }

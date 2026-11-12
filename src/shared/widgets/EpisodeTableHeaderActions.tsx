@@ -121,7 +121,7 @@ export default function EpisodeTableHeaderActions({
               size="small"
               disabled={isPending}
               ariaLabel={t('MessageRemoveEpisodes', { 0: selectedEpisodes.size })}
-              className="bg-error/90 border border-white/10 text-white backdrop-blur-md"
+              className="border border-white/10 bg-error/90 text-white backdrop-blur-md"
               onClick={handleRemoveClick}
               icon={Trash2}
             />
@@ -131,7 +131,7 @@ export default function EpisodeTableHeaderActions({
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   exit={{ scale: 0 }}
-                  className="bg-error absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full border border-white/20 px-1 text-[10px] font-black text-white shadow-lg"
+                  className="absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full border border-white/20 bg-error px-1 text-[10px] font-black text-white shadow-lg"
                 >
                   {selectedEpisodes.size}
                 </motion.span>

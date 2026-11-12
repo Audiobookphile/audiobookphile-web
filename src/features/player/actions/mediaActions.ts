@@ -35,7 +35,6 @@ export async function updateLibraryItemMediaAction(libraryItemId: string, payloa
 export async function rescanLibraryItemAction(libraryItemId: string) {
   // This is a complex DB/Storage flow that we can migrate to an Edge Function
   // For now, let's just trigger a re-fetch and cover update
-  const { fetchBookCover } = await import('@/shared/lib/coverFetch')
   const { autoFetchCoverAction } = await import('@/features/metadata/actions/coverActions')
 
   // We'd need to fetch the item title first.
@@ -43,7 +42,8 @@ export async function rescanLibraryItemAction(libraryItemId: string) {
   if (!item?.media?.metadata?.title) return { result: 'UPTODATE' }
 
   const title = item.media.metadata.title
-  const author = (item.media.metadata as any).authorName || (item.media.metadata as any).author
+  const metadata = item.media.metadata as { authorName?: string; author?: string }
+  const author = metadata.authorName || metadata.author
 
   await autoFetchCoverAction(libraryItemId, title, author)
   return { result: 'UPDATED' }
@@ -115,7 +115,7 @@ export async function fetchPodcastFeedAction(_rssFeed: string) {
   return null
 }
 
-export async function downloadPodcastEpisodesAction(_libraryItemId: string, _episodes: any[]) {
+export async function downloadPodcastEpisodesAction(_libraryItemId: string, _episodes: unknown[]) {
   return null
 }
 

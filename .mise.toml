@@ -1,0 +1,20 @@
+# Bun runtime for this repository.
+#
+# The toolchain is Bun's own: `bun lint`, `bun fmt`, `bun test`, `bun audit`
+# and `bun check`. `bun lint` and `bun fmt` ship only in canary builds --
+# they are not in any released Bun -- so the runtime is pinned to the canary
+# channel.
+#
+# This overrides the global `bun = "latest"` in ~/.config/mise/config.toml,
+# which resolves to the last stable release (1.4.3), and stable Bun has no
+# `bun lint` or `bun fmt`.
+#
+# The canary is fetched through the generic GitHub backend rather than mise's
+# `bun` core backend: the canary is published under the rolling `canary`
+# release tag and has no `bun-v<version>` tag of its own, so the core
+# backend 404s on it. The installed binary reports itself as 1.4.4 -- the
+# in-development version for the next release.
+#
+# Re-run `mise install` to pick up a newer canary build.
+[tools]
+"github:oven-sh/bun" = "canary"

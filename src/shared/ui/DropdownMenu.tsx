@@ -2,6 +2,7 @@
 import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, ChevronRight } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useModalRef } from '@/shared/contexts/ModalContext'
@@ -22,7 +23,13 @@ export interface DropdownMenuItem {
   subtext?: string
   keepOpen?: boolean
   rightIcon?: React.ReactNode
-  icon?: any
+  /**
+   * The icon component, rendered as `<Icon size={16} className="..." />`.
+   *
+   * `LucideIcon` rather than a component type of our own, because that is
+   * what the icon set exports and every caller passes one of them.
+   */
+  icon?: LucideIcon
   onClick?: () => void
   className?: string
   subitems?: DropdownMenuSubitem[]
@@ -132,7 +139,7 @@ function DropdownSubmenu({
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       ref={submenuRef}
       role="menu"
-      className="bg-primary/95 absolute z-[9999] overflow-y-auto rounded-xl border border-white/10 py-1.5 shadow-2xl backdrop-blur-xl"
+      className="absolute z-[9999] overflow-y-auto rounded-xl border border-white/10 bg-primary/95 py-1.5 shadow-2xl backdrop-blur-xl"
       style={{
         ...floatingStyles,
         width: '200px',
@@ -253,7 +260,7 @@ export default function DropdownMenu({
   const [isMouseOver, setIsMouseOver] = useState(false)
 
   const [openSubmenuLeft, setOpenSubmenuLeft] = useState(false)
-  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isOverSubmenuRef = useRef(false)
   const menuItemRefs = useRef<(HTMLLIElement | null)[]>([])
   const submenuWidth = 200
@@ -414,7 +421,7 @@ export default function DropdownMenu({
                 </span>
                 {item.subtext && <span className="mx-1 opacity-40">:</span>}
                 {item.subtext && (
-                  <span className="text-foreground/60 block truncate font-sans text-xs font-normal">
+                  <span className="block truncate font-sans text-xs font-normal text-foreground/60">
                     {item.subtext}
                   </span>
                 )}
@@ -518,7 +525,7 @@ export default function DropdownMenu({
           {menuItems}
           {showNoItemsMessage && !items.length && (
             <li
-              className="text-foreground relative px-4 py-4 select-none"
+              className="relative px-4 py-4 text-foreground select-none"
               role="option"
               aria-selected={false}
               cy-id="dropdown-menu-no-items"

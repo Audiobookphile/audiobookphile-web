@@ -11,16 +11,16 @@ export class PlayerEventEmitter {
     if (!this.listeners[event]) {
       this.listeners[event] = new Set<PlayerEventCallback<keyof PlayerEventMap>>()
     }
-    this.listeners[event]!.add(callback as PlayerEventCallback<keyof PlayerEventMap>)
+    this.listeners[event]!.add(callback)
   }
 
   off<K extends keyof PlayerEventMap>(event: K, callback: PlayerEventCallback<K>): void {
-    this.listeners[event]?.delete(callback as PlayerEventCallback<keyof PlayerEventMap>)
+    this.listeners[event]?.delete(callback)
   }
 
   protected emit<K extends keyof PlayerEventMap>(event: K, data: PlayerEventMap[K]): void {
     this.listeners[event]?.forEach((callback) => {
-      ;(callback as PlayerEventCallback<K>)(data)
+      callback(data)
     })
   }
 

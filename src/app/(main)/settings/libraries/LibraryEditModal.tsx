@@ -92,7 +92,7 @@ export default function LibraryEditModal({
   // Load metadata providers when modal opens
   useEffect(() => {
     if (isOpen) {
-      ensureProvidersLoaded()
+      void ensureProvidersLoaded()
     }
   }, [isOpen, ensureProvidersLoaded])
 

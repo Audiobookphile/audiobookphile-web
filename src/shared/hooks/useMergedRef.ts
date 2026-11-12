@@ -14,7 +14,7 @@ export const useMergedRef = <T>(externalRef?: React.Ref<T>) => {
       if (typeof externalRef === 'function') {
         externalRef(node)
       } else {
-        ;(externalRef as React.RefObject<T | null>).current = node
+        externalRef.current = node
       }
     },
     [externalRef]

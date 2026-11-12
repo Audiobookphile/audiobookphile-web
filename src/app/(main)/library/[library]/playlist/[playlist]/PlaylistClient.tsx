@@ -18,7 +18,7 @@ export default function PlaylistClient({ playlist }: PlaylistClientProps) {
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 md:flex-row md:items-start">
         <PlaylistGroupCover items={playlist.items ?? []} width={coverWidth * 2} height={coverHeight * 2} />
         <div className="flex flex-col gap-2">
-          <h1 className="text-foreground text-2xl font-bold">{playlist.name}</h1>
+          <h1 className="text-2xl font-bold text-foreground">{playlist.name}</h1>
           {playlist.description && <p className="text-foreground-muted">{playlist.description}</p>}
         </div>
       </div>

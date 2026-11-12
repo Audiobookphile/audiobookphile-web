@@ -137,11 +137,11 @@ export default function ItemTaskRunningCard({ task }: ItemTaskRunningCardProps) 
     <div className="flex items-start gap-3 px-3 py-2.5 transition-all">
       <div className="flex shrink-0 items-center justify-center pt-0.5">
         {isFailed ? (
-          <div className="bg-error/20 border-error/20 rounded-lg border p-1.5">
+          <div className="rounded-lg border border-error/20 bg-error/20 p-1.5">
             <AlertCircle size={16} className="text-error" />
           </div>
         ) : isSuccess ? (
-          <div className="bg-success/20 border-success/20 rounded-lg border p-1.5">
+          <div className="rounded-lg border border-success/20 bg-success/20 p-1.5">
             <CheckCircle2 size={16} className="text-success" />
           </div>
         ) : (
@@ -157,8 +157,8 @@ export default function ItemTaskRunningCard({ task }: ItemTaskRunningCardProps) 
             {title}
           </p>
           {!isFinished && (
-            <div className="bg-primary/20 border-primary/20 rounded-full border px-1.5 py-0.5">
-              <span className="text-primary text-[8px] font-black tracking-tighter uppercase">Live</span>
+            <div className="rounded-full border border-primary/20 bg-primary/20 px-1.5 py-0.5">
+              <span className="text-[8px] font-black tracking-tighter text-primary uppercase">Live</span>
             </div>
           )}
         </div>
@@ -177,8 +177,8 @@ export default function ItemTaskRunningCard({ task }: ItemTaskRunningCardProps) 
         )}
 
         {isFailed && !!failedMessage && (
-          <div className="bg-error/10 border-error/10 mt-1.5 rounded-lg border p-2">
-            <p className="text-error text-[10px] leading-tight font-medium break-words whitespace-normal italic">
+          <div className="mt-1.5 rounded-lg border border-error/10 bg-error/10 p-2">
+            <p className="text-[10px] leading-tight font-medium break-words whitespace-normal text-error italic">
               {failedMessage}
             </p>
           </div>

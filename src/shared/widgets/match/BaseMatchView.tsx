@@ -58,7 +58,7 @@ export default function BaseMatchView<TUsage extends { [key: string]: boolean },
   const handleSelectAllToggle = useCallback(
     (value: boolean) => {
       const newUsage = Object.keys(selectedMatchUsage).reduce((acc, key) => {
-        ;(acc as TUsage)[key as keyof TUsage] = value as TUsage[keyof TUsage]
+        acc[key as keyof TUsage] = value as TUsage[keyof TUsage]
         return acc
       }, {} as TUsage)
       setSelectedMatchUsage(newUsage)
@@ -169,7 +169,7 @@ export default function BaseMatchView<TUsage extends { [key: string]: boolean },
         </form>
       </div>
       <div
-        className={`border-border flex flex-shrink-0 items-center justify-end border-t px-4 py-3 transition-shadow duration-200 ${showShadow ? 'box-shadow-md-up' : ''}`}
+        className={`flex flex-shrink-0 items-center justify-end border-t border-border px-4 py-3 transition-shadow duration-200 ${showShadow ? 'box-shadow-md-up' : ''}`}
       >
         <Btn type="submit" disabled={isPendingApply} loading={isPendingApply} onClick={handleSubmitMatchUpdate}>
           {t('ButtonSubmit')}

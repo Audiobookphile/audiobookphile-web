@@ -16,14 +16,14 @@ export const isLinkActive = (editor: Editor) => {
   if (!selection) return false
   const [match] = Editor.nodes(editor, {
     at: Editor.unhangRange(editor, selection),
-    match: (n) => !Editor.isEditor(n) && Element.isElement(n) && n.type === 'link',
+    match: (n) => Element.isElement(n) && n.type === 'link',
   })
   return !!match
 }
 
 export const unwrapLink = (editor: Editor) => {
   Transforms.unwrapNodes(editor, {
-    match: (n) => !Editor.isEditor(n) && Element.isElement(n) && n.type === 'link',
+    match: (n) => Element.isElement(n) && n.type === 'link',
   })
 }
 
@@ -35,7 +35,7 @@ export const getSelectedText = (editor: Editor): string => {
     // If cursor is collapsed, check if we're inside a link
     const [match] = Editor.nodes(editor, {
       at: selection,
-      match: (n) => !Editor.isEditor(n) && Element.isElement(n) && n.type === 'link',
+      match: (n) => Element.isElement(n) && n.type === 'link',
     })
 
     if (match) {
@@ -57,7 +57,7 @@ export const getLinkUrl = (editor: Editor): string => {
 
   const [match] = Editor.nodes(editor, {
     at: selection,
-    match: (n) => !Editor.isEditor(n) && Element.isElement(n) && n.type === 'link',
+    match: (n) => Element.isElement(n) && n.type === 'link',
   })
 
   if (match) {
@@ -71,10 +71,10 @@ export const getLinkUrl = (editor: Editor): string => {
 export const getActiveLinkEntry = (editor: Editor): NodeEntry<Element> | undefined => {
   const { selection } = editor
   if (!selection || !Range.isCollapsed(selection)) return
-  const entry = Editor.above(editor, {
+  const entry = Editor.above<CustomElement>(editor, {
     at: selection,
     match: (n) => Element.isElement(n) && n.type === 'link',
-  }) as NodeEntry<Element> | undefined
+  })
   return entry
 }
 
@@ -95,7 +95,7 @@ export const upsertLink = (editor: Editor, text: string, url: string) => {
   const overlappingLinks = Array.from(
     Editor.nodes(editor, {
       at: selection,
-      match: (n) => !Editor.isEditor(n) && Element.isElement(n) && n.type === 'link',
+      match: (n) => Element.isElement(n) && n.type === 'link',
     })
   )
 
@@ -108,14 +108,14 @@ export const upsertLink = (editor: Editor, text: string, url: string) => {
         // Selection overlaps a link - unwrap overlapping links and delete selection
         Transforms.unwrapNodes(editor, {
           at: selection,
-          match: (n) => !Editor.isEditor(n) && Element.isElement(n) && n.type === 'link',
+          match: (n) => Element.isElement(n) && n.type === 'link',
           split: true,
         })
       }
 
       // Delete the selection and insert new link
       Transforms.delete(editor)
-      Transforms.insertNodes(editor, { type: 'link', url, children: [{ text: content }] } as Element)
+      Transforms.insertNodes(editor, { type: 'link', url, children: [{ text: content }] })
     })
   } else {
     // COLLAPSED SELECTION (cursor)
@@ -124,21 +124,25 @@ export const upsertLink = (editor: Editor, text: string, url: string) => {
       const [, linkPath] = overlappingLinks[0]
       Editor.withoutNormalizing(editor, () => {
         Transforms.removeNodes(editor, { at: linkPath })
-        Transforms.insertNodes(editor, { type: 'link', url, children: [{ text: content }] } as Element, {
-          at: linkPath,
-        })
+        Transforms.insertNodes(
+          editor,
+          { type: 'link', url, children: [{ text: content }] },
+          {
+            at: linkPath,
+          }
+        )
       })
     } else {
       // Cursor not in a link - insert new link at cursor position
-      Transforms.insertNodes(editor, { type: 'link', url, children: [{ text: content }] } as Element)
+      Transforms.insertNodes(editor, { type: 'link', url, children: [{ text: content }] })
     }
   }
 
   // Position cursor after the new link
-  const inserted = Editor.above(editor, {
+  const inserted = Editor.above<CustomElement>(editor, {
     at: editor.selection!,
     match: (n) => Element.isElement(n) && n.type === 'link',
-  }) as NodeEntry<Element> | undefined
+  })
 
   if (inserted) {
     const [, linkPath] = inserted

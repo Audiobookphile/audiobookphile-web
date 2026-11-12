@@ -69,7 +69,7 @@ export function SlateEditorExamples() {
               <SlateEditor srcContent={editorValue} onUpdate={handleUpdate} label="Editor" />
             </div>
             <div className="mt-9.5 min-w-[250px] flex-1">
-              <TextareaInput value={textAreaValue} onChange={handleUpdateTextarea} rows={4} label="Textarea" />
+              <TextareaInput value={textareaOutput} onChange={handleUpdateTextarea} rows={4} label="Textarea" />
             </div>
           </div>
           <div className="flex flex-wrap gap-4">

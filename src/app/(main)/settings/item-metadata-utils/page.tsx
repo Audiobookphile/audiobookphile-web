@@ -31,7 +31,7 @@ export default async function ItemMetadataUtilsPage() {
           <Link
             key={item.href}
             href={item.href}
-            className="bg-primary/40 hover:bg-primary/60 text-foreground-muted hover:text-foreground rounded-md p-4"
+            className="rounded-md bg-primary/40 p-4 text-foreground-muted hover:bg-primary/60 hover:text-foreground"
           >
             <div className="flex items-center justify-between">
               <span>{item.label}</span>

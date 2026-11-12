@@ -1,7 +1,20 @@
 'use client'
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { createEditor, Descendant, Editor, Element, Node, Path, Point, Range, Text, Transforms } from 'slate'
+import {
+  createEditor,
+  Descendant,
+  Editor,
+  Element,
+  Node,
+  NodeEntry,
+  Operation,
+  Path,
+  Point,
+  Range,
+  Text,
+  Transforms,
+} from 'slate'
 import { HistoryEditor, withHistory } from 'slate-history'
 import { ReactEditor, Slate, withReact } from 'slate-react'
 
@@ -60,7 +73,7 @@ const withLinks = <T extends Editor>(editor: T) => {
   const { isInline, insertText, insertBreak, normalizeNode } = editor
 
   // Treat links as inline
-  editor.isInline = (el) => (Element.isElement(el) && el.type === 'link') || isInline(el)
+  editor.isInline = (el: Element) => (Element.isElement(el) && el.type === 'link') || isInline(el)
 
   // Helper: if caret is collapsed at the end of a link, move it right AFTER the link node
   const escapeIfAtEndOfLink = (): void => {
@@ -92,7 +105,7 @@ const withLinks = <T extends Editor>(editor: T) => {
     if (afterNow) Transforms.select(editor, afterNow)
   }
 
-  editor.insertText = (text) => {
+  editor.insertText = (text: string) => {
     escapeIfAtEndOfLink()
     insertText(text)
   }
@@ -103,7 +116,7 @@ const withLinks = <T extends Editor>(editor: T) => {
   }
 
   // Optional: enforce "pure text inside link"
-  editor.normalizeNode = (entry) => {
+  editor.normalizeNode = (entry: NodeEntry) => {
     const [node, path] = entry
 
     const isLink = (node: Node) => Element.isElement(node) && node.type === 'link'
@@ -160,7 +173,7 @@ const SlateEditor = memo(
           editor.children &&
           Array.isArray(editor.children) &&
           editor.children.length > 0 &&
-          editor.children.every((child) => child && typeof child === 'object')
+          editor.children.every((child: Descendant) => child && typeof child === 'object')
         )
       } catch {
         return false
@@ -288,7 +301,7 @@ const SlateEditor = memo(
         }
 
         // Check if the change resulted in an actual content change (ignore selection changes)
-        const hasContentChanged = editor.operations.some((op) => op.type !== 'set_selection')
+        const hasContentChanged = editor.operations.some((op: Operation) => op.type !== 'set_selection')
         if (!hasContentChanged) {
           return
         }

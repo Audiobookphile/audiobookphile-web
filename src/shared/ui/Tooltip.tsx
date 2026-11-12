@@ -199,7 +199,7 @@ const Tooltip = ({
       left: x != null ? `${x}px` : '',
       top: y != null ? `${y}px` : '',
       [staticSide[resolvedPlacement.split('-')[0]]]: '-4px',
-    } as React.CSSProperties
+    }
   }, [middlewareData.arrow, resolvedPlacement, withArrow])
 
   const tooltipElement = (
@@ -229,7 +229,7 @@ const Tooltip = ({
             <div
               ref={arrowRef}
               style={arrowStyles}
-              className="bg-primary absolute h-2 w-2 rotate-45 border-r border-b border-white/10"
+              className="absolute h-2 w-2 rotate-45 border-r border-b border-white/10 bg-primary"
             />
           )}
         </motion.div>

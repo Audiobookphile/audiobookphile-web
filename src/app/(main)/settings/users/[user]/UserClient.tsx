@@ -37,7 +37,7 @@ export default function UserClient({ user }: { user: User }) {
         <h1 className="text-xl">{user.username}</h1>
       </div>
 
-      <div className="bg-border my-4 h-px w-full" />
+      <div className="my-4 h-px w-full bg-border" />
 
       <h2 className="text-lg font-medium">{t('HeaderSavedMediaProgress')}</h2>
       <SimpleDataTable data={user.mediaProgress} columns={columns} getRowKey={(mediaProgress) => mediaProgress.id} />

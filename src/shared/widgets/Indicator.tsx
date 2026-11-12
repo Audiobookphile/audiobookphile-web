@@ -28,8 +28,8 @@ const Indicator = ({ tooltipText, children, className, ariaLabel, role = 'note' 
     )
   }
 
-  if (children && typeof children === 'object' && 'render' in (children as any)) {
-    const Icon = children as any
+  if (children && typeof children === 'object' && 'render' in (children as { render?: unknown })) {
+    const Icon = children as unknown as React.ComponentType<{ size?: number; strokeWidth?: number }>
     return (
       <Tooltip text={tooltipText} position="top">
         <div

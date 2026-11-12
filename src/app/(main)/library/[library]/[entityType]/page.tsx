@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
 import {
   getLibraries,
   getLibraryAuthors,
@@ -53,9 +54,8 @@ async function fetchInitialData(
       default:
         return null
     }
-  } catch (error: any) {
-    if (error.name === 'UnauthorizedError') {
-      const { redirect } = require('next/navigation')
+  } catch (error) {
+    if (error instanceof Error && error.name === 'UnauthorizedError') {
       redirect('/login')
     }
     console.error(`Failed to fetch initial data for ${entityType}:`, error)

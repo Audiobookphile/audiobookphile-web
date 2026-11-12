@@ -19,11 +19,8 @@ interface CronExpressionBuilderProps {
   options?: FormatDateOptions
 }
 
-export default function CronExpressionBuilder({
-  value,
-  onChange,
-  options: { language, timeZone } = {},
-}: CronExpressionBuilderProps) {
+export default function CronExpressionBuilder({ value, onChange, options }: CronExpressionBuilderProps) {
+  const { language, timeZone } = options ?? {}
   const t = useTypeSafeTranslations()
   const [selectedInterval, setSelectedInterval] = useState<string>('daily')
   const [customCronError, setCustomCronError] = useState<string>('')

@@ -15,28 +15,28 @@ const mockPosthog = {
   capture: mock((event: string, properties?: Record<string, unknown>) => ({ event, properties })),
   identify: mock((id: string) => id),
   reset: mock(() => {}),
+  init: mock(() => {}),
+  onFeatureFlags: mock(() => undefined),
 }
 
-mock.module('posthog-js', () => ({
+void mock.module('posthog-js', () => ({
   default: mockPosthog,
-  __esModule: true,
-}))
-
-mock.module('posthog-js/react', () => ({
-  usePostHog: () => mockPosthog,
-  PostHogProvider: ({ children }: { children: unknown }) => children,
   __esModule: true,
 }))
 
 describe('analytics with PostHog enabled', () => {
   it('reads kill-switch flags from posthog', async () => {
-    const { getFeatureFlag } = await import('../shared/lib/analytics')
+    const { getFeatureFlag, loadAnalytics } = await import('../shared/lib/analytics')
+    // The tracker is loaded on demand, so the facade has nothing to read
+    // until it has been asked for.
+    await loadAnalytics()
     expect(getFeatureFlag('passkey_2fa', true)).toBe(false)
     expect(getFeatureFlag('brand_new_flag', false)).toBe(true)
   })
 
   it('forwards capture/identify/reset to posthog', async () => {
-    const { capture, identifyUser, resetAnalytics } = await import('../shared/lib/analytics')
+    const { capture, identifyUser, resetAnalytics, loadAnalytics } = await import('../shared/lib/analytics')
+    await loadAnalytics()
     capture('playback_started', { libraryId: 'lib_1' })
     expect(mockPosthog.capture).toHaveBeenCalledWith('playback_started', { libraryId: 'lib_1' })
 
@@ -45,5 +45,15 @@ describe('analytics with PostHog enabled', () => {
 
     resetAnalytics()
     expect(mockPosthog.reset).toHaveBeenCalled()
+  })
+
+  it('keeps the calls made before the tracker arrives', async () => {
+    // The tracker is a chunk fetch away, and an event fired during the
+    // first render would be lost if the facade dropped it.
+    const { capture, loadAnalytics } = await import('../shared/lib/analytics')
+    mockPosthog.capture.mockClear()
+    capture('playback_paused', { libraryId: 'lib_2' })
+    await loadAnalytics()
+    expect(mockPosthog.capture).toHaveBeenCalledWith('playback_paused', { libraryId: 'lib_2' })
   })
 })

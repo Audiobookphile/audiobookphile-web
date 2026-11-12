@@ -55,12 +55,10 @@ export function useEpisodeTableVirtualizer(totalItems: number, rowHeight: number
         scrollContainer === document.documentElement ? window.innerHeight : scrollContainer.clientHeight
 
       // Top position of the list container relative to the scroll container
-      let listTop = 0
-      if (scrollContainer === document.documentElement) {
-        listTop = listEl.getBoundingClientRect().top + window.scrollY
-      } else {
-        listTop = listEl.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top + scrollTop
-      }
+      const listTop =
+        scrollContainer === document.documentElement
+          ? listEl.getBoundingClientRect().top + window.scrollY
+          : listEl.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top + scrollTop
 
       // How far the scroll position is past the top of the list
       const relativeScrollTop = Math.max(0, scrollTop - listTop)

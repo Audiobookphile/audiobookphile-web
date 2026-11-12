@@ -132,7 +132,7 @@ export default function EpisodeRow({
                 <button
                   id={`btn-episode-${episode.id}`}
                   type="button"
-                  className={`focus-visible:ring-accent line-clamp-2 cursor-pointer rounded-lg text-start text-[13px] leading-tight font-black tracking-tight uppercase transition-colors focus-visible:ring-1 focus-visible:ring-offset-2 sm:text-sm ${userIsFinished ? 'text-white/40' : 'text-white/90'}`}
+                  className={`line-clamp-2 cursor-pointer rounded-lg text-start text-[13px] leading-tight font-black tracking-tight uppercase transition-colors focus-visible:ring-1 focus-visible:ring-accent focus-visible:ring-offset-2 sm:text-sm ${userIsFinished ? 'text-white/40' : 'text-white/90'}`}
                   onClick={(e) => {
                     e.stopPropagation()
                     handleRowClick()
@@ -209,9 +209,9 @@ export default function EpisodeRow({
                 className={`h-9 flex-nowrap border border-white/5 px-3 shadow-lg backdrop-blur-md hover:border-white/10 hover:bg-white/10 ${userIsFinished ? 'text-white/30' : 'text-white/90'}`}
               >
                 {streamIsPlaying ? (
-                  <Pause size={18} className="text-accent fill-current" />
+                  <Pause size={18} className="fill-current text-accent" />
                 ) : (
-                  <Play size={18} className="text-success fill-current" />
+                  <Play size={18} className="fill-current text-success" />
                 )}
                 <span className="ps-2 text-[10px] font-black tracking-widest whitespace-nowrap uppercase">
                   {timeRemaining}
@@ -257,7 +257,7 @@ export default function EpisodeRow({
               {userCanDelete && (
                 <IconBtn
                   borderless
-                  className="hover:text-error text-white/20"
+                  className="text-white/20 hover:text-error"
                   onClick={handleDeleteClick}
                   icon={Trash2}
                 />
@@ -287,7 +287,7 @@ export default function EpisodeRow({
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent * 100}%` }}
-              className="bg-accent h-full shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+              className="h-full bg-accent shadow-[0_0_8px_rgba(245,158,11,0.5)]"
             />
           </div>
         )}

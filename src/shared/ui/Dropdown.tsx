@@ -432,7 +432,7 @@ export default function Dropdown({
             handleOptionClick(item.value as string | number)
           }
         }}
-        onSubitemClick={(subitem) => handleSubitemClick(subitem.value as string | number)}
+        onSubitemClick={(subitem) => handleSubitemClick(subitem.value)}
         onOpenSubmenu={(index) => {
           if (openSubmenuIndex !== index) {
             setOpenSubmenuIndex(index)

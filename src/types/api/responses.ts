@@ -1,4 +1,4 @@
-import { Author, Collection, Library, LibraryItem, Playlist, Series } from '.'
+import { Author, BookshelfEntity, Collection, Library, LibraryItem, Playlist, Series } from '.'
 import { ApiKey, User } from './auth'
 import {
   Backup,
@@ -183,6 +183,24 @@ export interface GetAuthorsPaginatedResponse {
 }
 
 export type GetAuthorsResponse = GetAuthorsListResponse | GetAuthorsPaginatedResponse
+
+/**
+ * The page envelope, whatever the entity type.
+ *
+ * The five list endpoints answer with different item types but the same
+ * shape, and the hooks that read them treat them uniformly. Four of them
+ * name the array `results`; the authors endpoint names it `authors` when it
+ * is not paginated -- the same distinction `isGetAuthorsListResponse` draws
+ * on the other side of the wire.
+ *
+ * Every response type above is assignable to this, so a page can be held
+ * as one without a cast.
+ */
+export interface BookshelfPageResponse {
+  results?: BookshelfEntity[]
+  authors?: BookshelfEntity[]
+  total?: number
+}
 
 /** Type guard — narrows to non-paginated shape */
 export function isGetAuthorsListResponse(r: GetAuthorsResponse): r is GetAuthorsListResponse {

@@ -65,7 +65,7 @@ export function AdvancedModalExamples() {
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} className="w-[600px]">
               <div className="flex h-full flex-col p-6">
                 {/* Header */}
-                <div className="border-border mb-6 flex items-center justify-between border-b pb-4">
+                <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
                   <h3 className="text-xl font-semibold text-white">Edit Tags</h3>
                 </div>
 
@@ -90,7 +90,7 @@ export function AdvancedModalExamples() {
                 </div>
 
                 {/* Footer */}
-                <div className="border-border flex items-center justify-end gap-3 border-t pt-4">
+                <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
                   <Btn onClick={() => setIsModalOpen(false)} color="bg-gray-600">
                     Cancel
                   </Btn>
@@ -145,50 +145,50 @@ export function AdvancedModalExamples() {
             >
               {selectedTab === 'details' && (
                 <div className="space-y-3">
-                  <h3 className="text-foreground text-lg font-semibold">Details</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Details</h3>
                   <p className="text-foreground-muted">
                     Configure the basic details for this library. Name, description, and other metadata.
                   </p>
-                  <div className="bg-primary rounded p-4">
-                    <p className="text-foreground-subdued text-sm">This is sample content for the Details tab.</p>
+                  <div className="rounded bg-primary p-4">
+                    <p className="text-sm text-foreground-subdued">This is sample content for the Details tab.</p>
                   </div>
                 </div>
               )}
               {selectedTab === 'settings' && (
                 <div className="space-y-3">
-                  <h3 className="text-foreground text-lg font-semibold">Settings</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Settings</h3>
                   <p className="text-foreground-muted">
                     Adjust library-level settings such as scan behavior, metadata preferences, and more.
                   </p>
-                  <div className="bg-primary rounded p-4">
-                    <p className="text-foreground-subdued text-sm">This is sample content for the Settings tab.</p>
+                  <div className="rounded bg-primary p-4">
+                    <p className="text-sm text-foreground-subdued">This is sample content for the Settings tab.</p>
                   </div>
                 </div>
               )}
               {selectedTab === 'scanner' && (
                 <div className="space-y-3">
-                  <h3 className="text-foreground text-lg font-semibold">Scanner</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Scanner</h3>
                   <p className="text-foreground-muted">Configure how the scanner processes files in this library.</p>
-                  <div className="bg-primary rounded p-4">
-                    <p className="text-foreground-subdued text-sm">This is sample content for the Scanner tab.</p>
+                  <div className="rounded bg-primary p-4">
+                    <p className="text-sm text-foreground-subdued">This is sample content for the Scanner tab.</p>
                   </div>
                 </div>
               )}
               {selectedTab === 'schedule' && (
                 <div className="space-y-3">
-                  <h3 className="text-foreground text-lg font-semibold">Schedule</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Schedule</h3>
                   <p className="text-foreground-muted">Set up automatic scan schedules for this library.</p>
-                  <div className="bg-primary rounded p-4">
-                    <p className="text-foreground-subdued text-sm">This is sample content for the Schedule tab.</p>
+                  <div className="rounded bg-primary p-4">
+                    <p className="text-sm text-foreground-subdued">This is sample content for the Schedule tab.</p>
                   </div>
                 </div>
               )}
               {selectedTab === 'tools' && (
                 <div className="space-y-3">
-                  <h3 className="text-foreground text-lg font-semibold">Tools</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Tools</h3>
                   <p className="text-foreground-muted">Library management tools for bulk operations and maintenance.</p>
-                  <div className="bg-primary rounded p-4">
-                    <p className="text-foreground-subdued text-sm">This is sample content for the Tools tab.</p>
+                  <div className="rounded bg-primary p-4">
+                    <p className="text-sm text-foreground-subdued">This is sample content for the Tools tab.</p>
                   </div>
                 </div>
               )}

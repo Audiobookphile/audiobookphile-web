@@ -74,7 +74,7 @@ export default function TabbedModal({
               {isActive && (
                 <motion.div
                   layoutId="active-tab"
-                  className="bg-primary/10 border-primary/20 absolute inset-0 border-x border-t"
+                  className="absolute inset-0 border-x border-t border-primary/20 bg-primary/10"
                   transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                 />
               )}
@@ -85,7 +85,7 @@ export default function TabbedModal({
       </div>
 
       {/* Modal content */}
-      <div className="bg-primary/95 flex flex-col overflow-hidden rounded-tr-2xl rounded-b-2xl border border-white/10 shadow-2xl backdrop-blur-xl">
+      <div className="flex flex-col overflow-hidden rounded-tr-2xl rounded-b-2xl border border-white/10 bg-primary/95 shadow-2xl backdrop-blur-xl">
         {/* Tab content */}
         <AnimatePresence mode="wait">
           <motion.div

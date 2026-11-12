@@ -5,6 +5,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FlatResultItem, SearchResultType } from '@/features/library/hooks/useGlobalSearchTransformer'
 import AuthorImage from '@/features/metadata/components/AuthorImage'
+import type { Author } from '@/types/api'
 import { useMenuPosition } from '@/shared/hooks/useMenuPosition'
 import { useScrollToFocused } from '@/shared/hooks/useScrollToFocused'
 import { mergeClasses } from '@/shared/lib/merge-classes'
@@ -24,7 +25,7 @@ const HighlightMatch = ({ text, query }: { text: string; query: string }) => {
     <>
       {parts.map((part, i) =>
         part.isMatch ? (
-          <span key={i} className="text-accent font-black drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]">
+          <span key={i} className="font-black text-accent drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]">
             {part.text}
           </span>
         ) : (
@@ -112,7 +113,7 @@ export default function GlobalSearchMenu({
         cy-id="global-search-menu"
         role="listbox"
         tabIndex={-1}
-        className="bg-primary/95 globalSearchMenu absolute z-50 mt-2 max-h-[min(600px,calc(100vh-100px))] w-full overflow-y-auto rounded-2xl border border-white/10 p-1.5 shadow-2xl backdrop-blur-xl"
+        className="globalSearchMenu absolute z-50 mt-2 max-h-[min(600px,calc(100vh-100px))] w-full overflow-y-auto rounded-2xl border border-white/10 bg-primary/95 p-1.5 shadow-2xl backdrop-blur-xl"
         style={
           usePortal
             ? {
@@ -129,7 +130,7 @@ export default function GlobalSearchMenu({
         {(Array.isArray(results) ? results : []).map((result, index) => {
           if (result.isPlaceholder) {
             return (
-              <div key={result.id} className="text-foreground/40 px-4 py-3 text-sm font-medium italic">
+              <div key={result.id} className="px-4 py-3 text-sm font-medium text-foreground/40 italic">
                 {result.placeholderText}
               </div>
             )
@@ -139,7 +140,7 @@ export default function GlobalSearchMenu({
             return (
               <div
                 key={result.id}
-                className="text-foreground/30 mt-3 mb-1 px-4 py-1 text-[10px] font-black tracking-[0.15em] uppercase"
+                className="mt-3 mb-1 px-4 py-1 text-[10px] font-black tracking-[0.15em] text-foreground/30 uppercase"
               >
                 {result.title}
               </div>
@@ -165,7 +166,7 @@ export default function GlobalSearchMenu({
               >
                 {hasImage ? (
                   result.type === 'author' && result.originalItem ? (
-                    <AuthorImage author={result.originalItem} className="h-full w-full" />
+                    <AuthorImage author={result.originalItem as unknown as Author} className="h-full w-full" />
                   ) : (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={result.imageSrc} alt="" className="h-full w-full object-cover" loading="lazy" />
@@ -177,11 +178,11 @@ export default function GlobalSearchMenu({
 
               {/* Text */}
               <div className="min-w-0 flex-1 py-1">
-                <div className="text-foreground truncate text-sm font-bold tracking-tight">
+                <div className="truncate text-sm font-bold tracking-tight text-foreground">
                   <HighlightMatch text={result.title} query={searchQuery} />
                 </div>
                 {result.subtitle && (
-                  <div className="text-foreground/40 mt-0.5 truncate text-[10px] font-medium">
+                  <div className="mt-0.5 truncate text-[10px] font-medium text-foreground/40">
                     {shouldHighlightSubtitle ? (
                       <HighlightMatch text={result.subtitle} query={searchQuery} />
                     ) : (
@@ -190,14 +191,14 @@ export default function GlobalSearchMenu({
                   </div>
                 )}
                 {result.author && (
-                  <div className="text-foreground/60 mt-0.5 truncate text-xs font-semibold">
+                  <div className="mt-0.5 truncate text-xs font-semibold text-foreground/60">
                     <HighlightMatch text={result.author} query={searchQuery} />
                   </div>
                 )}
               </div>
 
               {isSelected && (
-                <div className="text-accent pr-2">
+                <div className="pr-2 text-accent">
                   <ChevronRight size={16} strokeWidth={3} />
                 </div>
               )}

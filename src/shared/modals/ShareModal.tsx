@@ -1,6 +1,6 @@
 'use client'
 
-import { Copy, HelpCircle, Info, Share2, Trash2 } from 'lucide-react'
+import { HelpCircle, Info } from 'lucide-react'
 import { useLocale } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { closeMediaItemShareAction, openMediaItemShareAction } from '@/features/tools/actions/shareActions'
@@ -187,7 +187,7 @@ export default function ShareModal({ isOpen, onClose, mediaItemId, mediaItemShar
               href="https://www.audiobookphile.org/guides/media-item-shares"
               target="_blank"
               rel="noreferrer"
-              className="hover:text-primary inline-flex text-white/40 transition-colors"
+              className="inline-flex text-white/40 transition-colors hover:text-primary"
             >
               <HelpCircle size={20} strokeWidth={2.5} />
             </a>
@@ -245,19 +245,19 @@ export default function ShareModal({ isOpen, onClose, mediaItemId, mediaItemShar
               </p>
               <ToggleSwitch size="medium" value={isDownloadable} onChange={setIsDownloadable} />
               <Tooltip text={t('LabelShareDownloadableHelp')} position="right" maxWidth={160} openOnClick addTabIndex>
-                <span className="hover:text-primary cursor-pointer text-white/20 transition-colors">
+                <span className="cursor-pointer text-white/20 transition-colors hover:text-primary">
                   <Info size={18} strokeWidth={2.5} />
                 </span>
               </Tooltip>
             </div>
 
-            <p className="text-foreground-muted px-1 py-1 text-sm">
+            <p className="px-1 py-1 text-sm text-foreground-muted">
               {t.rich('MessageShareURLWillBe', {
                 0: demoShareUrl,
                 strong: (chunks) => <strong>{chunks}</strong>,
               })}
             </p>
-            <p className="text-foreground-muted px-1 py-1 text-sm">
+            <p className="px-1 py-1 text-sm text-foreground-muted">
               {t.rich('MessageShareExpirationWillBe', {
                 0: expirationDateString,
                 strong: (chunks) => <strong>{chunks}</strong>,

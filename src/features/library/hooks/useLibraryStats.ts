@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchLibraryStatsAction } from '@/features/library/actions/libraryActions'
-import { LibraryStats } from '@/types/api/models'
 
 export function useLibraryStats(libraryId: string | undefined) {
   return useQuery({

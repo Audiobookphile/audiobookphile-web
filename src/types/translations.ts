@@ -1,5 +1,5 @@
-// Auto-generated types for translation keys
-// Run `npm run generate-translation-types` to update
+// Auto-generated types for translation keys — derived from src/locales/en-us.json.
+// Regenerate whenever the locale files gain or lose a key.
 
 import { RichTagsFunction } from 'next-intl'
 import type enUsMessages from '../locales/en-us.json'

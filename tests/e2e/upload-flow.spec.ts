@@ -1,8 +1,4 @@
 import { test, expect } from './fixtures'
-import { execFileSync } from 'node:child_process'
-import { mkdtempSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 
 /**
  * P3.4 — full upload pipeline smoke against the live stack.
@@ -18,16 +14,18 @@ import { join } from 'node:path'
  * Skipped (soft) when credentials are absent so CI without seeds stays green.
  */
 
-const SRC = mkdtempSync(join(tmpdir(), 'ab-upload-'))
+// The fixture is written straight into the OS temp directory: ffmpeg creates
+// the file, so no intermediate directory has to exist first.
+const TMP_DIR = Bun.env.TMPDIR || '/tmp'
 const uploadName = `E2E Upload ${Date.now()}`
-const uploadFile = join(SRC, `${uploadName}.mp3`)
+const uploadFile = `${TMP_DIR}/ab-upload-${Date.now()}.mp3`
 let ffmpegAvailable = true
 try {
-  execFileSync(
-    'ffmpeg',
-    ['-f', 'lavfi', '-i', 'sine=frequency=440:duration=2', '-c:a', 'libmp3lame', '-y', uploadFile],
-    { stdio: 'ignore' }
+  const ffmpeg = Bun.spawnSync(
+    ['ffmpeg', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=2', '-c:a', 'libmp3lame', '-y', uploadFile],
+    { stdout: 'ignore', stderr: 'ignore' }
   )
+  ffmpegAvailable = ffmpeg.success
 } catch {
   ffmpegAvailable = false
 }
@@ -46,11 +44,12 @@ async function cleanupItem(title: string) {
   const { data: items } = await supabase.from('library_items').select('id, audio_files').eq('title', title)
   for (const item of items || []) {
     const paths: string[] = []
-    for (const f of (item.audio_files as any[]) || []) {
-      const p = f?.metadata?.path ?? f?.path ?? ''
+    const audioFiles = (item.audio_files as Array<{ path?: string; metadata?: { path?: string } }>) || []
+    for (const f of audioFiles) {
+      const p = String(f?.metadata?.path ?? f?.path ?? '')
       if (p.startsWith('supabase://')) paths.push(p.replace('supabase://', ''))
       else if (p.startsWith('b2-')) paths.push(p.replace(/^b2-(tertiary|secondary):\/\//, ''))
-      else paths.push(p)
+      else if (p) paths.push(p)
     }
     if (paths.length) {
       await supabase.storage.from('audio-files').remove(paths)

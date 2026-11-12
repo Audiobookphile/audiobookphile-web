@@ -1,6 +1,5 @@
 import { test, expect } from './fixtures'
-import { readFileSync, existsSync } from 'node:fs'
-import path from 'node:path'
+import { loadEnv } from '../../scripts/load-env'
 import { type APIRequestContext } from '@playwright/test'
 
 /**
@@ -15,30 +14,14 @@ import { type APIRequestContext } from '@playwright/test'
 
 const PASSWORD = 'TestPass123!'
 
-function loadEnvFile(filePath: string): Record<string, string> {
-  const env: Record<string, string> = {}
-  if (!existsSync(filePath)) return env
-  for (const line of readFileSync(filePath, 'utf8').split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-    const idx = trimmed.indexOf('=')
-    if (idx === -1) continue
-    let value = trimmed.slice(idx + 1)
-    if (
-      value.length >= 2 &&
-      ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'")))
-    ) {
-      value = value.slice(1, -1)
-    }
-    env[trimmed.slice(0, idx)] = value
-  }
-  return env
-}
+// Load .env.local so the admin credentials resolve without a manual export.
+// A variable already in the environment is never overridden by a file, so an
+// explicit export still wins.
+await loadEnv(`${import.meta.dir}/../..`)
 
 function supabaseAdminEnv(): { url: string; serviceKey: string } {
-  const fromFile = loadEnvFile(path.resolve(__dirname, '../../.env.local'))
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || fromFile.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY || fromFile.SUPABASE_SERVICE_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY
   if (!url || !serviceKey) {
     throw new Error(
       'Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_KEY (.env.local). Cannot create the E2E test user.'

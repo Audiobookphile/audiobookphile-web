@@ -1,19 +1,34 @@
 'use server'
 
-import { uploadCover } from '@/shared/lib/api'
-import { fetchBookCover } from '@/shared/lib/coverFetch'
-import { createServiceRoleClient } from '@/shared/utils/supabase/service-role'
 import type {
   BookSearchResult,
   PodcastSearchResult,
   UpdateLibraryItemMediaPayload,
   UpdateLibraryItemMediaResponse,
 } from '@/types/api'
-import type { Database } from '@/types/supabase'
 
 /**
  * Search for book metadata using Open Library and Google Books.
  */
+/**
+ * The part of the Google Books volumes response this app reads.
+ */
+type GoogleBooksResponse = {
+  items?: {
+    volumeInfo?: {
+      title?: string
+      authors?: string[]
+      description?: string
+      imageLinks?: { thumbnail?: string }
+      categories?: string[]
+      industryIdentifiers?: { type?: string; identifier?: string }[]
+      language?: string
+      publisher?: string
+      publishedDate?: string
+    }
+  }[]
+}
+
 export async function searchBooksAction(
   _provider: string,
   title: string,
@@ -30,7 +45,18 @@ export async function searchBooksAction(
       signal: AbortSignal.timeout(8000),
     })
     if (olRes.ok) {
-      const data = await olRes.json()
+      interface OpenLibraryDoc {
+        title?: string
+        author_name?: string[]
+        first_sentence?: { value?: string }
+        cover_i?: number | string
+        subject?: string[]
+        isbn?: string[]
+        language?: string[]
+        publisher?: string[]
+        first_publish_year?: number | string
+      }
+      const data = (await olRes.json()) as { docs?: OpenLibraryDoc[] }
       for (const doc of (data?.docs || []).slice(0, 8)) {
         results.push({
           title: doc.title || title,
@@ -66,7 +92,9 @@ export async function searchBooksAction(
         }
       )
       if (gbRes.ok) {
-        const data = await gbRes.json()
+        // The Google Books response has a shape this app depends on, so it is
+        // named rather than left as the `any` that `json()` returns.
+        const data = (await gbRes.json()) as GoogleBooksResponse
         for (const item of (data?.items || []).slice(0, 8)) {
           const info = item.volumeInfo || {}
           const thumbnail = info.imageLinks?.thumbnail?.replace('http://', 'https://') || null
@@ -78,7 +106,7 @@ export async function searchBooksAction(
             series: [],
             genres: info.categories?.slice(0, 3) || [],
             tags: [],
-            isbn: info.industryIdentifiers?.find((i: any) => i.type === 'ISBN_13')?.identifier || undefined,
+            isbn: info.industryIdentifiers?.find((i) => i.type === 'ISBN_13')?.identifier || undefined,
             asin: undefined,
             language: info.language || undefined,
             publisher: info.publisher || undefined,
@@ -133,7 +161,7 @@ export async function applyMatchAction(
       await autoFetchCoverAction(libraryItemId, updatePayload.metadata.title, authorName)
     }
 
-    return { updated: true } as UpdateLibraryItemMediaResponse
+    return { updated: true }
   } catch (err) {
     console.error('[matchActions] applyMatch failed:', err)
     throw err

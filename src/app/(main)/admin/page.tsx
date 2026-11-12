@@ -24,11 +24,11 @@ export default async function AdminDashboardPage() {
   return (
     <div className="mx-auto w-full max-w-6xl p-6 md:p-10">
       {/* Bleeding-Edge Navigation Banner */}
-      <div className="border-border bg-primary/80 mb-8 flex flex-col gap-4 rounded-2xl border p-4 backdrop-blur-xl md:flex-row md:items-center md:justify-between">
+      <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-border bg-primary/80 p-4 backdrop-blur-xl md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/library"
-            className="border-border bg-primary hover:border-accent/40 hover:bg-primary-hover group text-foreground inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-all hover:shadow-md"
+            className="group inline-flex items-center gap-2 rounded-xl border border-border bg-primary px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition-all hover:border-accent/40 hover:bg-primary-hover hover:shadow-md"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
             <span>Return to Library</span>
@@ -36,16 +36,16 @@ export default async function AdminDashboardPage() {
 
           <Link
             href="/settings"
-            className="border-border bg-primary/50 hover:border-border hover:bg-primary text-foreground-muted hover:text-foreground inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all"
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-primary/50 px-4 py-2.5 text-sm font-medium text-foreground-muted transition-all hover:border-border hover:bg-primary hover:text-foreground"
           >
-            <Settings className="text-foreground-muted h-4 w-4" />
+            <Settings className="h-4 w-4 text-foreground-muted" />
             <span>Server Settings</span>
           </Link>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="border-accent/30 bg-accent/15 text-accent inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold tracking-wider uppercase">
-            <ShieldAlert className="text-accent h-3.5 w-3.5" />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/15 px-3 py-1 text-xs font-bold tracking-wider text-accent uppercase">
+            <ShieldAlert className="h-3.5 w-3.5 text-accent" />
             <span>{roleBadge}</span>
           </span>
           <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-400">
@@ -57,22 +57,22 @@ export default async function AdminDashboardPage() {
 
       {/* Dashboard Title & Intro */}
       <div className="mb-8">
-        <h1 className="text-foreground text-3xl font-extrabold tracking-tight md:text-4xl">Admin Dashboard</h1>
-        <p className="text-foreground-muted mt-2 text-base">
+        <h1 className="text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">Admin Dashboard</h1>
+        <p className="mt-2 text-base text-foreground-muted">
           Real-time server telemetry, active sessions, and user invite management.
         </p>
       </div>
 
       {/* Analytics Telemetry Grid (client-fetched) */}
       <div className="mb-12">
-        <h2 className="text-foreground-subdued mb-4 text-xs font-bold tracking-wider uppercase">System Analytics</h2>
+        <h2 className="mb-4 text-xs font-bold tracking-wider text-foreground-subdued uppercase">System Analytics</h2>
         <AdminAnalyticsWidget />
       </div>
 
       {/* User Management & Invitations */}
-      <div className="border-border bg-primary/80 rounded-2xl border p-6 backdrop-blur-xl">
-        <h2 className="text-foreground mb-1 text-xl font-bold tracking-tight">User Management</h2>
-        <p className="text-foreground-muted mb-6 text-sm">
+      <div className="rounded-2xl border border-border bg-primary/80 p-6 backdrop-blur-xl">
+        <h2 className="mb-1 text-xl font-bold tracking-tight text-foreground">User Management</h2>
+        <p className="mb-6 text-sm text-foreground-muted">
           Invite new members to your server. Newly invited users will receive an enrollment token via email.
         </p>
         <div className="max-w-xl">

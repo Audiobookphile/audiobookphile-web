@@ -93,7 +93,7 @@ export async function upload(
         const errData = await presignRes.json().catch(() => ({}))
         throw new Error(errData.error || `Presign failed: ${presignRes.status}`)
       }
-    } catch (e: any) {
+    } catch (e) {
       console.warn('Failed to get presigned URL:', e)
       if (e instanceof Error && e.message.includes('Presign failed')) {
         throw e

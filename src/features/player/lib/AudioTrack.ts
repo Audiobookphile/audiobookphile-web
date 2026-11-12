@@ -12,7 +12,6 @@ export class AudioTrack {
   readonly mimeType: string
   readonly metadata: Record<string, unknown>
 
-  private readonly sessionId: string | undefined
   private readonly sessionTrackUrl: string
 
   constructor(track: AudioTrackData, sessionId?: string) {
@@ -23,8 +22,6 @@ export class AudioTrack {
     this.contentUrl = track.contentUrl ?? ''
     this.mimeType = track.mimeType ?? ''
     this.metadata = track.metadata ?? {}
-
-    this.sessionId = sessionId
 
     // If the contentUrl is an absolute URL (e.g. Supabase signed URL) or an HLS path,
     // use it directly. Only build the ABS session track URL for relative paths.

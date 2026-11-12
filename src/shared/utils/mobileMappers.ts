@@ -1,5 +1,5 @@
 import type { MobileBookModel, MobileLibraryModel } from '@/types/schemas'
-import { parseTitleAndAuthor, prettifyFilenameTitle, sanitizeDisplayTitle } from './titleAuthorParser'
+import { parseTitleAndAuthor, sanitizeDisplayTitle } from './titleAuthorParser'
 
 // Safe date helper — handles null/undefined from Supabase rows
 function toMs(value: string | null | undefined, fallback = 0): number {
@@ -22,6 +22,37 @@ export interface MobileProgressInput {
   started_at?: string | null
   created_at?: string | null
   finished_at?: string | null
+}
+
+export interface MobileAudioFileInput {
+  id?: string
+  ino?: string | number
+  track_index?: number
+  index?: number
+  filename?: string
+  duration?: number | string | null
+  size?: number | string | null
+  mime_type?: string | null
+  mimeType?: string | null
+  bit_rate?: number | string | null
+  bitRate?: number | string | null
+  codec?: string | null
+  language?: string | null
+  storage_path?: string | null
+  path?: string | null
+  rel_path?: string | null
+  relPath?: string | null
+  metadata?: Record<string, unknown> | null
+}
+
+export interface MobileChapterInput {
+  id?: string | number
+  title?: string
+  start?: number
+  start_time?: number
+  end?: number
+  end_time?: number
+  chapter_index?: number
 }
 
 export interface MobileBookInput {
@@ -67,12 +98,12 @@ export interface MobileBookInput {
     explicit?: boolean | null
     abridged?: boolean | null
     cover_path?: string | null
-    tags?: any[] | null
-    genres?: any[] | null
-    narrators?: any[] | null
-    audio_files?: any[] | null
-    chapters?: any[] | null
-    ebook_file?: any | null
+    tags?: unknown[] | null
+    genres?: unknown[] | null
+    narrators?: unknown[] | null
+    audio_files?: MobileAudioFileInput[] | null
+    chapters?: MobileChapterInput[] | null
+    ebook_file?: unknown
     duration?: number | null
     size?: number | null
     book_authors?: Array<{
@@ -127,7 +158,7 @@ export function mapLibraryForMobile(lib: MobileLibraryInput): MobileLibraryModel
   return _mapLibraryForMobile(lib) as MobileLibraryModel
 }
 
-function _mapLibraryForMobile(lib: MobileLibraryInput): any {
+function _mapLibraryForMobile(lib: MobileLibraryInput): Record<string, unknown> {
   return {
     id: lib.id,
     name: lib.name || 'Library',
@@ -155,7 +186,7 @@ function _mapLibraryForMobile(lib: MobileLibraryInput): any {
       autoScanCronExpression: lib.settings?.autoScanCronExpression ?? lib.settings?.auto_scan_cron_expression ?? null,
     },
     folders:
-      lib.library_folders?.map((f: any) => ({
+      lib.library_folders?.map((f) => ({
         id: f.id,
         full_path: f.path || '',
         fullPath: f.path || '',
@@ -188,14 +219,17 @@ export function mapBookForMobile(item: MobileBookInput, progressRecord: MobilePr
   return _mapBookForMobile(item, progressRecord) as MobileBookModel
 }
 
-function _mapBookForMobile(item: MobileBookInput, progressRecord: MobileProgressInput | null): any {
+function _mapBookForMobile(item: MobileBookInput, progressRecord: MobileProgressInput | null): Record<string, unknown> {
   // 1. Authors & Title
   const authors =
-    item.book_authors?.map((ba: any) => ba.authors).filter(Boolean) ||
-    item.books?.book_authors?.map((ba: any) => ba.authors).filter(Boolean) ||
+    item.book_authors?.map((ba) => ba.authors).filter((a): a is NonNullable<typeof a> => Boolean(a)) ||
+    item.books?.book_authors?.map((ba) => ba.authors).filter((a): a is NonNullable<typeof a> => Boolean(a)) ||
     []
-  const authorNames = authors.map((a: any) => a.name)
-  const rawAuthorFallback = (item as any).author_names_first_last || (item as any).author || ''
+  const authorNames = authors.map((a) => a.name)
+  const rawAuthorFallback =
+    (item as unknown as { author_names_first_last?: string; author?: string }).author_names_first_last ||
+    (item as unknown as { author_names_first_last?: string; author?: string }).author ||
+    ''
 
   let finalTitle = item.books?.title || item.title || 'Unknown Title'
   let authorName = authorNames.join(', ') || rawAuthorFallback
@@ -214,7 +248,7 @@ function _mapBookForMobile(item: MobileBookInput, progressRecord: MobileProgress
   // that duplicate the separate subtitle/series/year metadata fields.
   finalTitle = sanitizeDisplayTitle(finalTitle)
 
-  const authorNameLF = authors.map((a: any) => a.name_lf || a.name).join(', ') || authorName
+  const authorNameLF = authors.map((a) => a.name_lf || a.name).join(', ') || authorName
 
   // 2. Narrators
   const narrators = item.books?.narrators || []
@@ -229,12 +263,13 @@ function _mapBookForMobile(item: MobileBookInput, progressRecord: MobileProgress
   const audioFilesList = item.books?.audio_files || []
   const audioFiles =
     audioFilesList
-      .map((af: any) => {
-        const meta = af.metadata || {}
-        const filename = af.filename || meta.filename || ''
+      .map((af) => {
+        const meta = (af.metadata as Record<string, unknown>) || {}
+        const metaFilename = typeof meta.filename === 'string' ? meta.filename : ''
+        const filename = af.filename || metaFilename || ''
         const size = Number(af.size || meta.size) || 0
         const path = af.path || meta.path || af.storage_path || ''
-        const rel_path = af.relPath || af.rel_path || meta.relPath || meta.rel_path || af.storage_path || af.path || ''
+        const relPath = af.relPath || af.rel_path || meta.relPath || meta.rel_path || af.storage_path || af.path || ''
 
         return {
           ino: af.id || af.ino,
@@ -252,8 +287,8 @@ function _mapBookForMobile(item: MobileBookInput, progressRecord: MobileProgress
             filename: filename,
             ext: filename.split('.').pop() || '',
             path: path,
-            rel_path: rel_path,
-            relPath: rel_path,
+            rel_path: relPath,
+            relPath: relPath,
             size: size,
             mtime_ms: Number(meta.mtimeMs || meta.mtime_ms) || new Date().getTime(),
             mtimeMs: Number(meta.mtimeMs || meta.mtime_ms) || new Date().getTime(),
@@ -264,19 +299,19 @@ function _mapBookForMobile(item: MobileBookInput, progressRecord: MobileProgress
           },
         }
       })
-      .sort((a: any, b: any) => a.index - b.index) || []
+      .sort((a, b) => a.index - b.index) || []
 
   // 5. Chapters
   const chaptersList = item.books?.chapters || []
   const chapters =
     chaptersList
-      .map((ch: any) => ({
+      .map((ch) => ({
         id: ch.chapter_index !== undefined ? ch.chapter_index : ch.id,
         title: ch.title,
         start: Number(ch.start_time !== undefined ? ch.start_time : ch.start) || 0,
         end: Number(ch.end_time !== undefined ? ch.end_time : ch.end) || 0,
       }))
-      .sort((a: any, b: any) => a.id - b.id) || []
+      .sort((a, b) => Number(a.id ?? 0) - Number(b.id ?? 0)) || []
 
   // 6. User Media Progress
   const userMediaProgress = progressRecord
@@ -333,7 +368,7 @@ function _mapBookForMobile(item: MobileBookInput, progressRecord: MobileProgress
     mediaType: item.media_type || 'book',
     media: {
       mediaType: 'book' as const,
-      library_files: audioFiles.map((af: any) => ({
+      library_files: audioFiles.map((af: { ino?: unknown; metadata?: unknown }) => ({
         ino: af.ino,
         metadata: af.metadata,
         is_supplementary: false,

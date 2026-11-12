@@ -8,10 +8,26 @@ import { getLibraryItemCoverSrc, getPlaceholderCoverUrl } from '@/shared/lib/cov
 import Btn from '@/shared/ui/Btn'
 import { sanitizeDisplayTitle } from '@/shared/utils/titleAuthorParser'
 
+interface SearchItem {
+  id?: string
+  title?: string
+  author_names_first_last?: string
+  coverPath?: string | null
+  cover_path?: string | null
+  updatedAt?: number | string | null
+  updated_at?: number | string | null
+  media?: {
+    metadata?: {
+      title?: string
+      authorName?: string
+    }
+  }
+}
+
 interface SearchClientProps {
   libraryId: string
   initialQuery: string
-  initialResults: any
+  initialResults?: unknown
 }
 
 export default function SearchClient({ libraryId, initialQuery, initialResults }: SearchClientProps) {
@@ -38,8 +54,14 @@ export default function SearchClient({ libraryId, initialQuery, initialResults }
     [libraryId, router, searchParams]
   )
 
-  const items = useMemo(() => {
-    const candidate = initialResults?.results ?? initialResults?.items
+  const items = useMemo<SearchItem[]>(() => {
+    if (!initialResults || typeof initialResults !== 'object') return []
+    const res = initialResults as {
+      results?: SearchItem[]
+      items?: SearchItem[]
+      book?: Array<{ libraryItem: SearchItem }>
+    }
+    const candidate = res.results ?? res.items ?? (Array.isArray(res.book) ? res.book.map((b) => b.libraryItem) : [])
     return Array.isArray(candidate) ? candidate : []
   }, [initialResults])
 
@@ -56,7 +78,7 @@ export default function SearchClient({ libraryId, initialQuery, initialResults }
           type="search"
           defaultValue={initialQuery}
           placeholder={t('ButtonSearch')}
-          className="bg-bg-light border-border focus:ring-primary flex-1 rounded-md border px-4 py-2 text-sm focus:ring-2 focus:outline-none"
+          className="bg-bg-light flex-1 rounded-md border border-border px-4 py-2 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
           autoFocus
         />
         <Btn type="submit" loading={isPending} disabled={isPending} size="small">
@@ -98,7 +120,7 @@ export default function SearchClient({ libraryId, initialQuery, initialResults }
 
       {/* Results */}
       {initialQuery && (
-        <p className="text-foreground-muted mb-4 text-sm">
+        <p className="mb-4 text-sm text-foreground-muted">
           {items.length === 0
             ? `No results for "${initialQuery}"`
             : `${items.length} result${items.length !== 1 ? 's' : ''} for "${initialQuery}"`}
@@ -106,14 +128,18 @@ export default function SearchClient({ libraryId, initialQuery, initialResults }
       )}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-        {items.map((item: any) => {
+        {items.map((item) => {
           const itemId = item.id
           if (!itemId) return null
 
           const title = sanitizeDisplayTitle(item.media?.metadata?.title || item.title || 'Unknown')
           const author = item.media?.metadata?.authorName || item.author_names_first_last || ''
           const coverSrc = getLibraryItemCoverSrc(
-            { id: itemId, updatedAt: item.updatedAt ?? item.updated_at, coverPath: item.coverPath ?? item.cover_path },
+            {
+              id: itemId,
+              updatedAt: typeof item.updatedAt === 'number' ? item.updatedAt : undefined,
+              coverPath: (item.coverPath ?? item.cover_path) || undefined,
+            },
             placeholder
           )
 
@@ -130,8 +156,8 @@ export default function SearchClient({ libraryId, initialQuery, initialResults }
                   }}
                 />
               </div>
-              <p className="text-foreground line-clamp-2 text-xs font-medium">{title}</p>
-              {author && <p className="text-foreground-muted line-clamp-1 text-xs">{author}</p>}
+              <p className="line-clamp-2 text-xs font-medium text-foreground">{title}</p>
+              {author && <p className="line-clamp-1 text-xs text-foreground-muted">{author}</p>}
             </Link>
           )
         })}
@@ -139,7 +165,7 @@ export default function SearchClient({ libraryId, initialQuery, initialResults }
 
       {!initialQuery && (
         <div className="flex h-48 items-center justify-center">
-          <p className="text-foreground-muted text-sm">{t('MessageNoResults')}</p>
+          <p className="text-sm text-foreground-muted">{t('MessageNoResults')}</p>
         </div>
       )}
     </div>

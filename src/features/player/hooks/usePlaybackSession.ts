@@ -41,8 +41,8 @@ interface UsePlaybackSessionReturn {
     episodeId?: string,
     startTimeOverride?: number
   ) => Promise<PlaybackSession | null>
-  /** Sync progress to server */
-  syncProgress: (currentTime: number) => void
+  /** Sync progress to server. Fire-and-forget: the caller does not await it. */
+  syncProgress: (currentTime: number, duration?: number) => void
   /** Close the current session */
   closeSession: (getCurrentTime?: () => number, getDuration?: () => number) => Promise<void>
   /** Start the sync interval (call when playback starts) */
@@ -218,7 +218,7 @@ export function usePlaybackSession(options: UsePlaybackSessionOptions = {}): Use
         if (listeningTimeSinceSync.current >= syncThreshold) {
           const currentTime = getCurrentTime()
           const duration = getDuration?.() ?? undefined
-          syncProgress(currentTime, duration)
+          void syncProgress(currentTime, duration)
         }
       }, 1000)
     },
@@ -272,7 +272,11 @@ export function usePlaybackSession(options: UsePlaybackSessionOptions = {}): Use
 
   return {
     startSession,
-    syncProgress,
+    // The interface declares this as `=> void`: the sync is fire-and-forget
+    // and the caller does not await it. The implementation is async, so the
+    // boundary wraps it and makes the discarded result explicit rather than
+    // handing a promise to a caller that ignores it.
+    syncProgress: (currentTime: number, duration?: number) => void syncProgress(currentTime, duration),
     closeSession,
     startSyncInterval,
     stopSyncInterval,

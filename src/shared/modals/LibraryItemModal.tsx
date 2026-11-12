@@ -47,8 +47,7 @@ export function useLibraryItemModal(): LibraryItemModalContextValue {
 
 /** Either `navCtx` (fetch + prev/next) or `libraryItem` (no fetch); object literals cannot include both. */
 export type LibraryItemModalItemSource =
-  | { navCtx: EntityNavigationContext }
-  | { libraryItem: BookLibraryItem | PodcastLibraryItem }
+  { navCtx: EntityNavigationContext } | { libraryItem: BookLibraryItem | PodcastLibraryItem }
 
 export type LibraryItemModalProps = Omit<ModalProps, 'outerContent' | 'sideNavigation' | 'processing' | 'children'> &
   LibraryItemModalItemSource & {
@@ -158,7 +157,10 @@ export default function LibraryItemModal(props: LibraryItemModalProps) {
           </h2>
           {resolvedItem && 'authors' in resolvedItem.media.metadata && (
             <p className="truncate text-sm font-medium text-white/60">
-              {(resolvedItem.media.metadata.authors as any[])?.map((a) => a.name).join(', ')}
+              {(resolvedItem.media.metadata.authors as Array<{ name?: string }>)
+                ?.map((a) => a.name)
+                .filter(Boolean)
+                .join(', ')}
             </p>
           )}
         </div>

@@ -70,7 +70,7 @@ export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
             <IconBtn
               borderless
               size="custom"
-              className="text-foreground/60 hover:text-foreground p-2"
+              className="p-2 text-foreground/60 hover:text-foreground"
               onClick={handlePreviousChapter}
               ariaLabel={t('ButtonPreviousChapter')}
               icon={SkipBack}
@@ -85,7 +85,7 @@ export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
               <IconBtn
                 borderless
                 size="custom"
-                className="text-foreground/80 hover:text-foreground p-2"
+                className="p-2 text-foreground/80 hover:text-foreground"
                 onClick={jumpBackward}
                 ariaLabel={jumpBackwardTooltipText}
                 icon={RotateCcw}
@@ -105,7 +105,7 @@ export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
               size="custom"
               loading={isLoading}
               outlined={false}
-              className="bg-primary hover:bg-primary/90 shadow-primary/30 h-14 w-14 rounded-full text-white shadow-lg ring-2 ring-white/25 transition-all sm:h-16 sm:w-16"
+              className="h-14 w-14 rounded-full bg-primary text-white shadow-lg ring-2 shadow-primary/30 ring-white/25 transition-all hover:bg-primary/90 sm:h-16 sm:w-16"
               onClick={playPause}
               ariaLabel={isPlaying ? t('ButtonPause') : t('ButtonPlay')}
               icon={isPlaying ? Pause : Play}
@@ -121,7 +121,7 @@ export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
               <IconBtn
                 borderless
                 size="custom"
-                className="text-foreground/80 hover:text-foreground p-2"
+                className="p-2 text-foreground/80 hover:text-foreground"
                 onClick={jumpForward}
                 ariaLabel={jumpForwardTooltipText}
                 icon={RotateCw}
@@ -139,7 +139,7 @@ export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
             <IconBtn
               borderless
               size="custom"
-              className="text-foreground/60 hover:text-foreground p-2"
+              className="p-2 text-foreground/60 hover:text-foreground"
               onClick={handleNextChapter}
               ariaLabel={t('ButtonNextChapter')}
               icon={SkipForward}
@@ -168,7 +168,7 @@ export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
               <IconBtn
                 size="custom"
                 borderless
-                className="text-foreground/60 hover:text-foreground p-2"
+                className="p-2 text-foreground/60 hover:text-foreground"
                 onClick={() => setIsChaptersModalOpen(true)}
                 ariaLabel={t('LabelViewChapters')}
                 icon={List}
@@ -181,7 +181,7 @@ export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
             <IconBtn
               size="custom"
               borderless
-              className="text-foreground/60 hover:text-foreground p-2"
+              className="p-2 text-foreground/60 hover:text-foreground"
               onClick={() => setIsSettingsModalOpen(true)}
               ariaLabel={t('LabelViewPlayerSettings')}
               icon={Settings2}

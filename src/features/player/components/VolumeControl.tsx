@@ -165,7 +165,7 @@ export default function VolumeControl({ playerHandler }: VolumeControlProps) {
           onMouseLeave={closePopoverSoon}
         >
           <div
-            className="bg-primary/95 flex flex-col items-center rounded-2xl border border-white/10 p-4 shadow-2xl backdrop-blur-xl"
+            className="flex flex-col items-center rounded-2xl border border-white/10 bg-primary/95 p-4 shadow-2xl backdrop-blur-xl"
             style={{ marginBottom: -8 }}
           >
             <div
@@ -186,7 +186,7 @@ export default function VolumeControl({ playerHandler }: VolumeControlProps) {
                 style={{ width: 6, height: trackHeight }}
               />
               <div
-                className="bg-accent pointer-events-none absolute rounded-full shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+                className="pointer-events-none absolute rounded-full bg-accent shadow-[0_0_15px_rgba(245,158,11,0.5)]"
                 style={{ width: 6, height: filledHeight, bottom: 0 }}
               />
               <motion.div
@@ -219,7 +219,7 @@ export default function VolumeControl({ playerHandler }: VolumeControlProps) {
         aria-label={t('LabelVolume')}
         aria-expanded={isOpen}
         aria-controls={`${widgetId}-popover`}
-        className="text-foreground/60 flex h-10 w-10 cursor-pointer items-center justify-center transition-all duration-300 hover:scale-110 hover:text-white active:scale-95"
+        className="flex h-10 w-10 cursor-pointer items-center justify-center text-foreground/60 transition-all duration-300 hover:scale-110 hover:text-white active:scale-95"
       >
         <VolumeIcon size={24} strokeWidth={2} />
       </button>

@@ -81,11 +81,11 @@ export default function ItemSlider({ title, children, className = '' }: ItemSlid
 
   return (
     <div className={mergeClasses('ps-6e mt-6e w-full', className)}>
-      <div className="py-1e px-4e flex items-center">
-        <div className="text-foreground flex-grow font-bold">{title}</div>
+      <div className="flex items-center px-4e py-1e">
+        <div className="flex-grow font-bold text-foreground">{title}</div>
 
         {isScrollable && (
-          <div className="gap-1e flex items-center">
+          <div className="flex items-center gap-1e">
             <SliderNavBtn direction="left" disabled={!canScrollLeft} onClick={scrollLeft} />
             <SliderNavBtn direction="right" disabled={!canScrollRight} onClick={scrollRight} />
           </div>
@@ -94,7 +94,7 @@ export default function ItemSlider({ title, children, className = '' }: ItemSlid
 
       <div
         ref={sliderRef}
-        className="no-scroll px-2e py-3e flex w-full overflow-x-auto overflow-y-hidden scroll-smooth"
+        className="no-scroll flex w-full overflow-x-auto overflow-y-hidden scroll-smooth px-2e py-3e"
         onScroll={checkScroll}
       >
         {children}

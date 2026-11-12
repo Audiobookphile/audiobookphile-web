@@ -125,7 +125,7 @@ export default function BookMatchView({
   }, [selectedMatch])
 
   const seriesItemsMap = useMemo(
-    () => availableSeries.map((item) => ({ value: item.value, content: item.content as string })),
+    () => availableSeries.map((item) => ({ value: item.value, content: item.content })),
     [availableSeries]
   )
 
@@ -249,7 +249,7 @@ export default function BookMatchView({
         } else if (
           ['title', 'subtitle', 'description', 'publisher', 'publishedYear', 'language', 'isbn', 'asin'].includes(key)
         ) {
-          updatePayload.metadata![key] = value as string | undefined
+          updatePayload.metadata![key] = value
         }
       }
 

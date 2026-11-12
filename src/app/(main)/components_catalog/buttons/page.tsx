@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { BtnExamples } from '../examples/BtnExamples'
 import { ContextMenuDropdownExamples } from '../examples/ContextMenuDropdownExamples'
 import { IconBtnExamples } from '../examples/IconBtnExamples'
@@ -17,9 +18,9 @@ export default function ButtonComponentsPage() {
         <p className="mb-6 text-gray-300">
           This page showcases all the button components available in the audiobookphile client.
         </p>
-        <a href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
+        <Link href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
           ← Back to Components Catalog
-        </a>
+        </Link>
       </div>
 
       {/* Table of Contents */}

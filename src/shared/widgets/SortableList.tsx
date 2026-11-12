@@ -37,13 +37,13 @@ export default function SortableList<T extends SortableItem>({
     [items]
   )
 
-  const onDragend = useCallback<DragendEvent>((data) => {
+  const onDragend = useCallback<DragendEvent<T>>((data) => {
     if (data.draggedNode.el) {
       data.draggedNode.el.classList.remove('opacity-50', 'bg-white/20')
     }
   }, [])
 
-  const onDragstart = useCallback<DragstartEvent>((data) => {
+  const onDragstart = useCallback<DragstartEvent<T>>((data) => {
     if (data.draggedNode.el) {
       data.draggedNode.el.classList.add('opacity-50', 'bg-white/20')
     }

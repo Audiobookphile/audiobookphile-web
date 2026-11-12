@@ -9,7 +9,6 @@ import { getPlaceholderCoverUrl } from '@/shared/lib/coverUtils'
 import { computeProgress } from '@/shared/lib/mediaProgress'
 import MediaCardCover from '@/shared/widgets/media-card/MediaCardCover'
 import MediaCardOverlay from '@/shared/widgets/media-card/MediaCardOverlay'
-import type { LibraryItem } from '@/types/api'
 import { BookshelfView } from '@/types/api'
 import { MediaCardProps } from './MediaCard'
 import MediaCardDetailView from './MediaCardDetailView'
@@ -58,7 +57,7 @@ export default function CollapsedSeriesCard(props: CollapsedSeriesCardProps) {
   const coverWidth = coverHeight / coverAspect
   const placeholderUrl = getPlaceholderCoverUrl()
 
-  const media = libraryItem.media as LibraryItem['media']
+  const media = libraryItem.media
   const hasCover = !!media.coverPath
 
   // Keep useMemo for computeProgress since it's an actual computation
@@ -103,7 +102,7 @@ export default function CollapsedSeriesCard(props: CollapsedSeriesCardProps) {
       return (
         <div
           cy-id="seriesSequenceList"
-          className="shadow-modal-content absolute end-[0.375em] top-[0.375em] z-20 rounded-lg bg-amber-900 text-end"
+          className="absolute end-[0.375em] top-[0.375em] z-20 rounded-lg bg-amber-900 text-end shadow-modal-content"
           style={{ padding: '0.1em 0.25em' }}
         >
           <p style={{ fontSize: '0.8em' }}>#{seriesSequenceList}</p>
@@ -116,7 +115,7 @@ export default function CollapsedSeriesCard(props: CollapsedSeriesCardProps) {
       return (
         <div
           cy-id="booksInSeries"
-          className="shadow-modal-content absolute end-[0.375em] top-[0.375em] z-20 rounded-lg bg-yellow-600/90"
+          className="absolute end-[0.375em] top-[0.375em] z-20 rounded-lg bg-yellow-600/90 shadow-modal-content"
           style={{ padding: '0.1em 0.25em' }}
         >
           <p style={{ fontSize: '0.8em' }}>{booksInSeries}</p>

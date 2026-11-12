@@ -63,7 +63,7 @@ export function TasksProvider({ children }: TasksProviderProps) {
       }
     }
 
-    loadTasks()
+    void loadTasks()
 
     return () => {
       isMounted = false

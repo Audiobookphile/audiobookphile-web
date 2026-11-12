@@ -1,6 +1,7 @@
 # Ignore all local scratch scripts in the root and scripts folder
 /check_audio_files.ts
 /check_books_temp.ts
+/check_authors.ts
 /count_books.ts
 /count_books_anon.ts
 /count_books_auth.ts
@@ -8,7 +9,37 @@
 /get_sync_report3.ts
 /inspect_schema.ts
 /inspect_schema_temp.ts
+/mailflow-probe.ts
+/query.ts
 /test_aws_sdk.ts
 /test_b2_production.ts
 /search_books_temp.ts
-/scripts/
+
+# The scripts directory is excluded, with a few exceptions.
+#
+# `bun install` runs two things out of it: the project's own `prepare`
+# lifecycle hook, and the security scanner that bunfig.toml configures.
+# Both are hard requirements -- a `prepare` hook that cannot be found fails
+# the install, and so does a configured scanner that cannot be found -- and
+# neither is optional, so the files have to travel with the build.
+#
+# The type gate travels with it too. `bun run build` ends with
+# `bun run typecheck`, which is `scripts/tsrs.ts` -- and that imports
+# `scripts/tsrs-resolve.ts` for the platform lookup. A build that cannot
+# find either of them fails at the last step, after the whole compile.
+#
+# The rest of the directory is development tooling and does not belong in a
+# deployment.
+#
+# The pattern is `/scripts/*` and not `/scripts/` on purpose. A gitignore
+# cannot re-include a file whose parent directory is excluded, so excluding
+# the directory itself would silently exclude these files along with it.
+#
+# `scripts/verify-deploy-files.ts` checks this list against what the build
+# actually needs, so a new script that the build depends on cannot be left
+# behind here by accident.
+/scripts/*
+!/scripts/prepare.ts
+!/scripts/security-scanner.ts
+!/scripts/tsrs.ts
+!/scripts/tsrs-resolve.ts

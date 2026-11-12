@@ -57,11 +57,11 @@ export default function DragDrop({
 
       if (hasDirectories) {
         const files = await traverseFileTree(items)
-        onFilesDropped(files)
+        void onFilesDropped(files)
       } else {
         // Only files - convert FileList to File array to keep a common output type
         const files = Array.from(e.dataTransfer.files)
-        onFilesDropped(files)
+        void onFilesDropped(files)
       }
     }
   }
@@ -99,16 +99,21 @@ export default function DragDrop({
         const files: File[] = []
 
         function readEntries(): void {
-          dirReader.readEntries(async (entries) => {
-            if (entries.length > 0) {
+          // The reader's callback takes a void return, so the async work is
+          // not handed back to it. The recursion still happens only after
+          // every sub-entry has been traversed.
+          dirReader.readEntries((entries) => {
+            if (entries.length === 0) {
+              resolve(files)
+              return
+            }
+            void (async () => {
               for (const subEntry of entries) {
                 const subFiles = await traverseEntry(subEntry)
                 files.push(...subFiles)
               }
               readEntries()
-            } else {
-              resolve(files)
-            }
+            })()
           })
         }
 

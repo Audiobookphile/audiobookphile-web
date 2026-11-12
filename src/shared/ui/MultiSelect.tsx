@@ -1,8 +1,7 @@
 'use client'
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
+import type { RefObject } from 'react'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import { mergeClasses } from '@/shared/lib/merge-classes'
-import type { DropdownMenuItem } from './DropdownMenu'
 import DropdownMenu from './DropdownMenu'
 import InputWrapper from './InputWrapper'
 import Label from './Label'
@@ -16,7 +15,16 @@ export interface MultiSelectItem<T = string> {
 
 export interface MultiSelectProps<T = string> {
   value?: string
-  selectedItems: MultiSelectItem<T>[]
+  /**
+   * Optional, defaulting to an empty list.
+   *
+   * The prop was typed as required while the destructuring gave it a
+   * default, which made the default unreachable for every typed caller --
+   * the type forced the prop to be passed, so the default only ever fired
+   * for a caller that passed `undefined` explicitly. Marking it optional
+   * describes what the code actually does.
+   */
+  selectedItems?: MultiSelectItem<T>[]
   items: MultiSelectItem<string>[]
   label?: string
   disabled?: boolean
@@ -111,13 +119,9 @@ export function MultiSelect<T = string>({
     items,
     disabled,
     showEdit,
-    showInput,
     allowNew,
     menuDisabled,
     editingPillIndex: controlledEditingPillIndex,
-    getEditableText,
-    getReadOnlyPrefix,
-    getFullText,
     getItemTextId: getItemTextIdProp,
     onMutate: onMutateProp,
     onValidate,
@@ -244,7 +248,7 @@ export function MultiSelect<T = string>({
           noItemsText={t('LabelNoItems')}
           menuMaxHeight="224px"
           className="z-60"
-          triggerRef={inputWrapperRef as React.RefObject<HTMLElement>}
+          triggerRef={inputWrapperRef as RefObject<HTMLElement>}
         />
       </div>
     </div>

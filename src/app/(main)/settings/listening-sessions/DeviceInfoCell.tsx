@@ -15,7 +15,7 @@ function getDeviceInfoParts(session: PlaybackSession): { line1: string; line2: s
 
   const useMobileLine = Boolean(d.sdkVersion) || (Boolean(d.manufacturer && d.model) && !d.browserName)
 
-  let line2: string | null = null
+  let line2: string | null
   if (useMobileLine) {
     const devicePart = [d.manufacturer, d.model].filter(Boolean).join(' ').trim()
     const sdkPart = d.sdkVersion?.trim()
@@ -42,7 +42,7 @@ export default function DeviceInfoCell({ session }: { session: PlaybackSession }
       {parts.line2 ? (
         <TruncatingTooltipText
           text={parts.line2}
-          className={parts.line1 ? 'text-foreground-muted text-xs' : 'text-xs'}
+          className={parts.line1 ? 'text-xs text-foreground-muted' : 'text-xs'}
         />
       ) : null}
     </div>

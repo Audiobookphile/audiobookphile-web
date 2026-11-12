@@ -29,7 +29,7 @@ export default function LibrariesList(props: LibrariesListProps) {
   }, [librariesData])
 
   const handleSortChange = (sortedItems: Library[]) => {
-    setLibraries(sortedItems as Library[])
+    setLibraries(sortedItems)
     startTransition(async () => {
       saveLibraryOrderAction(sortedItems.map((item, index) => ({ id: item.id, newOrder: index })))
     })

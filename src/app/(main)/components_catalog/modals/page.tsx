@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { AdvancedModalExamples } from '../examples/AdvancedModalExamples'
 import { ConfirmDialogExamples } from '../examples/ConfirmDialogExamples'
 import { ModalExamples } from '../examples/ModalExamples'
@@ -15,9 +16,9 @@ export default function ModalComponentsPage() {
         <p className="mb-6 text-gray-300">
           This page showcases all the modal components available in the audiobookphile client.
         </p>
-        <a href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
+        <Link href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
           ← Back to Components Catalog
-        </a>
+        </Link>
       </div>
 
       {/* Table of Contents */}

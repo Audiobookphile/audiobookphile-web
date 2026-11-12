@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { Suspense } from 'react'
 import { MetadataProvider } from '@/features/metadata/contexts/MetadataContext'
 import { MediaProvider } from '@/features/player/contexts/MediaContext'
 import { CommandPaletteProvider } from '@/shared/contexts/CommandPaletteContext'

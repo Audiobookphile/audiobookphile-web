@@ -137,13 +137,13 @@ export default function EditApiKeyModal({ isOpen, apiKey, users, onClose, onSubm
               disabled={isExpired}
               onChange={(value) => setFormData((prev) => ({ ...prev, isActive: value }))}
             />
-            {isExpired && <span className="text-error text-sm">{t('LabelExpired')}</span>}
+            {isExpired && <span className="text-sm text-error">{t('LabelExpired')}</span>}
           </div>
 
           {/* Act on behalf of user Section */}
-          <div className="border-border mt-4 border-t pt-4">
+          <div className="mt-4 border-t border-border pt-4">
             <h3 className="mb-2 text-lg font-semibold">{t('LabelApiKeyUser')}</h3>
-            <p className="text-foreground-muted mb-4 text-sm">{t('LabelApiKeyUserDescription')}</p>
+            <p className="mb-4 text-sm text-foreground-muted">{t('LabelApiKeyUserDescription')}</p>
 
             <Dropdown
               value={formData.userId}
@@ -157,7 +157,7 @@ export default function EditApiKeyModal({ isOpen, apiKey, users, onClose, onSubm
         </div>
 
         {/* Footer Actions */}
-        <div className="border-border border-t px-4 py-3">
+        <div className="border-t border-border px-4 py-3">
           <div className="flex items-center justify-end">
             <Btn disabled={!isValid} onClick={handleSubmit}>
               {isEditing ? t('ButtonSave') : t('ButtonCreate')}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Eye, Image as ImageIcon, RefreshCw, Search, Trash2, Upload, X } from 'lucide-react'
+import { Trash2, Upload, X } from 'lucide-react'
 import React, { useEffect, useMemo, useState, useTransition } from 'react'
 import { useBookCoverAspectRatio } from '@/features/library/contexts/LibraryContext'
 import {
@@ -63,7 +63,7 @@ export default function CoverEdit({ libraryItem }: CoverEditProps) {
 
   // Ensure providers are loaded when component mounts
   useEffect(() => {
-    ensureProvidersLoaded()
+    void ensureProvidersLoaded()
   }, [ensureProvidersLoaded])
 
   // Cover search via WebSocket
@@ -94,15 +94,13 @@ export default function CoverEdit({ libraryItem }: CoverEditProps) {
 
   // Keep useMemo for localCovers since it filters and maps an array
   const localCovers = useMemo(() => {
-    const libraryFiles = (libraryItem.libraryFiles || []) as LibraryFile[]
+    const libraryFiles = libraryItem.libraryFiles || []
     return libraryFiles
       .filter((f) => f.fileType === 'image')
-      .map(
-        (file): LocalCover => ({
-          ...file,
-          localPath: getLibraryFileUrl(libraryItem.id, file.ino),
-        })
-      )
+      .map((file): LocalCover => ({
+        ...file,
+        localPath: getLibraryFileUrl(libraryItem.id, file.ino),
+      }))
   }, [libraryItem.libraryFiles, libraryItem.id])
 
   const userCanUpload = user.permissions?.upload || false
@@ -347,7 +345,7 @@ export default function CoverEdit({ libraryItem }: CoverEditProps) {
                       )}
                       onClick={() => handleSetCover(localCoverFile)}
                     >
-                      <div className="bg-primary h-24" style={{ width: 96 / bookCoverAspectRatio + 'px' }}>
+                      <div className="h-24 bg-primary" style={{ width: 96 / bookCoverAspectRatio + 'px' }}>
                         <PreviewCover
                           src={localCoverFile.localPath || ''}
                           width={96 / bookCoverAspectRatio}
@@ -409,9 +407,9 @@ export default function CoverEdit({ libraryItem }: CoverEditProps) {
       {hasSearched && (
         <div className="mt-2 flex max-w-full flex-wrap items-center justify-center sm:max-h-80 sm:overflow-y-scroll">
           {searchInProgress && !coversFound.length ? (
-            <p className="text-foreground-muted py-4">{t('MessageLoading')}</p>
+            <p className="py-4 text-foreground-muted">{t('MessageLoading')}</p>
           ) : !searchInProgress && !coversFound.length ? (
-            <p className="text-foreground-muted py-4">{t('MessageNoCoversFound')}</p>
+            <p className="py-4 text-foreground-muted">{t('MessageNoCoversFound')}</p>
           ) : (
             coversFound.map((cover) => (
               <button
@@ -434,7 +432,7 @@ export default function CoverEdit({ libraryItem }: CoverEditProps) {
       )}
 
       {previewUpload && (
-        <div className="bg-primary/95 absolute top-0 left-0 z-20 flex h-full w-full flex-col items-center p-8 backdrop-blur-3xl">
+        <div className="absolute top-0 left-0 z-20 flex h-full w-full flex-col items-center bg-primary/95 p-8 backdrop-blur-3xl">
           <p className="mb-8 text-xl font-black tracking-widest text-white/90 uppercase">{t('HeaderPreviewCover')}</p>
           <button
             className="absolute top-6 right-6 text-white/40 transition-colors hover:text-white"

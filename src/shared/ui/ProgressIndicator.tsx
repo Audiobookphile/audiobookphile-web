@@ -23,7 +23,7 @@ export default function ProgressIndicator({
       <div className="mb-2 flex items-center justify-between">
         <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} className="flex-1">
           {typeof label === 'string' ? (
-            <p className="text-foreground/60 text-xs font-bold tracking-wider uppercase">{t(label)}</p>
+            <p className="text-xs font-bold tracking-wider text-foreground/60 uppercase">{t(label)}</p>
           ) : (
             label
           )}
@@ -32,7 +32,7 @@ export default function ProgressIndicator({
           key={progress}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-accent min-w-[3rem] text-right font-mono text-sm font-bold"
+          className="min-w-[3rem] text-right font-mono text-sm font-bold text-accent"
         >
           {progress.toFixed(0)}%
         </motion.p>
@@ -43,7 +43,7 @@ export default function ProgressIndicator({
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ type: 'spring', stiffness: 50, damping: 20 }}
-          className="bg-accent relative h-full rounded-full shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+          className="relative h-full rounded-full bg-accent shadow-[0_0_15px_rgba(245,158,11,0.5)]"
         >
           <div className="animate-shimmer absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         </motion.div>

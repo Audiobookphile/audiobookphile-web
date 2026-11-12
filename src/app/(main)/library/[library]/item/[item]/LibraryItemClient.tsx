@@ -106,9 +106,9 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
               <h1 className="text-2xl font-semibold md:text-3xl">
                 {metadata?.title ? sanitizeDisplayTitle(metadata.title) : ''}
               </h1>
-              {subtitle && <h2 className="text-foreground-muted text-xl font-medium md:text-2xl">{subtitle}</h2>}
+              {subtitle && <h2 className="text-xl font-medium text-foreground-muted md:text-2xl">{subtitle}</h2>}
               {podcastAuthor && (
-                <h2 className="text-foreground text-lg font-medium md:text-xl">
+                <h2 className="text-lg font-medium text-foreground md:text-xl">
                   {t('LabelByAuthor', { 0: podcastAuthor })}
                 </h2>
               )}
@@ -119,14 +119,14 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
                       <Fragment key={series.id}>
                         <a
                           href={`/library/${library.id}/series/${series.id}`}
-                          className="text-foreground-muted text-lg hover:underline"
+                          className="text-lg text-foreground-muted hover:underline"
                         >
                           {series.name}
                           {series.sequence && (
-                            <span className="text-foreground-muted text-lg"> #{series.sequence}</span>
+                            <span className="text-lg text-foreground-muted"> #{series.sequence}</span>
                           )}
                         </a>
-                        {index < bookSeries.length - 1 && <span className="text-foreground-muted text-lg">, </span>}
+                        {index < bookSeries.length - 1 && <span className="text-lg text-foreground-muted">, </span>}
                       </Fragment>
                     )
                   })}
@@ -135,18 +135,18 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
 
               {bookAuthors.length > 0 && (
                 <div>
-                  <span className="text-foreground text-lg">{t('LabelByAuthor', { 0: '' })}</span>
+                  <span className="text-lg text-foreground">{t('LabelByAuthor', { 0: '' })}</span>
                   {bookAuthors.map((author, index) => {
                     return (
                       <Fragment key={author.id}>
                         <a
                           href={`/library/${library.id}/authors/${author.id}`}
-                          className="text-foreground text-lg hover:underline md:text-xl"
+                          className="text-lg text-foreground hover:underline md:text-xl"
                         >
                           {author.name}
                         </a>
                         {index < bookAuthors.length - 1 && (
-                          <span className="text-foreground text-lg md:text-xl">, </span>
+                          <span className="text-lg text-foreground md:text-xl">, </span>
                         )}
                       </Fragment>
                     )
@@ -177,7 +177,7 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
                     <button
                       type="button"
                       aria-label="Clear episode download queue"
-                      className="hover:bg-error/20 hover:text-error rounded-lg bg-white/5 p-1.5 transition-colors"
+                      className="rounded-lg bg-white/5 p-1.5 transition-colors hover:bg-error/20 hover:text-error"
                       onClick={() => setIsClearQueueDialogOpen(true)}
                     >
                       <X size={16} />
@@ -189,7 +189,7 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
 
             {/* Podcast episodes currently downloading */}
             {episodesDownloading.length > 0 && (
-              <div className="bg-success/20 relative mx-auto mt-4 max-w-max rounded-md px-4 py-2 text-sm font-semibold text-gray-100 md:mx-0">
+              <div className="relative mx-auto mt-4 max-w-max rounded-md bg-success/20 px-4 py-2 text-sm font-semibold text-gray-100 md:mx-0">
                 {episodesDownloading.map((episode) => (
                   <div key={episode.id} className="flex items-center">
                     <LoadingSpinner />
@@ -204,20 +204,20 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
             <div className="mt-6 flex flex-col gap-4">
               {/* chapters table */}
               {libraryItem.mediaType === 'book' && (libraryItem.media?.chapters?.length ?? 0) > 0 && (
-                <ChaptersTable libraryItem={libraryItem as BookLibraryItem} />
+                <ChaptersTable libraryItem={libraryItem} />
               )}
 
               {/* audio tracks table — audioFiles is the API's per-track array;
                   `tracks` never exists on an API payload, so gating on it hid
                   the table entirely. */}
               {libraryItem.mediaType === 'book' && (libraryItem.media?.audioFiles?.length ?? 0) > 0 && (
-                <AudioTracksTable libraryItem={libraryItem as BookLibraryItem} />
+                <AudioTracksTable libraryItem={libraryItem} />
               )}
 
               {/* podcast episodes table */}
               {isPodcast && (
                 <EpisodeTable
-                  libraryItem={libraryItem as PodcastLibraryItem}
+                  libraryItem={libraryItem}
                   dateFormat={serverSettings?.dateFormat}
                   episodesDownloading={episodesDownloading}
                   episodeDownloadsQueued={episodeDownloadsQueued}

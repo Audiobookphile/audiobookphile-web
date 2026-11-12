@@ -113,9 +113,10 @@ function toCronstrueLocale(locale: string): string {
       case 'pt_br':
       case 'pt_pt':
         return locale
-      default:
+      default: {
         const parts = locale.split('_')
         return parts[0]
+      }
     }
   }
   return locale

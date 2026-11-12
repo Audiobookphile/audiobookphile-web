@@ -78,7 +78,7 @@ export default function ChapterAIModal({
       }
     }
 
-    fetchInsights()
+    void fetchInsights()
   }, [isOpen, bookTitle, bookAuthor, chapterTitle, chapterIndex])
 
   return (

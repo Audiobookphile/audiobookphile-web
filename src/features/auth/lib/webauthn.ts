@@ -191,7 +191,7 @@ function credentialRequestOptionsFromResponse(options: PasskeyLoginOptionsRespon
       challenge: base64urlToBuffer(options.challenge),
       rpId: options.rpId,
       allowCredentials: (options.allowCredentials || []).map((cred) => ({
-        type: 'public-key' as PublicKeyCredentialType,
+        type: 'public-key',
         id: base64urlToBuffer(cred.id),
         ...(cred.transports ? { transports: cred.transports as AuthenticatorTransport[] } : {}),
       })),
@@ -238,11 +238,11 @@ export async function performPasskeyRegistration(
     timeout: options.timeout || 60_000,
     attestation: (options.attestation || 'none') as AttestationConveyancePreference,
     excludeCredentials: (options.excludeCredentials || []).map((cred) => ({
-      type: 'public-key' as PublicKeyCredentialType,
+      type: 'public-key',
       id: base64urlToBuffer(cred.id),
     })),
-    authenticatorSelection: options.authenticatorSelection as AuthenticatorSelectionCriteria,
-    ...(options.extensions ? { extensions: options.extensions as AuthenticationExtensionsClientInputs } : {}),
+    authenticatorSelection: options.authenticatorSelection,
+    ...(options.extensions ? { extensions: options.extensions } : {}),
   }
 
   const credential = (await navigator.credentials.create({

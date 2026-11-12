@@ -118,7 +118,7 @@ export default function LibraryScannerTab({ settings, onSettingsChange }: Librar
       <div className="inline-flex grow items-center justify-between px-2 py-4 text-sm font-bold tracking-wider uppercase">
         {source.name}
         {source.include && (index === firstActiveIndex || index === lastActiveIndex) && (
-          <span className="bg-primary/10 text-primary ml-3 rounded-full px-3 py-1 text-[9px] font-black tracking-widest uppercase">
+          <span className="ml-3 rounded-full bg-primary/10 px-3 py-1 text-[9px] font-black tracking-widest text-primary uppercase">
             {index === firstActiveIndex ? t('LabelHighestPriority') : t('LabelLowestPriority')}
           </span>
         )}
@@ -130,7 +130,7 @@ export default function LibraryScannerTab({ settings, onSettingsChange }: Librar
   return (
     <div className="mb-4 h-full w-full px-1 py-1 md:px-4">
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-foreground text-base md:text-lg">{t('HeaderMetadataOrderOfPrecedence')}</h2>
+        <h2 className="text-base text-foreground md:text-lg">{t('HeaderMetadataOrderOfPrecedence')}</h2>
         {!isDefault && (
           <Btn size="small" onClick={handleReset}>
             {t('ButtonResetToDefault')}
@@ -139,7 +139,7 @@ export default function LibraryScannerTab({ settings, onSettingsChange }: Librar
       </div>
 
       <div className="mb-4 flex items-center justify-between md:justify-start">
-        <p className="text-foreground-muted pr-2 text-sm">{t('LabelMetadataOrderOfPrecedenceDescription')}</p>
+        <p className="pr-2 text-sm text-foreground-muted">{t('LabelMetadataOrderOfPrecedenceDescription')}</p>
         <SettingsMoreInfoIcon moreInfoUrl="https://www.audiobookphile.org/guides/book-scanner" />
       </div>
 

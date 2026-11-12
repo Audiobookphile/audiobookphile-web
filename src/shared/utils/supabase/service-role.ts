@@ -9,6 +9,7 @@
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
+import { getSupabaseServiceRoleKey, getSupabaseUrl } from './env'
 
 /**
  * Returns a Supabase client that uses the service role key.
@@ -16,21 +17,18 @@ import type { Database } from '@/types/supabase'
  *
  * Environment variable lookup order:
  *  1. `SUPABASE_SERVICE_ROLE_KEY` — canonical name; set this in all environments.
- *  2. `SUPABASE_SERVICE_KEY`      — legacy alias accepted via the `??` fallback to
- *     support existing Vercel projects that were configured with the shorter name.
+ *  2. `SUPABASE_SECRET_KEY`       — Vercel Marketplace Supabase integration name.
+ *  3. `SUPABASE_SERVICE_KEY`      — legacy alias accepted via the `??` fallback.
  */
 export function createServiceRoleClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  // Prefer the canonical SUPABASE_SERVICE_ROLE_KEY; fall back to the legacy
-  // SUPABASE_SERVICE_KEY alias so that existing Vercel deployments are not broken
-  // during a rename transition. Both variable names are intentionally supported.
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY
+  const supabaseUrl = getSupabaseUrl()
+  const serviceRoleKey = getSupabaseServiceRoleKey()
 
   if (!supabaseUrl) {
-    throw new Error('Missing environment variable: NEXT_PUBLIC_SUPABASE_URL')
+    throw new Error('Missing environment variable: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL')
   }
   if (!serviceRoleKey) {
-    throw new Error('Missing environment variable: SUPABASE_SERVICE_ROLE_KEY')
+    throw new Error('Missing environment variable: SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY')
   }
 
   return createSupabaseClient<Database>(supabaseUrl, serviceRoleKey, {

@@ -104,17 +104,11 @@ export function PlaylistCardExamples({ playlistData }: PlaylistCardExamplesProps
           <div className="flex flex-wrap gap-4">
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Standard View</p>
-              <PlaylistCard
-                playlist={{ ...playlistData, items: [] } as Playlist}
-                bookshelfView={BookshelfView.STANDARD}
-              />
+              <PlaylistCard playlist={{ ...playlistData, items: [] }} bookshelfView={BookshelfView.STANDARD} />
             </div>
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Detail View</p>
-              <PlaylistCard
-                playlist={{ ...playlistData, items: [] } as Playlist}
-                bookshelfView={BookshelfView.DETAIL}
-              />
+              <PlaylistCard playlist={{ ...playlistData, items: [] }} bookshelfView={BookshelfView.DETAIL} />
             </div>
           </div>
         </Example>
@@ -124,14 +118,14 @@ export function PlaylistCardExamples({ playlistData }: PlaylistCardExamplesProps
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Standard View</p>
               <PlaylistCard
-                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 1) } as Playlist}
+                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 1) }}
                 bookshelfView={BookshelfView.STANDARD}
               />
             </div>
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Detail View</p>
               <PlaylistCard
-                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 1) } as Playlist}
+                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 1) }}
                 bookshelfView={BookshelfView.DETAIL}
               />
             </div>
@@ -145,14 +139,14 @@ export function PlaylistCardExamples({ playlistData }: PlaylistCardExamplesProps
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Standard View</p>
               <PlaylistCard
-                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 2) } as Playlist}
+                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 2) }}
                 bookshelfView={BookshelfView.STANDARD}
               />
             </div>
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Detail View</p>
               <PlaylistCard
-                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 2) } as Playlist}
+                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 2) }}
                 bookshelfView={BookshelfView.DETAIL}
               />
             </div>
@@ -164,14 +158,14 @@ export function PlaylistCardExamples({ playlistData }: PlaylistCardExamplesProps
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Standard View</p>
               <PlaylistCard
-                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 3) } as Playlist}
+                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 3) }}
                 bookshelfView={BookshelfView.STANDARD}
               />
             </div>
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Detail View</p>
               <PlaylistCard
-                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 3) } as Playlist}
+                playlist={{ ...playlistData, items: playlistData.items?.slice(0, 3) }}
                 bookshelfView={BookshelfView.DETAIL}
               />
             </div>

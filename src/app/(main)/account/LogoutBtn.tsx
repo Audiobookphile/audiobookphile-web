@@ -36,7 +36,7 @@ export default function LogoutBtn() {
 
   return (
     <Btn onClick={handleLogout} loading={loading} className="group h-auto items-center justify-between gap-2 py-2 ps-6">
-      <LogOut size={18} className="text-foreground/40 group-hover:text-primary transition-colors" />
+      <LogOut size={18} className="text-foreground/40 transition-colors group-hover:text-primary" />
       <span className="text-[11px] font-bold tracking-widest uppercase">{t('LabelLogout')}</span>
     </Btn>
   )

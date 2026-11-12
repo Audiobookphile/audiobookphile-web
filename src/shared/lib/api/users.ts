@@ -41,7 +41,7 @@ export const getData = cache(
   async <T extends Promise<unknown>[]>(...promises: T): Promise<{ [K in keyof T]: Awaited<T[K]> }> => {
     try {
       const responses = await Promise.all(promises)
-      return responses as { [K in keyof T]: Awaited<T[K]> }
+      return responses
     } catch (error) {
       // If any request is unauthorized, redirect to refresh token endpoint
       if (error instanceof UnauthorizedError) {
@@ -87,18 +87,18 @@ export const getUser = cache(async (userId: string): Promise<User> => {
   return apiRequest<User>(`/api/users/${userId}`, {})
 })
 
-export const deleteUser = cache(async (userId: string): Promise<void> => {
+export async function deleteUser(userId: string): Promise<void> {
   return apiRequest<void>(`/api/users/${userId}`, {
     method: 'DELETE',
   })
-})
+}
 
 export const getApiKeys = cache(async (): Promise<GetApiKeysResponse> => {
   return apiRequest<GetApiKeysResponse>('/api/api-keys', {})
 })
 
-export const deleteApiKey = cache(async (apiKeyId: string): Promise<void> => {
+export async function deleteApiKey(apiKeyId: string): Promise<void> {
   return apiRequest<void>(`/api/api-keys/${apiKeyId}`, {
     method: 'DELETE',
   })
-})
+}

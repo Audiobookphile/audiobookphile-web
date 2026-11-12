@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 }
 
 export default async function ComponentsCatalogLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  let libraries: import('@/types/api').Library[] = []
+  let libraries: import('@/types/api').Library[]
   try {
     const res = await getLibraries()
     libraries = res.libraries

@@ -18,7 +18,7 @@ export default async function SearchPage({
   const { library: libraryId } = await params
   const { q: query } = await searchParams
 
-  let results: any = null
+  let results: Awaited<ReturnType<typeof searchLibrary>> | null = null
   if (query && query.trim().length > 0) {
     try {
       results = await searchLibrary(libraryId, query.trim(), 24)

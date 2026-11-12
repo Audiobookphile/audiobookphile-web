@@ -77,8 +77,8 @@ export const getNarrators = cache(async (libraryId: string) => {
   return apiRequest<GetNarratorsResponse>(`/api/libraries/${libraryId}/narrators`, {})
 })
 
-export async function updateNarrator(narratorId: string, payload: any): Promise<any> {
-  return apiRequest<any>(`/api/narrators/${narratorId}`, {
+export async function updateNarrator(narratorId: string, payload: Record<string, unknown>): Promise<unknown> {
+  return apiRequest<unknown>(`/api/narrators/${narratorId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
   })

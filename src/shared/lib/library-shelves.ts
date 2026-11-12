@@ -12,7 +12,7 @@ export function normalizeShelves(input: unknown): PersonalizedShelf[] {
     if (!shelf || typeof shelf !== 'object') continue
     const s = shelf as PersonalizedShelf
     if (s.entities !== undefined && !Array.isArray(s.entities)) {
-      shelves.push({ ...s, entities: [] } as PersonalizedShelf)
+      shelves.push({ ...s, entities: [] })
     } else {
       shelves.push(s)
     }

@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { CheckboxExamples } from '../examples/CheckboxExamples'
 import { ToggleSwitchExamples } from '../examples/ToggleSwitchExamples'
 
@@ -14,9 +15,9 @@ export default function CheckboxComponentsPage() {
         <p className="mb-6 text-gray-300">
           This page showcases all the checkbox and switch components available in the audiobookphile client.
         </p>
-        <a href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
+        <Link href="/components_catalog" className="text-blue-400 transition-colors hover:text-blue-300">
           ← Back to Components Catalog
-        </a>
+        </Link>
       </div>
 
       {/* Table of Contents */}

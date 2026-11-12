@@ -10,7 +10,7 @@ export function useImageColor(src?: string | null) {
     }
 
     const img = new Image()
-    img.crossOrigin = 'Anonymous'
+    img.crossOrigin = 'anonymous'
     img.src = src
 
     img.onload = () => {

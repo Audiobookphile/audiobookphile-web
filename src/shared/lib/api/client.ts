@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server'
 import { ApiError, NetworkError, UnauthorizedError } from '../apiErrors'
-import {
-  type ApiResult,
-  fetchAsResult,
-  getClientBaseUrlFromRequest,
-  getServerBaseUrl,
-  parseApiResponseBody,
-} from './base'
+import { type ApiResult, fetchAsResult, getClientBaseUrlFromRequest, getServerBaseUrl } from './base'
 
 /**
  * Send the browser to /login with an error hint and drop refresh cookie (session cannot continue).
@@ -27,6 +21,8 @@ export function getUserDefaultUrlPath(userDefaultLibraryId: string | null, userT
   return userDefaultLibraryId ? `/library/${userDefaultLibraryId}` : isAdmin ? '/settings' : '/account'
 }
 
+const publicEndpoints = ['/status']
+
 /**
  * Single authenticated fetch layer (P2.2). Never throws for HTTP or network
  * errors — returns `{ ok: true, data }` or `{ ok: false, error }`; server
@@ -43,14 +39,15 @@ export async function apiFetch<T = unknown>(endpoint: string, options: RequestIn
 
   const isFormData = options.body instanceof FormData
 
-  const fetchHeaders = new Headers(options.headers as Record<string, string>)
+  const fetchHeaders = new Headers(options.headers)
 
   if (!isFormData && !fetchHeaders.has('Content-Type')) {
     fetchHeaders.set('Content-Type', 'application/json')
   }
 
-  if (!fetchHeaders.has('apikey') && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    fetchHeaders.set('apikey', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY
+  if (!fetchHeaders.has('apikey') && anonKey) {
+    fetchHeaders.set('apikey', anonKey)
   }
 
   if (!isPublic) {
@@ -125,10 +122,6 @@ export async function apiRequest<T = unknown>(endpoint: string, options: Request
   }
 }
 
-const publicEndpoints = ['/status']
-const RefreshTokenExpiry = parseInt(process.env.REFRESH_TOKEN_EXPIRY || '') || 7 * 24 * 60 * 60 // 7 days
-const AccessTokenExpiry = parseInt(process.env.ACCESS_TOKEN_EXPIRY || '') || 12 * 60 * 60 // 12 hours
-
 export type SessionRefreshTokens = {
   accessToken: string
   refreshToken: string | null
@@ -137,8 +130,4 @@ export type SessionRefreshTokens = {
 export type SessionRefreshResult = SessionRefreshTokens & {
   userDefaultLibraryId: string | null
   userType: string
-}
-
-type SessionCookieSetter = {
-  set(name: string, value: string, options: any): void
 }

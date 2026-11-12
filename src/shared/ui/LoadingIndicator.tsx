@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import { TranslationKey } from '@/types/translations'
 
@@ -28,7 +28,7 @@ export default function LoadingIndicator({ label, children, variant = 'overlay' 
       aria-label={displayLabel}
     >
       <div className="w-48">
-        <div className="bg-primary/80 flex flex-col items-center rounded-2xl border border-white/10 px-8 py-6 shadow-2xl backdrop-blur-md">
+        <div className="flex flex-col items-center rounded-2xl border border-white/10 bg-primary/80 px-8 py-6 shadow-2xl backdrop-blur-md">
           <div className="relative mb-4 h-12 w-12">
             {/* Pulsing rings */}
             <motion.div
@@ -54,7 +54,7 @@ export default function LoadingIndicator({ label, children, variant = 'overlay' 
           <motion.div
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-            className="text-foreground text-sm font-medium tracking-wide"
+            className="text-sm font-medium tracking-wide text-foreground"
           >
             {displayLabel}
           </motion.div>

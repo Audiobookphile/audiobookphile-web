@@ -25,7 +25,6 @@ import MediaCardFrame from '@/shared/widgets/media-card/MediaCardFrame'
 import MediaCardOverlay from '@/shared/widgets/media-card/MediaCardOverlay'
 import { useMediaCardActions } from '@/shared/widgets/media-card/useMediaCardActions'
 import type {
-  BookMedia,
   BookshelfEntity,
   EReaderDevice,
   LibraryItem,
@@ -163,7 +162,7 @@ function MediaCard(props: MediaCardProps) {
 
   const isPodcast = isPodcastLibraryItem(libraryItem)
 
-  const media = libraryItem.media as BookMedia | PodcastMedia
+  const media = libraryItem.media
   const originalMetadata = media.metadata
 
   const metadata = useMemo(() => {

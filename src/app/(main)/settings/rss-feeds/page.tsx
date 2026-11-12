@@ -12,7 +12,7 @@ export default async function RssFeedsPage() {
   return (
     <SettingsContent title={t('HeaderRSSFeeds')}>
       <div className="p-6">
-        <p className="text-foreground-muted text-sm">
+        <p className="text-sm text-foreground-muted">
           RSS feed generation is not available in this version. RSS feeds require a persistent server process to
           generate and serve feeds.
         </p>

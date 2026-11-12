@@ -34,6 +34,7 @@ export const metadata: Metadata = {
 }
 
 import { PostHogProvider } from '@/shared/PostHogProvider'
+import { ServiceWorkerRegistrar } from '@/shared/ServiceWorkerRegistrar'
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -54,6 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <SentryErrorBoundary componentName="RootLayout">
                     <ErrorBoundary title="Audiobookphile Error">
                       <Providers>{children}</Providers>
+                      <ServiceWorkerRegistrar />
                     </ErrorBoundary>
                   </SentryErrorBoundary>
                 </CardSizeProvider>

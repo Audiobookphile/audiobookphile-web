@@ -1,3 +1,4 @@
+import type { TargetAndTransition, Transition, VariantLabels } from 'framer-motion'
 import { LucideIcon } from 'lucide-react'
 import React from 'react'
 import { mergeClasses } from '@/shared/lib/merge-classes'
@@ -11,8 +12,8 @@ export interface MediaOverlayIconBtnProps {
   className?: string
   selected?: boolean
   cyId?: string
-  whileHover?: any
-  transition?: any
+  whileHover?: TargetAndTransition | VariantLabels
+  transition?: Transition
 }
 
 export default function MediaOverlayIconBtn({

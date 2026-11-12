@@ -144,7 +144,7 @@ export default function PodcastMatchView({
         } else if (
           ['title', 'description', 'language', 'feedUrl', 'itunesPageUrl', 'releaseDate', 'author'].includes(key)
         ) {
-          updatePayload.metadata![key] = value as string | undefined
+          updatePayload.metadata![key] = value
         }
       }
 

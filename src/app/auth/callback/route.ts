@@ -1,4 +1,3 @@
-import type { EmailOtpType } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/shared/utils/supabase/server'
 
@@ -32,7 +31,7 @@ export async function GET(request: Request) {
 
   const code = searchParams.get('code')
   const tokenHash = searchParams.get('token_hash')
-  const type = (searchParams.get('type') ?? 'magiclink') as EmailOtpType
+  const type = searchParams.get('type') ?? 'magiclink'
   const accessToken = searchParams.get('access_token')
   const refreshToken = searchParams.get('refresh_token')
 

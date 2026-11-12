@@ -18,7 +18,7 @@ export default function BookShelfRow({ title, children, className }: BookShelfRo
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
   const [isScrolling, setIsScrolling] = useState(false)
-  const scrollTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const checkCanScroll = useCallback(() => {
     if (!shelfRef.current) return
@@ -62,15 +62,15 @@ export default function BookShelfRow({ title, children, className }: BookShelfRo
     <div className={mergeClasses('content-visibility-auto relative w-full', className)}>
       <div
         ref={shelfRef}
-        className="bookshelf-row categorizedBookshelfRow no-scroll pl-4e md:pl-8e relative w-full max-w-full overflow-x-auto overflow-y-hidden"
+        className="bookshelf-row categorizedBookshelfRow no-scroll relative w-full max-w-full overflow-x-auto overflow-y-hidden pl-4e md:pl-8e"
         onScroll={handleScroll}
       >
-        <div className="pt-6e pr-4e flex h-full w-full items-center">{children}</div>
+        <div className="flex h-full w-full items-center pt-6e pr-4e">{children}</div>
       </div>
 
       <div className="relative">
-        <div className="categoryPlacard left-4e md:left-8e w-44e relative top-0 z-30 transform">
-          <div className="bg-primary/95 flex h-full w-full items-center justify-center rounded-lg border border-white/10 px-4 py-1.5 shadow-lg backdrop-blur-xl">
+        <div className="categoryPlacard relative top-0 left-4e z-30 w-44e transform md:left-8e">
+          <div className="flex h-full w-full items-center justify-center rounded-lg border border-white/10 bg-primary/95 px-4 py-1.5 shadow-lg backdrop-blur-xl">
             <h2 className="text-[10px] font-black tracking-[0.2em] text-white/90 uppercase">{title}</h2>
           </div>
         </div>

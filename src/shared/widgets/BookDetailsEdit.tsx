@@ -17,11 +17,18 @@ export type BookUpdatePayload = UpdatePayload<Details>
 
 interface BookDetailsEditProps {
   libraryItem: BookLibraryItem
-  availableAuthors: MultiSelectItem<string>[]
-  availableNarrators: MultiSelectItem<string>[]
-  availableGenres: MultiSelectItem<string>[]
-  availableTags: MultiSelectItem<string>[]
-  availableSeries: MultiSelectItem<string>[]
+  /**
+   * The pickable values for each facet. Optional, defaulting to an empty
+   * list.
+   *
+   * These were typed as required while the destructuring gave them
+   * defaults, which made the defaults unreachable for every typed caller.
+   */
+  availableAuthors?: MultiSelectItem<string>[]
+  availableNarrators?: MultiSelectItem<string>[]
+  availableGenres?: MultiSelectItem<string>[]
+  availableTags?: MultiSelectItem<string>[]
+  availableSeries?: MultiSelectItem<string>[]
   onChange?: (details: { libraryItemId: string; hasChanges: boolean }) => void
   onSubmit?: (details: { updatePayload: UpdatePayload<Details>; hasChanges: boolean }) => void
   ref?: React.Ref<BookDetailsEditRef>
@@ -85,7 +92,7 @@ const BookDetailsEdit = ({
     submitForm,
     initialDetails,
   } = useDetailsEdit<Details>({
-    metadata: (media.metadata as Details) || {},
+    metadata: media.metadata || {},
     tags: media.tags || [],
     libraryItemId: libraryItem.id,
     ref,
@@ -256,7 +263,7 @@ const BookDetailsEdit = ({
           <div className="grow px-1">
             <TwoStageMultiSelect
               label={t('LabelSeries')}
-              items={availableSeries.map((item) => ({ value: item.value, content: item.content as string }))}
+              items={availableSeries.map((item) => ({ value: item.value, content: item.content }))}
               selectedItems={seriesItems}
               onItemAdded={handleAddSeries}
               onItemRemoved={handleRemoveSeries}

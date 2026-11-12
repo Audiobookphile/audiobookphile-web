@@ -265,15 +265,13 @@ export function SeriesCardExamples({ seriesData, libraryId }: SeriesCardExamples
             <div>
               <p className="mb-2 text-sm text-gray-400">Books without covers</p>
               <SeriesCard
-                series={
-                  {
-                    ...seriesData,
-                    books: seriesData.books?.slice(0, 2).map((book) => ({
-                      ...book,
-                      media: { ...(book as BookLibraryItem).media, coverPath: undefined },
-                    })) as LibraryItem[],
-                  } as Series
-                }
+                series={{
+                  ...seriesData,
+                  books: seriesData.books?.slice(0, 2).map((book) => ({
+                    ...book,
+                    media: { ...(book as BookLibraryItem).media, coverPath: undefined },
+                  })) as LibraryItem[],
+                }}
                 libraryId={libraryId}
                 bookshelfView={BookshelfView.DETAIL}
                 dateFormat={defaultDateFormat}
@@ -287,7 +285,7 @@ export function SeriesCardExamples({ seriesData, libraryId }: SeriesCardExamples
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Standard View</p>
               <SeriesCard
-                series={{ ...seriesData, books: seriesData.books?.slice(0, 1) } as Series}
+                series={{ ...seriesData, books: seriesData.books?.slice(0, 1) }}
                 libraryId={libraryId}
                 bookshelfView={BookshelfView.STANDARD}
                 dateFormat={defaultDateFormat}
@@ -296,7 +294,7 @@ export function SeriesCardExamples({ seriesData, libraryId }: SeriesCardExamples
             <div className="mb-6">
               <p className="mb-2 text-sm text-gray-400">Detail View</p>
               <SeriesCard
-                series={{ ...seriesData, books: seriesData.books?.slice(0, 1) } as Series}
+                series={{ ...seriesData, books: seriesData.books?.slice(0, 1) }}
                 libraryId={libraryId}
                 bookshelfView={BookshelfView.DETAIL}
                 dateFormat={defaultDateFormat}

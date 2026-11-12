@@ -17,7 +17,7 @@
       "groupName": "react packages"
     },
     {
-      "matchPackageNames": ["next", "eslint-config-next"],
+      "matchPackageNames": ["next"],
       "groupName": "nextjs packages"
     },
     {

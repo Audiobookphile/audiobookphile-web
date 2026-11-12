@@ -40,23 +40,25 @@ export default function AuthConfirmPage() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).then(({ data, error }) => {
-      if (error || !data.session) {
-        router.replace('/auth/auth-code-error')
-        return
-      }
-      if (client === 'ios') {
-        const url = new URL('auth/callback', APP_DEEP_LINK_SCHEME)
-        url.searchParams.set('accessToken', data.session.access_token)
-        url.searchParams.set('refreshToken', data.session.refresh_token ?? '')
-        url.searchParams.set('userId', data.session.user.id)
-        if (server) url.searchParams.set('server', server)
-        window.location.replace(url.toString())
-        return
-      }
-      const destination = type === 'recovery' ? '/reset-password' : next === '/' ? '/library' : next
-      router.replace(destination)
-    })
+    void supabase.auth
+      .setSession({ access_token: accessToken, refresh_token: refreshToken })
+      .then(({ data, error }) => {
+        if (error || !data.session) {
+          router.replace('/auth/auth-code-error')
+          return
+        }
+        if (client === 'ios') {
+          const url = new URL('auth/callback', APP_DEEP_LINK_SCHEME)
+          url.searchParams.set('accessToken', data.session.access_token)
+          url.searchParams.set('refreshToken', data.session.refresh_token ?? '')
+          url.searchParams.set('userId', data.session.user.id)
+          if (server) url.searchParams.set('server', server)
+          window.location.replace(url.toString())
+          return
+        }
+        const destination = type === 'recovery' ? '/reset-password' : next === '/' ? '/library' : next
+        router.replace(destination)
+      })
   }, [router])
 
   return null

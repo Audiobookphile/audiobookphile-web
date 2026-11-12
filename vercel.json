@@ -1,20 +1,5 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/uptime",
-      "schedule": "0 8 * * *"
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/login",
-      "permanent": false
-    }
-  ],
-  "git": {
-    "deploymentEnabled": {
-      "main": true
-    }
-  }
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "bunVersion": "1.4.x"
 }

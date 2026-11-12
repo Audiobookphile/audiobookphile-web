@@ -299,7 +299,7 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
         // as FINISHED and let the container either advance or clear.
       })
     },
-    [startSyncInterval, stopSyncInterval]
+    [startSyncInterval, stopSyncInterval, showToast, t]
   )
 
   // Time update interval for smoother progress updates during playback
@@ -451,7 +451,9 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
       actions.forEach((action) => {
         try {
           navigator.mediaSession.setActionHandler(action, null)
-        } catch {}
+        } catch {
+          // Unsupported actions in some browser engines are safely ignored
+        }
       })
       return
     }
@@ -493,7 +495,9 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
       actions.forEach((action) => {
         try {
           navigator.mediaSession.setActionHandler(action, null)
-        } catch {}
+        } catch {
+          // Unsupported actions in some browser engines are safely ignored
+        }
       })
     }
   }, [

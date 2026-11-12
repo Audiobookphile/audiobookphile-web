@@ -61,10 +61,10 @@ export function isLibraryItemPlayable(
 
   const media = libraryItem.media
   if (media && !isBookMedia(media)) {
-    return (media as PodcastMedia).episodes?.length ? true : !!libraryItem.recentEpisode
+    return media.episodes?.length ? true : !!libraryItem.recentEpisode
   }
 
-  if (getBookTrackCount(media as BookMedia) > 0) return true
+  if (getBookTrackCount(media) > 0) return true
   if (options.episode) return true
 
   return !!libraryItem.recentEpisode

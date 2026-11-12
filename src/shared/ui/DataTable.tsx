@@ -134,7 +134,7 @@ function DataTablePagination({
   return (
     <div className="flex items-center justify-end gap-4 rounded-b-xl border-t border-white/5 bg-white/5 px-6 py-4 backdrop-blur-sm">
       <div className="flex items-center gap-3">
-        <span className="text-foreground/60 text-xs font-bold tracking-wider uppercase">{rowsPerPageLabel}</span>
+        <span className="text-xs font-bold tracking-wider text-foreground/60 uppercase">{rowsPerPageLabel}</span>
         <div className="w-24">
           <Dropdown
             value={rowsPerPage}
@@ -144,7 +144,7 @@ function DataTablePagination({
           />
         </div>
       </div>
-      <span className="text-foreground/80 text-sm font-medium">{pageIndicator}</span>
+      <span className="text-sm font-medium text-foreground/80">{pageIndicator}</span>
       <div className="ms-2 flex items-center gap-2">
         <IconBtn
           ariaLabel="Previous page"
@@ -422,7 +422,7 @@ export default function DataTable<T>({
 
   return (
     <div ref={containerRef} className={mergeClasses('group/table w-full', className)}>
-      <div className="bg-primary/5 relative overflow-x-auto rounded-2xl border border-white/10 shadow-xl">
+      <div className="relative overflow-x-auto rounded-2xl border border-white/10 bg-primary/5 shadow-xl">
         <table className={mergeClasses('w-full border-collapse text-sm', tableClassName)}>
           {caption && <caption className="sr-only">{caption}</caption>}
           <thead className="sticky top-0 z-10 bg-white/5 backdrop-blur-md">
@@ -442,7 +442,7 @@ export default function DataTable<T>({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="bg-primary absolute inset-x-0 top-0 z-20 flex items-center border-b border-white/20 shadow-lg"
+              className="absolute inset-x-0 top-0 z-20 flex items-center border-b border-white/20 bg-primary shadow-lg"
               style={{ height: `${headerHeight}px` }}
             >
               <div className={mergeClasses('flex h-full w-full items-center', bulkActions?.className)}>

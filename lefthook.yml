@@ -4,31 +4,31 @@ pre-commit:
     lint-and-format:
       glob: '*.{js,jsx,ts,tsx,json,yml}'
       stage_fixed: true
-      run: ./scripts/pre-commit.sh {staged_files}
+      run: bun run scripts/pre-commit.ts {staged_files}
     format-other:
       glob: '*.{css,md}'
       stage_fixed: true
-      run: ./scripts/format-other.sh {staged_files}
+      run: bun run scripts/format-other.ts {staged_files}
 
 commit-msg:
   commands:
     conventional-commit:
-      run: ./scripts/commit-msg.sh {1}
+      run: bun run scripts/commit-msg.ts {1}
 
 pre-push:
   parallel: false
   jobs:
     - name: delivery-gate
-      run: ./scripts/pre-push-gate.sh
+      run: bun run scripts/pre-push-gate.ts
 
 post-merge:
   commands:
     bun-install:
       glob: 'package.json'
-      run: bun install
+      run: bun install --frozen-lockfile
 
 post-checkout:
   commands:
     bun-install:
       glob: 'package.json'
-      run: bun install
+      run: bun install --frozen-lockfile

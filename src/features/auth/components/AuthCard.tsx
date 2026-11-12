@@ -71,7 +71,7 @@ export default function AuthCard({ title, subtitle, icon, onSubmit, children, cl
     if (!icon) return null
     const IconComp = iconMap[icon]
     if (!IconComp) return null
-    return <IconComp size={48} className="text-accent mx-auto mb-6 drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]" />
+    return <IconComp size={48} className="mx-auto mb-6 text-accent drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]" />
   }
 
   const header = (
@@ -80,7 +80,7 @@ export default function AuthCard({ title, subtitle, icon, onSubmit, children, cl
       <h1 className={mergeClasses('text-3xl font-black tracking-tight uppercase', subtitle ? 'mb-2' : 'mb-8')}>
         {title}
       </h1>
-      {subtitle && <p className="text-foreground/60 mb-8 text-sm leading-relaxed font-medium">{subtitle}</p>}
+      {subtitle && <p className="mb-8 text-sm leading-relaxed font-medium text-foreground/60">{subtitle}</p>}
     </div>
   )
 

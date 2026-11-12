@@ -59,7 +59,7 @@ export default function ToggleButtonGroup({
     if (disabled) return
 
     const last = items.length - 1
-    let next = focusIndex
+    let next: number
 
     switch (e.key) {
       case 'ArrowRight':

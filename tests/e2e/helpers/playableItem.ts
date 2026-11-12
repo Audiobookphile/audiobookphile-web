@@ -40,6 +40,78 @@ export async function dismissPlayerIfOpen(page: Page): Promise<void> {
 }
 
 /**
+ * Starts playback and waits for the player to mount.
+ *
+ * Starting playback is a server round trip: the Play button asks the
+ * backend for a session, and the player mounts once it has one. The
+ * backend that serves the library also serves the session, and it returns
+ * 500s under load -- measured at 50 errors during one gate run and 12
+ * during another, with the number of playback failures tracking it
+ * closely. When the session call 500s, the click does nothing at all and
+ * the panel never appears.
+ *
+ * That is a transient failure in a dependency, not a defect in the Play
+ * button, so the click is retried. It is a *setup* retry: the assertions
+ * that follow -- the panel is mounted, the audio element exists, the
+ * playhead moves -- are still made exactly once, against whatever the
+ * retry achieved. A Play button that is genuinely broken fails every
+ * attempt, so the test still fails.
+ *
+ * The login in tests/e2e/fixtures.ts already retries for the same reason.
+ *
+ * The time budget is the same as the single long wait it replaces: three
+ * attempts of twenty seconds each, where there was one wait of sixty. The
+ * same worst case, three chances instead of one.
+ */
+export async function startPlayback(
+  page: Page,
+  options: { attempts?: number; failureMessage?: string } = {}
+): Promise<void> {
+  const attempts = options.attempts ?? 3
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    // A panel that mounted after the previous attempt gave up still counts.
+    if (
+      await playerPanel(page)
+        .isVisible()
+        .catch(() => false)
+    ) {
+      return
+    }
+
+    await page.getByRole('button', { name: 'Play', exact: true }).first().click()
+
+    const mounted = await playerPanel(page)
+      .waitFor({ state: 'visible', timeout: 20_000 })
+      .then(() => true)
+      .catch(() => false)
+
+    if (mounted) {
+      const hasAudio = await audioElement(page)
+        .waitFor({ state: 'attached', timeout: 30_000 })
+        .then(() => true)
+        .catch(() => false)
+
+      if (!hasAudio) {
+        throw new Error('the player panel mounted but no <audio> element was ever created, so nothing can decode')
+      }
+      return
+    }
+
+    if (attempt < attempts) {
+      await page.waitForTimeout(1_000)
+    }
+  }
+
+  throw new Error(
+    options.failureMessage ??
+      `Clicking Play did not mount the player panel after ${attempts} attempts. The backend serves the ` +
+        `playback session and it returns 500s under load, so the click does nothing; check the dev server log ` +
+        `for ApiError before treating this as a product failure.`
+  )
+}
+
+/**
  * Finds an item id that the shelf itself advertises as playable, and returns
  * it together with the Play button that proved it.
  */

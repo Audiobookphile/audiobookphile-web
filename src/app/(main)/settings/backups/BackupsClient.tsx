@@ -67,14 +67,17 @@ export default function BackupsClient({
   const dateFormat = serverSettings.dateFormat ?? 'MM/dd/yyyy'
   const timeFormat = serverSettings.timeFormat ?? 'HH:mm'
 
-  const [backupsToKeep, setBackupsToKeep] = useState(
-    (serverSettings as any).backupsToKeep ? String((serverSettings as any).backupsToKeep) : ''
-  )
-  const [maxBackupSize, setMaxBackupSize] = useState(
-    (serverSettings as any).maxBackupSize ? String((serverSettings as any).maxBackupSize) : ''
-  )
+  type BackupSettingsExtended = ServerSettings & {
+    backupsToKeep?: number | string
+    maxBackupSize?: number | string
+    backupSchedule?: string | false
+  }
+  const settings = serverSettings as unknown as BackupSettingsExtended
 
-  const backupSchedule = (serverSettings as any).backupSchedule as string | false | undefined
+  const [backupsToKeep, setBackupsToKeep] = useState(settings.backupsToKeep ? String(settings.backupsToKeep) : '')
+  const [maxBackupSize, setMaxBackupSize] = useState(settings.maxBackupSize ? String(settings.maxBackupSize) : '')
+
+  const backupSchedule = settings.backupSchedule
 
   useEffect(() => {
     if (!appliedBackupToast) return
@@ -243,8 +246,8 @@ export default function BackupsClient({
     <SettingsContent
       title={t('HeaderBackups')}
       description={t.rich('MessageBackupsDescription', {
-        code: (chunks) => <code className="bg-foreground/10 text-foreground rounded-md px-1 py-0.5">{chunks}</code>,
-        strong: (chunks) => <strong className="text-foreground font-bold">{chunks}</strong>,
+        code: (chunks) => <code className="rounded-md bg-foreground/10 px-1 py-0.5 text-foreground">{chunks}</code>,
+        strong: (chunks) => <strong className="font-bold text-foreground">{chunks}</strong>,
       })}
     >
       <div>
@@ -265,14 +268,14 @@ export default function BackupsClient({
             <div className="pl-6">
               <div className="flex gap-2">
                 <div>
-                  <CronExpressionPreview cronExpression={backupSchedule as string} />
+                  <CronExpressionPreview cronExpression={backupSchedule} />
                 </div>
                 <div>
                   <IconBtn
                     ariaLabel={t('LabelEdit')}
                     borderless
                     size="small"
-                    className="text-foreground-muted cursor-pointer"
+                    className="cursor-pointer text-foreground-muted"
                     onClick={() => setIsBackupScheduleModalOpen(true)}
                     icon={Pencil}
                   />
@@ -296,7 +299,7 @@ export default function BackupsClient({
             />
             <label htmlFor="backups-to-keep-input">{t('LabelBackupsNumberToKeep')}</label>
             <Tooltip text={t('LabelBackupsNumberToKeepHelp')} maxWidth={300}>
-              <div className="text-foreground/40 flex cursor-default items-center justify-center transition-colors hover:text-white">
+              <div className="flex cursor-default items-center justify-center text-foreground/40 transition-colors hover:text-white">
                 <Info size={16} strokeWidth={2.5} />
               </div>
             </Tooltip>
@@ -314,7 +317,7 @@ export default function BackupsClient({
             />
             <label htmlFor="max-backup-size-input">{t('LabelBackupsMaxBackupSize')}</label>
             <Tooltip text={t('LabelBackupsMaxBackupSizeHelp')} maxWidth={300}>
-              <div className="text-foreground/40 flex cursor-default items-center justify-center transition-colors hover:text-white">
+              <div className="flex cursor-default items-center justify-center text-foreground/40 transition-colors hover:text-white">
                 <Info size={16} strokeWidth={2.5} />
               </div>
             </Tooltip>
@@ -354,7 +357,7 @@ export default function BackupsClient({
               deletingBackupId={deletingBackupId}
             />
           ) : (
-            <p className="text-foreground py-4 text-center text-lg">{t('MessageNoBackups')}</p>
+            <p className="py-4 text-center text-lg text-foreground">{t('MessageNoBackups')}</p>
           )}
           {isUploadingBackup || isApplyingBackup ? (
             <div
@@ -457,7 +460,7 @@ function BackupsTable({
               </Btn>
             ) : (
               <Tooltip text={LEGACY_BACKUP_UNSUPPORTED_HINT} position="bottom" maxWidth={320}>
-                <div className="text-error flex items-center justify-center opacity-60 transition-opacity hover:opacity-100">
+                <div className="flex items-center justify-center text-error opacity-60 transition-opacity hover:opacity-100">
                   <AlertCircle size={20} strokeWidth={2.5} role="img" aria-label={LEGACY_BACKUP_UNSUPPORTED_HINT} />
                 </div>
               </Tooltip>

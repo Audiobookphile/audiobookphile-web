@@ -15,7 +15,7 @@ import IconBtn from '@/shared/ui/IconBtn'
 import MediaCardCover from '@/shared/widgets/media-card/MediaCardCover'
 import MediaCardFrame from '@/shared/widgets/media-card/MediaCardFrame'
 import MediaOverlayIconBtn from '@/shared/widgets/media-card/MediaOverlayIconBtn'
-import type { BookLibraryItem, BookMetadata, LibraryItem, MediaProgress, PodcastLibraryItem } from '@/types/api'
+import type { BookLibraryItem, BookMetadata, MediaProgress, PodcastLibraryItem } from '@/types/api'
 import { isPodcastLibraryItem } from '@/types/api'
 
 interface LibraryItemCoverProps {
@@ -122,7 +122,7 @@ export default function LibraryItemCover({
         onMouseLeave={handleMouseLeave}
         cover={
           <MediaCardCover
-            libraryItem={libraryItem as LibraryItem}
+            libraryItem={libraryItem}
             coverAspect={coverAspectRatio}
             placeholderUrl={getPlaceholderCoverUrl()}
             hasCover={!!coverPath}

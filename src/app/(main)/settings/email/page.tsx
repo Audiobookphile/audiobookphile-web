@@ -1,4 +1,4 @@
-import { ExternalLink, Mail } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { getTypeSafeTranslations } from '@/shared/lib/getTypeSafeTranslations'
 import SettingsContent from '../SettingsContent'
 
@@ -22,7 +22,7 @@ export default async function EmailPage() {
   return (
     <SettingsContent title={t('HeaderEmail')}>
       <div className="space-y-4 p-6">
-        <p className="text-foreground-muted text-sm">
+        <p className="text-sm text-foreground-muted">
           Email sending is handled by Supabase Auth. Configure SMTP settings and email templates in your dashboard.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -35,9 +35,9 @@ export default async function EmailPage() {
               href={getHref(item.path)}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:border-primary/50 group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md transition-all hover:scale-[1.02] hover:border-primary/50 active:scale-[0.98]"
             >
-              <div className="bg-primary/20 group-hover:bg-primary/30 rounded-xl p-3 transition-colors">
+              <div className="rounded-xl bg-primary/20 p-3 transition-colors group-hover:bg-primary/30">
                 <ExternalLink size={20} className="text-primary" />
               </div>
               <div>

@@ -1,0 +1,562 @@
+# Bun configuration for audiobookphile-web.
+#
+# This repository runs on Bun end to end. Bun is the package manager, the
+# runtime, the linter, the formatter, the test runner and the dependency
+# auditor, and this file is the single place that configures the parts of
+# it that are configurable.
+#
+# `bun lint` and `bun fmt` ship only in canary builds -- they are not in any
+# released Bun -- so the whole toolchain moves to the canary channel at once,
+# rather than half of it running on a runtime the other half does not exist
+# in. .mise.toml pins that channel; see DEPLOYMENT.md section 4.
+#
+# The type gate is tsrs, the Rust port of the TypeScript compiler, not a Bun
+# builtin -- it is a separate devDependency, and so is @tsrs/wasm, the same
+# compiler compiled to WebAssembly, which runs on the platforms tsrs has no
+# native binary for. tsrs is the only type checker here: one compiler means
+# one verdict. The TypeScript 7.1 beta package is installed for one reason
+# only -- `next build` verifies the TypeScript setup and refuses to run
+# without it -- and its checker is never invoked. All three are native, so
+# none of them needs a Node.js runtime either.
+
+# Bun never phones home for this project.
+telemetry = false
+
+# ── Package manager ────────────────────────────────────────────────────────
+[install]
+# "hoisted" keeps the flat node_modules layout that Next.js output tracing
+# and the `bun server.js` standalone runtime are built against. Bun's
+# "isolated" linker is the default for new workspaces, but it changes
+# resolution semantics for a single-package project with an existing tree.
+linker = "hoisted"
+
+# The text lockfile (bun.lock) is the committed source of truth: diffable,
+# mergeable, reviewable in a pull request.
+saveTextLockfile = true
+
+# Never write exact pins or "*" into package.json on `bun add`.
+exact = false
+
+# Peer dependencies are installed by default.
+peer = true
+
+# Refuse package versions published in the last 3 days. A compromised
+# publish is the classic supply-chain attack and this is the cheapest
+# mitigation available: a malicious version cannot be installed the same
+# day it is pushed, which is the window an attack actually uses.
+minimumReleaseAge = 259200
+
+# Exemptions.
+#
+# tsrs is the experimental Rust port of the TypeScript compiler. It ships on
+# a canary-style cadence, so the newest release is regularly less than three
+# days old. The age guard is aimed at *unpinned* dependencies, where a new
+# publish can be pulled in silently; tsrs is pinned to an exact version, and
+# npm versions are immutable, so the guard has nothing to protect here.
+#
+# The @tsrs/* entries are the per-platform native binaries tsrs resolves its
+# executable from. They are published in lockstep with tsrs itself and would
+# otherwise be filtered out, leaving the package installed but unusable.
+#
+# @tsrs/wasm is in that group: the same compiler compiled to WebAssembly, for
+# the platforms tsrs has no native binary for. It carries the same version as
+# tsrs and is published at the same moment, so the guard would reject both
+# together or neither.
+#
+# typescript is exempt for the same reason: the beta line is published
+# continuously, and the beta is pinned to an exact version here, so the
+# guard has nothing to protect. Without the exemption `bun add
+# typescript@beta` silently resolves to a months-old release instead of
+# failing.
+#
+# The package is not a compiler in this repository -- tsrs is, and it is the
+# only one that runs. This one is here because Next.js needs it: `next
+# build` verifies the TypeScript setup and writes the tsconfig defaults
+# through its API, and that verification is what refuses to run without the
+# package. Its checker is never invoked.
+#
+# next is exempt because this repository tracks the Next.js canary channel
+# deliberately. A canary is published the moment it is built -- by definition
+# inside the three-day window the guard protects -- so the guard would reject
+# the channel this project has chosen to follow. The version is pinned to an
+# exact release in package.json, so the guard has nothing to protect: npm
+# versions are immutable and the lockfile records the exact artifact that was
+# reviewed. The @next/playwright companion package rides the same channel.
+#
+# The @next/swc-* entries are the per-platform native compilers Next.js loads
+# at build time. They are published in lockstep with next itself, so they are
+# inside the age window on exactly the same days. This one matters more than
+# it looks: when an optional dependency is filtered out, Bun skips it
+# silently, and the next build then discovers the missing compiler and tries
+# to fetch it by running `npm config get registry` -- which is a Node.js
+# runtime this repository does not have. The build fails with
+# "npm: command not found". Exempting the compiler packages is what keeps the
+# build free of a package manager it is not allowed to use.
+#
+# bun-types is exempt for the same reason. It is pinned to the exact canary
+# build that matches the Bun runtime the toolchain is pinned to, so the
+# ambient types cannot drift underneath the runtime.
+#
+# @next/playwright is exempt for the same reason as next.
+minimumReleaseAgeExcludes = [
+  "typescript",
+  "tsrs",
+  "@tsrs/wasm",
+  "@tsrs/darwin-arm64",
+  "@tsrs/linux-arm64-gnu",
+  "@tsrs/linux-arm64-musl",
+  "@tsrs/linux-x64-gnu",
+  "@tsrs/linux-x64-musl",
+  "@typescript/typescript-darwin-arm64",
+  "@typescript/typescript-darwin-x64",
+  "@typescript/typescript-linux-arm64-gnu",
+  "@typescript/typescript-linux-arm64-musl",
+  "@typescript/typescript-linux-x64-gnu",
+  "@typescript/typescript-linux-x64-musl",
+  "next",
+  "@next/env",
+  "@next/playwright",
+  "@next/swc-darwin-arm64",
+  "@next/swc-darwin-x64",
+  "@next/swc-linux-arm64-gnu",
+  "@next/swc-linux-arm64-musl",
+  "@next/swc-linux-x64-gnu",
+  "@next/swc-linux-x64-musl",
+  "@next/swc-win32-arm64-msvc",
+  "@next/swc-win32-x64-msvc",
+  "bun-types",
+]
+
+# Local installs stay mutable; CI runs `bun ci`, which installs the exact
+# versions in the lockfile and fails when package.json disagrees with it, so
+# a drifted lockfile fails the build instead of silently resolving.
+frozenLockfile = false
+
+# NOTE: there is deliberately no `[install.cache] dir` override here. Bun
+# resolves a leading "~/" in that field inconsistently between releases --
+# 1.4.3 treated it as a literal path and created a "~" directory inside the
+# project -- so the default cache location is left alone.
+
+# NOTE: `bun dedupe` is deliberately not run. It removes seven duplicate
+# versions from the tree, which is worth almost nothing, and it does it by
+# downgrading to the version the most packages ask for -- which takes
+# @types/node from 26.3.0 back to 20.19.0. Older type declarations are
+# older types: the Node APIs the project uses would be checked against
+# definitions that predate them. A duplicate copy of a package is a much
+# smaller cost than that.
+
+# ── Install-time security gate ─────────────────────────────────────────────
+# Bun scans every package before it is installed and cancels the install if
+# the scan returns a fatal advisory. The scanner is a file in this
+# repository, not a package from the registry, so the policy is reviewable
+# in a pull request and adds no dependency of its own.
+#
+# What it enforces: a floor on the versions of the packages this repository
+# has already decided are unsafe below (the same versions the `overrides`
+# block in package.json pins, from the other side); a blocklist of packages
+# whose npm account was compromised; and a rule that every dependency
+# resolves from the registry at an immutable version rather than from a git
+# repository, a URL or a local directory.
+#
+# The scanner is a `.ts` file on purpose: Bun runs it directly, with no
+# build step and no compile step in the container image.
+#
+# NOTE: `bun install` fails outright when this file is missing, so the
+# container images copy it in before the install. See the Containerfile.
+[install.security]
+scanner = "./scripts/security-scanner.ts"
+
+# ── Runtime ────────────────────────────────────────────────────────────────
+[run]
+# Use Bun's own shell for package.json scripts instead of /bin/sh or bash.
+# One shell on macOS, Linux and CI: no bash 3.2 on the macOS runner, no
+# "command not found" from a script that assumed a GNU extension.
+shell = "bun"
+
+# Alias `node` to `bun` for every script and executable Bun launches.
+#
+# This is what makes "this repository has no Node.js runtime" a mechanical
+# guarantee rather than a convention. Bun prepends a `node` symlink that
+# points at the bun binary to $PATH, so:
+#
+#   * a script that runs `node` runs Bun instead, unchanged;
+#   * a `#!/usr/bin/env node` shebang is executed by Bun;
+#   * a dependency's lifecycle script that calls `node ./install.js` runs
+#     under Bun -- @sentry/cli, @swc/core and @vgpu/adapter-node all do;
+#   * it is recursive, so a script that shells out to another script that
+#     calls `node` still lands on Bun.
+#
+# Without this, a Node runtime could enter the build through the back door
+# the first time a dependency added a `node` call to a postinstall script.
+# With it, there is no `node` binary for anything to reach.
+#
+# Bun enables this by default when `node` is not already in $PATH, which is
+# the case on this host -- but "by default" is not a guarantee, and a
+# developer with Node installed would silently get a different toolchain
+# from the one CI runs. Pinning it here means every machine behaves the
+# same way.
+bun = true
+
+# Do not leave orphan processes behind.
+#
+# Bun watches the process that spawned it and exits as soon as that parent
+# goes away, even if the parent was force-killed and never got the chance to
+# forward a signal. On its own exit it also terminates every descendant, so
+# nothing it spawned outlives it.
+#
+# The case this repository actually hits: a cancelled pre-push gate, or a
+# lefthook hook that times out, leaving a `next dev` server holding port
+# 3000 and a couple of gigabytes of RAM. The next run then fails to bind
+# the port and the failure reads as a product bug.
+noOrphans = true
+
+
+# ── Linter ─────────────────────────────────────────────────────────────────
+# Bun's own linter. It replaces the oxlint + eslint + eslint-config-next
+# trio: the `nextjs/*` rules are Next.js's own eslint plugin, `react/*`
+# covers the React Compiler rule set, and `jsx-a11y/*` is the
+# accessibility plugin -- all implemented natively, all in one binary.
+[lint]
+# The repository's own lint rules. Bun loads an ESLint plugin from a path,
+# and the rule is configured below like any built-in one.
+plugins = ["./scripts/lint-plugin.ts"]
+# Type-aware rules are off by default. Turning them on makes every lint run
+# pay for a full type check, which is what `bun run typecheck` is for.
+#
+# This repository turns them on anyway, for a specific set of rules listed
+# below. The reason is not the type check -- `bun run typecheck` already does
+# that, with tsrs, which is faster -- but that these particular rules find
+# bugs a plain lint cannot see: a promise nobody awaits, an `await` on
+# something that is not a promise, a comparison against an enum value that
+# cannot exist.
+#
+# The rules that are not wanted are turned off explicitly below, so the set
+# that runs is exactly the set that was chosen.
+typeAware = true
+
+# The same tsconfig the type checker uses, so type-aware rules and the
+# compiler agree on what the project looks like.
+tsconfig = "./tsconfig.json"
+
+# Same set the old eslint.config.js ignored. Bun already skips node_modules
+# and everything in .gitignore, so these are the extras.
+#
+# src/types/supabase.ts is generated by `bun run types:sync`. It is not this
+# repository's to edit, so a hand-written fix would be overwritten by the
+# next regeneration. A generated file has no business being linted.
+#
+# NOTE: there is deliberately no `[[lint.overrides]]` block in this file, and
+# that is a load-bearing decision rather than an absence.
+#
+# An override block placed in the *middle* of `[lint.rules]` -- which is
+# where it reads most naturally, right after the rule it overrides -- voids
+# the entire lint configuration in Bun 1.4.4-canary.1. The rules that follow
+# it in the table are parsed as belonging to the override rather than to
+# `[lint.rules]`, and the linter then reports nothing at all: 1356 problems
+# became 0. The pre-push gate still passed, because it looks for errors and
+# there were none.
+#
+# The same two blocks at the *end* of the file work correctly, and a single
+# override naming one file changes only that file's rules. It is the
+# placement, not the feature.
+#
+# scripts/lint-canary.ts exists so that a configuration which stops
+# reporting is loud rather than silent: it lints a file with a deliberate
+# violation and requires the rule to fire. A lint run that reports nothing
+# is otherwise indistinguishable from a lint run with nothing to report.
+ignorePatterns = ["next-env.d.ts", "public/**", "src/types/supabase.ts"]
+
+# React 19 is in dependencies; declare the version explicitly so rules that
+# depend on it (jsx-runtime, the new JSX transform) do not have to guess.
+[lint.settings.react]
+version = "19.2"
+
+[lint.categories]
+# "correctness" is the category that finds real bugs.
+correctness = "error"
+
+[lint.rules]
+# The oxlint baseline these rules replace.
+"no-unused-vars" = "warn"
+"@typescript-eslint/no-explicit-any" = "warn"
+"react/jsx-no-target-blank" = "off"
+"react/react-in-jsx-scope" = "off"
+
+# Type-aware rules, enabled one by one.
+#
+# Bun's linter can run rules that need type information without turning on
+# `typeAware` for everything, and `bun lint --type-aware` reports the full
+# list of 15 it holds back. These are the ones whose violations are a
+# mistake rather than a style preference, and whose fix is small enough to
+# land with the rest of this work.
+#
+# A promise nobody awaits is a silent failure, an `await` on a non-promise
+# is a no-op that reads as a wait, and comparing an enum against a value it
+# cannot hold is a comparison that is always false. All of them are the kind
+# of bug a type-aware rule exists to find.
+#
+# The rules held back, and why:
+#
+#   @typescript-eslint/no-unsafe-*                 738 violations. These
+#     measure how far `any` propagates; the repository has 59 `any`s of its
+#     own to remove first. The cleanup has to come before the rule.
+#   @typescript-eslint/require-await                66 violations, and it
+#     is a style rule rather than a correctness one.
+#
+# The four that were mechanical have been landed:
+#
+#   @typescript-eslint/no-floating-promises          52 violations, 37 files.
+#     An un-awaited promise fails silently. This one needed a judgement
+#     call rather than a mechanical fix, and the two answers are different:
+#     `await` where the call has to finish before the handler is done, and
+#     `void` where it is fire-and-forget by design. The `await` sites are
+#     the interesting ones -- three of them complete a login session, and
+#     the `try/catch` around them could not catch a failure to establish
+#     the session, because the call was not awaited. A network drop after
+#     the password was accepted left the user with a spinner and no
+#     message. `completeSession` handles its own errors and never
+#     rejects, so awaiting it is behaviour-neutral; it is the *intent*
+#     that was unstated.
+#   @typescript-eslint/no-useless-default-assignment  9 violations, 4 files.
+#     A default on a required prop is unreachable for every typed caller --
+#     the type forces the prop to be passed, so the default only ever fired
+#     for a caller that passed `undefined` explicitly. The props were marked
+#     optional instead, which is what the code actually did.
+#   @typescript-eslint/no-redundant-type-constituents 17 violations, 6 files.
+#     A union like `'admin' | 'user' | string` reads as a constraint and is
+#     not one -- the trailing `string` absorbs the rest. Two of them are in
+#     a generated file and two come from slate's own types; see the
+#     ignorePatterns above.
+#   @typescript-eslint/no-unnecessary-type-assertion 147 violations, 69 files.
+#     A type assertion is erased at compile time, so removing one cannot
+#     change what runs. The linter fixes these itself.
+"@typescript-eslint/await-thenable" = "error"
+"@typescript-eslint/no-misused-promises" = "error"
+"@typescript-eslint/no-base-to-string" = "error"
+"@typescript-eslint/no-unsafe-enum-comparison" = "error"
+"@typescript-eslint/no-meaningless-void-operator" = "error"
+"@typescript-eslint/restrict-template-expressions" = "error"
+"@typescript-eslint/no-unnecessary-type-constraint" = "error"
+"@typescript-eslint/no-useless-default-assignment" = "error"
+"@typescript-eslint/no-redundant-type-constituents" = "error"
+"@typescript-eslint/no-unnecessary-type-assertion" = "error"
+"@typescript-eslint/no-floating-promises" = "error"
+"audiobookphile/dom-enum-values" = "error"
+
+# The rules held back, turned off explicitly so that `typeAware = true` does
+# not switch them on behind the back of the list above.
+"@typescript-eslint/no-unsafe-assignment" = "off"
+"@typescript-eslint/no-unsafe-argument" = "off"
+"@typescript-eslint/no-unsafe-call" = "off"
+"@typescript-eslint/no-unsafe-member-access" = "off"
+"@typescript-eslint/no-unsafe-return" = "off"
+"@typescript-eslint/require-await" = "off"
+"@typescript-eslint/no-array-delete" = "off"
+
+
+# This repository has no Node.js runtime. Bun's own rule enforces that at the
+# import boundary: it rejects `require('fs')` and `import 'node:fs'` alike,
+# and it runs natively, so the guard costs nothing.
+#
+# `bun:test` is allowed explicitly. The rule's own module list treats the
+# whole `bun:` namespace as a Node builtin, so every `import { describe } from
+# 'bun:test'` in the 18 test files would be reported as a Node import. Bun
+# already lists `bun:test` under `import/core-modules` in the resolved config;
+# the rule's own list does not, and `allow` is the way to say so.
+#
+# The rule covers module specifiers. Node *globals* -- `Buffer`, `__dirname`,
+# `require`, `module.exports` -- are not imports, so the pre-commit gate has a
+# separate layer for them (scripts/pre-commit.ts, "Node API Guard").
+"import/no-nodejs-modules" = ["error", { allow = ["bun:test"] }]
+
+# The React Compiler rule set that eslint-config-next@16 ships but this
+# codebase does not enforce yet. Kept off to preserve the pre-upgrade lint
+# baseline; address them in a follow-up.
+"react/static-components" = "off"
+"react/use-memo" = "off"
+"react/preserve-manual-memoization" = "off"
+"react/immutability" = "off"
+"react/globals" = "off"
+"react/refs" = "off"
+"react/set-state-in-effect" = "off"
+"react/error-boundaries" = "off"
+"react/purity" = "off"
+"react/set-state-in-render" = "off"
+"react/unsupported-syntax" = "off"
+
+# Accessibility rules that eslint-config-next never enabled.
+#
+# eslint-config-next@16 enables exactly six jsx-a11y rules, all at "warn":
+# alt-text, aria-props, aria-proptypes, aria-unsupported-elements,
+# role-has-required-aria-props and role-supports-aria-props. The rules below
+# are new coverage that Bun ships natively, and they are off here so this
+# migration does not silently turn an accessibility refactor of ~150 call
+# sites into a lint gate. They are a genuine improvement waiting to happen --
+# turn them on as their own piece of work.
+"jsx-a11y/anchor-is-valid" = "off"
+"jsx-a11y/click-events-have-key-events" = "off"
+"jsx-a11y/control-has-associated-label" = "off"
+"jsx-a11y/interactive-supports-focus" = "off"
+"jsx-a11y/label-has-associated-control" = "off"
+"jsx-a11y/mouse-events-have-key-events" = "off"
+"jsx-a11y/no-autofocus" = "off"
+"jsx-a11y/no-noninteractive-element-interactions" = "off"
+"jsx-a11y/no-noninteractive-element-to-interactive-role" = "off"
+"jsx-a11y/no-noninteractive-tabindex" = "off"
+"jsx-a11y/no-static-element-interactions" = "off"
+"jsx-a11y/prefer-tag-over-role" = "off"
+
+# The two custom rule sets from the old eslint.config.js.
+"@typescript-eslint/explicit-function-return-type" = "off"
+"@typescript-eslint/naming-convention" = [
+  "warn",
+  { selector = "default", format = ["camelCase", "PascalCase", "UPPER_CASE"], leadingUnderscore = "allow" },
+  { selector = "variable", format = ["camelCase", "PascalCase", "UPPER_CASE"], leadingUnderscore = "allow" },
+  { selector = "typeLike", format = ["PascalCase"] },
+  { selector = "property", format = [] },
+  { selector = "parameter", format = ["camelCase", "PascalCase"], leadingUnderscore = "allow" },
+]
+
+# ── Formatter ──────────────────────────────────────────────────────────────
+# Bun's own formatter, replacing biome and prettier. One formatter, one
+# config, one set of rules.
+[fmt]
+printWidth = 120
+tabWidth = 2
+useTabs = false
+semi = false
+singleQuote = true
+jsxSingleQuote = false
+quoteProps = "as-needed"
+trailingComma = "es5"
+bracketSpacing = true
+bracketSameLine = false
+arrowParens = "always"
+objectWrap = "preserve"
+proseWrap = "never"
+endOfLine = "lf"
+
+# Tailwind class sorting is built into Bun and uses this project's own
+# tailwindcss v4, so the output matches what the stylesheet defines.
+sortTailwindcss = { stylesheet = "./src/assets/globals.css" }
+
+# Markdown is left alone. Bun's Markdown formatter compacts tables, which
+# would reflow every row of a table on each cell edit and turn a one-line
+# change into a whole-table diff. The docs in this repository are hand
+# maintained with aligned tables, and that alignment is worth keeping.
+ignorePatterns = ["next-env.d.ts", ".next/**", "node_modules/**", "**/*.md"]
+
+# ── Test runner ────────────────────────────────────────────────────────────
+[test]
+root = "."
+
+# Run the test files in a different order every run.
+#
+# A suite that only passes in one order is a suite with hidden coupling
+# between its files: a shared module-level cache, a mocked global that
+# another file also mocks, a test that depends on a file above it having
+# run first. In a fixed order that coupling is invisible; in a random order
+# it shows up as a failure.
+#
+# Bun prints the seed it used, so a failure is reproducible exactly:
+#
+#   bun test --seed=1123801255
+#
+# Playwright specs are driven by `bun run test`, not by the unit runner.
+# Without this, `bun test` would try to execute the .spec.ts files as unit
+# tests and fail on the missing Playwright fixture registration.
+pathIgnorePatterns = ["tests/e2e/**", "node_modules/**", ".next/**", "playwright-report/**"]
+randomize = true
+
+# Test files themselves are not part of the coverage denominator.
+coverageSkipTestFiles = true
+
+# The coverage report is written in both formats: the text one for a
+# terminal, and lcov for a CI service to pick up. The reporters live here
+# rather than on the command line, so there is one place that says how the
+# project measures itself.
+coverageReporter = ["text", "lcov"]
+
+# The coverage floor for the delivery gate.
+#
+# NOTE: this is NOT Bun's own coverage-threshold key. Neither of Bun's
+# spellings is honoured by the canary: a `threshold` key in this section, and
+# a `coverageThreshold` object in package.json, are both ignored -- a floor
+# of 0.99 on a project measuring 73% passes with exit code 0. (Verified on
+# Bun 1.4.4-canary.1; the previous note in this file claimed the key failed
+# the run unconditionally, which is not what happens -- it is simply not
+# read.)
+#
+# So the floor is enforced by scripts/pre-push-gate.ts instead, which parses
+# the coverage report and compares it against the numbers below. They live
+# here because this file is where a reader looks for them; the gate parses
+# them out of this file rather than duplicating the values.
+#
+# Set just under the current measurement (68.8% functions, 73.3% lines) so a
+# regression trips the gate. Ratchet it up as coverage grows.
+[coverage]
+lines = 0.72
+functions = 0.68
+
+# ── Client bundle budget ───────────────────────────────────────────────────
+# The size ceiling for the client chunks the browser downloads.
+#
+# It is measured and enforced by scripts/size-budget.ts, which replaced
+# `size-limit`: that tool needed a puppeteer-core and a webpack in the
+# dependency graph to measure one number, and the number is the sum of the
+# gzip-compressed sizes of the files matching `.next/static/chunks/**/*.js`.
+#
+# The value is in bytes. 1835008 is 1.75 MiB, about 16% above the current
+# measurement (1538691 bytes), which is the same headroom the old brotli
+# budget had over its own measurement. Lower it as the bundle shrinks.
+#
+# Run it with `bun run size` after a production build.
+#
+# `budget` is the total of every client chunk: what the container image
+# serves.
+#
+# `initialBudget` is the initial payload -- the chunks one route loads when
+# it is first visited. It is the number a visitor waits for, and it is the
+# one that catches a library being pulled into the app shell by accident.
+# hls.js was 172 KB gzipped and posthog-js 84 KB, and both were in every
+# authenticated page's first load; the total budget never saw either of
+# them, because the chunks were in the build either way.
+[size]
+budget = 1835008
+initialBudget = 532480
+
+# ── Lint debt ──────────────────────────────────────────────────────────────
+#
+# This table is at the END of the file, and it has to stay there.
+#
+# It is a TOP-LEVEL table, not a sub-table of [lint], because Bun validates
+# the [lint] table it knows and rejects a key it does not: "Unknown key
+# "debt" in [lint]". That error takes the whole [lint] configuration with it
+# -- every rule falls back to its default, the type-aware rules stop
+# running, and a lint run reports nothing while looking perfectly healthy.
+# A top-level table Bun does not know is ignored, which is what [coverage]
+# below already relies on.
+#
+# It is at the END of the file because in TOML a table header owns every key
+# that follows it until the next header. A table in the middle of another
+# one swallows the rest of that one.
+#
+# The deferred rules above are switched off, and a rule that is switched off
+# reports nothing -- so the debt they carry would grow silently, and a new
+# `any` would join the ones nobody is counting.
+#
+# These are the numbers they currently have. scripts/lint-debt.ts lints with
+# each rule switched on, one at a time, and fails if a rule has more
+# violations than its number here. The debt can shrink; it cannot grow.
+#
+# Lower a number when it shrinks, and the ratchet will say so.
+#
+# The counts are per rule and are not additive: one line can be reported by
+# more than one rule.
+[lint-debt]
+"@typescript-eslint/require-await" = 66
+"@typescript-eslint/no-unsafe-assignment" = 74
+"@typescript-eslint/no-unsafe-argument" = 39
+"@typescript-eslint/no-unsafe-call" = 0
+"@typescript-eslint/no-unsafe-member-access" = 99
+"@typescript-eslint/no-unsafe-return" = 8

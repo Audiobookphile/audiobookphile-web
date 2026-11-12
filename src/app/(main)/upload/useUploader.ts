@@ -30,7 +30,7 @@ export function useUploader(libraries: Library[]) {
   const { userDefaultLibraryId } = useUser()
 
   useEffect(() => {
-    ensureProvidersLoaded()
+    void ensureProvidersLoaded()
   }, [ensureProvidersLoaded])
 
   const [selectedLibrary, setSelectedLibrary] = useState<string>()
@@ -126,7 +126,7 @@ export function useUploader(libraries: Library[]) {
     }
     if (itemResults.items.length > 0 && autoFetch) {
       itemResults.items.forEach((_, index) => {
-        handleFetchMetadata(index, itemResults.items)
+        void handleFetchMetadata(index, itemResults.items)
       })
     }
   }
@@ -140,7 +140,7 @@ export function useUploader(libraries: Library[]) {
     }
     if (itemResults.items.length > 0 && autoFetch) {
       itemResults.items.forEach((_, index) => {
-        handleFetchMetadata(index, itemResults.items)
+        void handleFetchMetadata(index, itemResults.items)
       })
     }
   }

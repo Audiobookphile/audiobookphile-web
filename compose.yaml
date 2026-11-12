@@ -1,0 +1,30 @@
+# Podman Compose file for the local development image.
+#
+# The container runtime here is Podman, not Docker: `podman compose up -d`
+# reads this file. It builds from Containerfile.local, which is the only
+# local build recipe in the repository.
+#
+# The image contains Bun and nothing else: no Node.js runtime, no npm.
+#
+#   podman compose up -d --build
+#
+# The NEXT_PUBLIC_* variables are baked into the build, so they are build
+# arguments. The service-role key is a runtime secret and never becomes a
+# build argument.
+services:
+  audiobookphile:
+    build:
+      context: .
+      dockerfile: Containerfile.local
+      args:
+        # NEXT_PUBLIC_* vars must be passed at build time — Next.js bakes them in
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    ports:
+      - 3000:3000
+    environment:
+      # Runtime-only secrets (never exposed to the browser)
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+    env_file:
+      - .env.local
+    restart: unless-stopped

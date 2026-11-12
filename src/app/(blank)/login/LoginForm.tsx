@@ -131,7 +131,7 @@ export default function LoginForm() {
         }
 
         // Establish session with Supabase using returned tokens to set SSR cookies
-        completeSession(data.user.token, data.user.refreshToken, data.userDefaultLibraryId)
+        await completeSession(data.user.token, data.user.refreshToken, data.userDefaultLibraryId)
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error'
         console.error('[LoginForm] Network error:', message)
@@ -147,7 +147,7 @@ export default function LoginForm() {
     setLoading(true)
     try {
       const data = await performPasskeyLogin(userId, tempToken)
-      completeSession(data.user.token, data.user.refreshToken, data.userDefaultLibraryId)
+      await completeSession(data.user.token, data.user.refreshToken, data.userDefaultLibraryId)
     } catch (err) {
       console.error('[LoginForm] Passkey sign-in error:', err)
       setError(webAuthnErrorMessage(err))
@@ -189,7 +189,7 @@ export default function LoginForm() {
           return
         }
 
-        completeSession(data.user.token, data.user.refreshToken, data.userDefaultLibraryId)
+        await completeSession(data.user.token, data.user.refreshToken, data.userDefaultLibraryId)
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error'
         console.error('[LoginForm] 2FA verify network error:', message)
@@ -260,12 +260,12 @@ export default function LoginForm() {
     window.history.replaceState(null, '', window.location.pathname + window.location.search)
     if (type === 'recovery') {
       const supabase = createClient()
-      supabase.auth
+      void supabase.auth
         .setSession({ access_token: accessToken, refresh_token: refreshToken })
         .then(() => router.replace('/reset-password'))
       return
     }
-    completeSession(accessToken, refreshToken)
+    void completeSession(accessToken, refreshToken)
   }, [completeSession, router])
 
   useEffect(() => {
@@ -294,7 +294,7 @@ export default function LoginForm() {
     return (
       <AuthCard title="Two-Factor Authentication" onSubmit={handle2FASubmit}>
         {methodTabs.length > 1 && (
-          <div className="border-border bg-bg-dark/50 mb-6 flex rounded-xl border p-1">
+          <div className="bg-bg-dark/50 mb-6 flex rounded-xl border border-border p-1">
             {methodTabs.map(({ key, label, icon: TabIcon, enrolled }) => (
               <button
                 key={key}
@@ -317,11 +317,11 @@ export default function LoginForm() {
 
         <div className="mb-6 flex flex-col gap-4">
           {!hasEnrolledMethods && (
-            <div className="border-border bg-bg-light/30 flex flex-col gap-3 rounded-xl border p-4 text-center">
-              <p className="text-foreground-muted text-sm">
+            <div className="bg-bg-light/30 flex flex-col gap-3 rounded-xl border border-border p-4 text-center">
+              <p className="text-sm text-foreground-muted">
                 No two-factor methods are configured for this account, so no verification code can be requested.
               </p>
-              <p className="text-foreground-muted text-xs">
+              <p className="text-xs text-foreground-muted">
                 Please contact an administrator to reconfigure your security settings.
               </p>
             </div>
@@ -329,10 +329,10 @@ export default function LoginForm() {
 
           {activeTab === 'biometric' && enrolledMethods.biometric && (
             <div className="flex flex-col items-center gap-4 py-4 text-center">
-              <div className="bg-accent/15 text-accent flex h-16 w-16 items-center justify-center rounded-2xl shadow-inner">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/15 text-accent shadow-inner">
                 <Fingerprint className="h-9 w-9 animate-pulse" />
               </div>
-              <p className="text-foreground-muted text-sm">
+              <p className="text-sm text-foreground-muted">
                 Verify your identity using Face ID, Touch ID, or security key.
               </p>
               <Btn
@@ -348,7 +348,7 @@ export default function LoginForm() {
 
           {activeTab === 'biometric' && !enrolledMethods.biometric && (
             <div className="flex flex-col items-center gap-4 py-4 text-center">
-              <p className="text-foreground-muted text-sm">Biometric 2FA is not set up yet.</p>
+              <p className="text-sm text-foreground-muted">Biometric 2FA is not set up yet.</p>
               <Btn type="button" onClick={() => router.push('/settings/security')} className="w-full">
                 Enable Biometric in Settings
               </Btn>
@@ -357,7 +357,7 @@ export default function LoginForm() {
 
           {activeTab === 'pin' && enrolledMethods.pin && (
             <div>
-              <p className="text-foreground-muted mb-4 text-center text-sm">
+              <p className="mb-4 text-center text-sm text-foreground-muted">
                 Enter your 4-8 digit security PIN code to sign in.
               </p>
               <TextInput
@@ -372,13 +372,13 @@ export default function LoginForm() {
 
           {activeTab === 'pin' && !enrolledMethods.pin && (
             <div className="flex flex-col items-center gap-3 py-4 text-center">
-              <p className="text-foreground-muted text-sm">A PIN code is not set up yet.</p>
+              <p className="text-sm text-foreground-muted">A PIN code is not set up yet.</p>
             </div>
           )}
 
           {activeTab === 'totp' && enrolledMethods.totp && (
             <div>
-              <p className="text-foreground-muted mb-4 text-center text-sm">
+              <p className="mb-4 text-center text-sm text-foreground-muted">
                 Enter the 6-digit verification code from your authenticator app to finish signing in.
               </p>
               <TextInput
@@ -409,7 +409,7 @@ export default function LoginForm() {
               setPinCode('')
               setError('')
             }}
-            className="text-foreground-muted hover:text-foreground text-center text-xs hover:underline"
+            className="text-center text-xs text-foreground-muted hover:text-foreground hover:underline"
           >
             Back to Login
           </button>
@@ -432,7 +432,7 @@ export default function LoginForm() {
       </div>
 
       <div className="mb-4 flex justify-end">
-        <Link href="/forgot-password" className="text-accent text-sm hover:underline">
+        <Link href="/forgot-password" className="text-sm text-accent hover:underline">
           Forgot password?
         </Link>
       </div>
@@ -451,10 +451,10 @@ export default function LoginForm() {
 
         <div className="relative my-2">
           <div className="absolute inset-0 flex items-center">
-            <span className="border-border w-full border-t" />
+            <span className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-bg text-foreground px-2">Or continue with</span>
+            <span className="bg-bg px-2 text-foreground">Or continue with</span>
           </div>
         </div>
 
@@ -464,12 +464,12 @@ export default function LoginForm() {
           <Btn
             type="button"
             color="bg-bg-light"
-            className="border-border flex w-full items-center justify-center gap-2 border"
+            className="flex w-full items-center justify-center gap-2 border border-border"
             loading={magicLoading}
             onClick={handleMagicLinkSignIn}
           >
             <svg
-              className="text-accent h-4 w-4"
+              className="h-4 w-4 text-accent"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -489,7 +489,7 @@ export default function LoginForm() {
             <Btn
               type="button"
               color="bg-bg-light"
-              className="border-border flex w-full items-center justify-center gap-2 border"
+              className="flex w-full items-center justify-center gap-2 border border-border"
               loading={googleLoading}
               onClick={handleGoogleSignIn}
             >
@@ -504,7 +504,7 @@ export default function LoginForm() {
           )}
         </div>
 
-        <p className="text-foreground-muted text-center text-xs">
+        <p className="text-center text-xs text-foreground-muted">
           Registration is invitation-only. Please contact an administrator for access.
         </p>
       </div>

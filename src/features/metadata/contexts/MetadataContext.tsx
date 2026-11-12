@@ -93,7 +93,7 @@ export function MetadataProvider({ children }: MetadataProviderProps) {
 
       console.log('[Metadata] Custom metadata provider added:', event)
       // Force refresh all providers
-      refreshProviders()
+      void refreshProviders()
     },
     [refreshProviders]
   )
@@ -105,7 +105,7 @@ export function MetadataProvider({ children }: MetadataProviderProps) {
 
       console.log('[Metadata] Custom metadata provider removed:', event)
       // Force refresh all providers
-      refreshProviders()
+      void refreshProviders()
     },
     [refreshProviders]
   )

@@ -68,14 +68,14 @@ export default function AuthorClient({ author: authorProp }: AuthorClientProps) 
 
   return (
     <div className="w-full" style={{ fontSize: sizeMultiplier + 'rem' }}>
-      <div className="gap-8e flex flex-col md:flex-row">
-        <div className="w-48e max-w-48e mx-auto">
+      <div className="flex flex-col gap-8e md:flex-row">
+        <div className="mx-auto w-48e max-w-48e">
           <div className="h-60e w-full">
             <AuthorImage author={author} className="h-full w-full" />
           </div>
         </div>
         <div className="flex-1">
-          <div className="gap-2e mb-2e flex items-center">
+          <div className="mb-2e flex items-center gap-2e">
             <h1 className="text-[1.5em]">{author.name}</h1>
             <IconBtn
               borderless
@@ -92,7 +92,7 @@ export default function AuthorClient({ author: authorProp }: AuthorClientProps) 
       </div>
 
       {libraryItems.length > 0 && (
-        <div className="mt-8e -ms-2e">
+        <div className="-ms-2e mt-8e">
           <ItemSlider
             title={
               <Link
@@ -131,7 +131,7 @@ export default function AuthorClient({ author: authorProp }: AuthorClientProps) 
             <Link href={`/library/${library.id}/series/${bookSeries.id}`} className="transition-colors hover:underline">
               {bookSeries.name}
             </Link>
-            <span className="text-foreground-subdued ps-2e">{t('LabelSeries')}</span>
+            <span className="ps-2e text-foreground-subdued">{t('LabelSeries')}</span>
           </>
         )
         return (

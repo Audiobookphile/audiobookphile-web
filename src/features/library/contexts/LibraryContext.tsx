@@ -2,11 +2,10 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useFilterData } from '@/features/library/hooks/useFilterData'
-import { useSocketEvent } from '@/shared/contexts/SocketContext'
 import { useUser } from '@/shared/contexts/UserContext'
 import { getCoverAspectRatio } from '@/shared/lib/coverUtils'
 import { ContextMenuDropdownItem } from '@/shared/ui/ContextMenuDropdown'
-import { BookshelfView, Library, LibraryFilterData, LibraryItem } from '@/types/api'
+import { BookshelfView, Library, LibraryFilterData } from '@/types/api'
 
 // Per-library settings (stored separately for each library)
 interface PerLibrarySettings {
@@ -104,8 +103,8 @@ export function LibraryProvider({ children, library }: { children: React.ReactNo
   const [isSettingsLoaded, setIsSettingsLoaded] = useState(false)
 
   const { serverSettings } = useUser()
-  const homeBookshelfView = (serverSettings?.homeBookshelfView ?? 0) as BookshelfView
-  const bookshelfView = (serverSettings?.bookshelfView ?? 0) as BookshelfView
+  const homeBookshelfView = serverSettings?.homeBookshelfView ?? 0
+  const bookshelfView = serverSettings?.bookshelfView ?? 0
 
   // Filter data hook
   const { filterData, isLoading: filterDataLoading } = useFilterData(library.id)
@@ -227,5 +226,5 @@ export function useLibraryOptional() {
 /** Numeric height/width ratio for covers from library setting. Square (1) or standard (1.6) */
 export function useBookCoverAspectRatio(): number {
   const context = useContext(LibraryContext)
-  return getCoverAspectRatio((context?.library.settings?.coverAspectRatio ?? 1) as 0 | 1)
+  return getCoverAspectRatio(context?.library.settings?.coverAspectRatio ?? 1)
 }

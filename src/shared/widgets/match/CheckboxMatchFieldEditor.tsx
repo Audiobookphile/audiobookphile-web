@@ -32,8 +32,8 @@ function CheckboxMatchFieldEditor({
   checkboxBgClass,
   borderColorClass,
   labelClass,
-  checkedLabelKey = 'LabelExplicitChecked' as TranslationKey,
-  uncheckedLabelKey = 'LabelExplicitUnchecked' as TranslationKey,
+  checkedLabelKey = 'LabelExplicitChecked',
+  uncheckedLabelKey = 'LabelExplicitUnchecked',
 }: CheckboxMatchFieldEditorProps) {
   const t = useTypeSafeTranslations()
 

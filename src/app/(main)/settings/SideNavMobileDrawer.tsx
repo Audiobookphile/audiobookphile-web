@@ -43,11 +43,11 @@ export default function SideNavMobileDrawer({ serverVersion, installSource }: Si
 
       {/* Drawer */}
       <div
-        className={`bg-bg border-border fixed top-0 left-0 z-70 h-full w-64 transform border-e shadow-2xl transition-transform duration-100 ease-in-out md:hidden ${
+        className={`fixed top-0 left-0 z-70 h-full w-64 transform border-e border-border bg-bg shadow-2xl transition-transform duration-100 ease-in-out md:hidden ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="border-primary/30 flex h-12 w-full items-center justify-end border-b px-4 py-2">
+        <div className="flex h-12 w-full items-center justify-end border-b border-primary/30 px-4 py-2">
           <IconBtn
             className="md:hidden"
             ariaLabel="Close navigation"

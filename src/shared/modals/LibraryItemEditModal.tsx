@@ -210,7 +210,11 @@ function LibraryItemEditModalContent({
             }
             return
           }
-          const next = (updatedItem as any).libraryItem as BookLibraryItem | PodcastLibraryItem
+          const next = (
+            'libraryItem' in updatedItem
+              ? (updatedItem as { libraryItem: BookLibraryItem | PodcastLibraryItem }).libraryItem
+              : updatedItem
+          ) as BookLibraryItem | PodcastLibraryItem
           showToast(t('ToastItemUpdateSuccess'), { type: 'success' })
           syncResolvedItem(next)
           onSaved?.(next)
@@ -280,7 +284,7 @@ function LibraryItemEditModalContent({
   }, [library.mediaType, libraryId, pendingEntityId, showPlaceholderShell])
 
   const fetchLoadingOverlay = (
-    <div className="bg-bg/50 absolute inset-0 z-10 flex items-center justify-center">
+    <div className="absolute inset-0 z-10 flex items-center justify-center bg-bg/50">
       <LoadingIndicator variant="inline" />
     </div>
   )
@@ -290,7 +294,7 @@ function LibraryItemEditModalContent({
       <PodcastDetailsEdit
         key={resolvedItem.id}
         ref={podcastDetailsRef}
-        libraryItem={resolvedItem as PodcastLibraryItem}
+        libraryItem={resolvedItem}
         availableGenres={availableGenres}
         availableTags={availableTags}
         onChange={handleChange}
@@ -300,7 +304,7 @@ function LibraryItemEditModalContent({
       <BookDetailsEdit
         key={resolvedItem.id}
         ref={bookDetailsRef}
-        libraryItem={resolvedItem as BookLibraryItem}
+        libraryItem={resolvedItem}
         availableAuthors={availableAuthors}
         availableNarrators={availableNarrators}
         availableGenres={availableGenres}
@@ -361,7 +365,7 @@ function LibraryItemEditModalContent({
         </div>
 
         <div
-          className={`bg-bg border-border flex shrink-0 items-center justify-between gap-3 border-t px-4 py-3 transition-shadow duration-200 ${footerShadow ? 'box-shadow-md-up' : ''}`}
+          className={`flex shrink-0 items-center justify-between gap-3 border-t border-border bg-bg px-4 py-3 transition-shadow duration-200 ${footerShadow ? 'box-shadow-md-up' : ''}`}
         >
           <div>
             {showDelete && (

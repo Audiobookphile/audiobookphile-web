@@ -5,9 +5,7 @@ import { Moon } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
-import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import { mergeClasses } from '@/shared/lib/merge-classes'
-import IconBtn from '../../../shared/ui/IconBtn'
 
 interface SleepTimerWidgetProps {
   playerHandler: UsePlayerHandlerReturn
@@ -16,7 +14,6 @@ interface SleepTimerWidgetProps {
 const PRESET_DURATIONS = [5, 15, 30, 45, 60] as const
 
 export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProps) {
-  const t = useTypeSafeTranslations()
   const { sleepTimerRemaining } = playerHandler.state
   const { startSleepTimer, stopSleepTimer } = playerHandler.controls
 
@@ -125,7 +122,7 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
       left: x != null ? `${x}px` : '',
       top: y != null ? `${y}px` : '',
       [staticSide[resolvedPlacement.split('-')[0]]]: '-4px',
-    } as React.CSSProperties
+    }
   }, [middlewareData.arrow, resolvedPlacement])
 
   const formatRemainingTime = (seconds: number) => {
@@ -140,9 +137,9 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
       id={`${widgetId}-popover`}
       role="dialog"
       style={floatingStyles}
-      className="bg-background/90 z-70 flex flex-col gap-2 rounded-2xl border border-white/15 p-3.5 shadow-2xl backdrop-blur-xl"
+      className="z-70 flex flex-col gap-2 rounded-2xl border border-white/15 bg-background/90 p-3.5 shadow-2xl backdrop-blur-xl"
     >
-      <div className="text-foreground mb-1 text-center text-xs font-bold tracking-wider uppercase opacity-70">
+      <div className="mb-1 text-center text-xs font-bold tracking-wider text-foreground uppercase opacity-70">
         Sleep Timer
       </div>
       <div className="grid grid-cols-5 gap-1.5">
@@ -151,7 +148,7 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
             key={minutes}
             type="button"
             onClick={() => handleStartTimer(minutes)}
-            className="text-foreground/80 hover:bg-primary hover:border-primary hover:shadow-primary/30 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold transition-all hover:text-white hover:shadow-md active:scale-95"
+            className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-foreground/80 transition-all hover:border-primary hover:bg-primary hover:text-white hover:shadow-md hover:shadow-primary/30 active:scale-95"
           >
             {minutes}m
           </button>
@@ -161,7 +158,7 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
         <button
           type="button"
           onClick={handleStopTimer}
-          className="bg-error/15 text-error border-error/30 hover:bg-error/25 mt-2 w-full rounded-xl border py-1.5 text-xs font-bold transition-all active:scale-95"
+          className="mt-2 w-full rounded-xl border border-error/30 bg-error/15 py-1.5 text-xs font-bold text-error transition-all hover:bg-error/25 active:scale-95"
         >
           Cancel Timer
         </button>
@@ -169,7 +166,7 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
       <div
         ref={arrowRef}
         style={arrowStyles}
-        className="bg-background/90 absolute h-2 w-2 rotate-45 border-r border-b border-white/15"
+        className="absolute h-2 w-2 rotate-45 border-r border-b border-white/15 bg-background/90"
       />
     </div>
   ) : null

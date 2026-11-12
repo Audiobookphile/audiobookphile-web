@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
 
 export default async function UploadPage() {
-  let libraries: import('@/types/api').Library[] = []
+  let libraries: import('@/types/api').Library[]
   try {
     const response = await getLibraries()
     libraries = response.libraries

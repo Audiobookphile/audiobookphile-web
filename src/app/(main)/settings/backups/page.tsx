@@ -20,12 +20,12 @@ export default async function BackupsPage() {
   return (
     <SettingsContent title={t('HeaderBackups')}>
       <div className="space-y-4 p-6">
-        <p className="text-foreground-muted text-sm">
+        <p className="text-sm text-foreground-muted">
           Database backups are managed by Supabase. You can download a backup or restore from your dashboard.
         </p>
-        <div className="bg-bg-light border-border space-y-3 rounded-lg border p-4">
-          <h3 className="text-foreground font-medium">Supabase Managed Backups</h3>
-          <p className="text-foreground-muted text-sm">
+        <div className="bg-bg-light space-y-3 rounded-lg border border-border p-4">
+          <h3 className="font-medium text-foreground">Supabase Managed Backups</h3>
+          <p className="text-sm text-foreground-muted">
             Supabase automatically backs up your database daily on paid plans. Point-in-time recovery is available on
             Pro and above.
           </p>
@@ -33,7 +33,7 @@ export default async function BackupsPage() {
             href={dashboardHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-primary/20 border-primary/30 text-primary hover:bg-primary/30 inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-black tracking-widest uppercase transition-all hover:scale-105 active:scale-95"
+            className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/20 px-5 py-2.5 text-sm font-black tracking-widest text-primary uppercase transition-all hover:scale-105 hover:bg-primary/30 active:scale-95"
           >
             <ExternalLink size={16} />
             Open Backups
@@ -46,7 +46,7 @@ export default async function BackupsPage() {
               <h3 className="text-[11px] font-black tracking-widest text-white/40 uppercase">Manual Export</h3>
             </div>
             <p className="text-sm text-white/60">You can export your data using the Supabase SQL editor or the CLI:</p>
-            <code className="text-primary/80 block rounded-xl border border-white/5 bg-black/40 p-4 font-mono text-xs">
+            <code className="block rounded-xl border border-white/5 bg-black/40 p-4 font-mono text-xs text-primary/80">
               supabase db dump --project-ref {projectRef} &gt; backup.sql
             </code>
           </div>

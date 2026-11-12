@@ -47,7 +47,7 @@ export default function ModalSideNavigation({
             >
               <ChevronLeft
                 size={40}
-                className="text-foreground/40 group-hover:text-primary drop-shadow-lg transition-colors duration-300"
+                className="text-foreground/40 drop-shadow-lg transition-colors duration-300 group-hover:text-primary"
               />
             </motion.button>
           </motion.div>
@@ -77,7 +77,7 @@ export default function ModalSideNavigation({
             >
               <ChevronRight
                 size={40}
-                className="text-foreground/40 group-hover:text-primary drop-shadow-lg transition-colors duration-300"
+                className="text-foreground/40 drop-shadow-lg transition-colors duration-300 group-hover:text-primary"
               />
             </motion.button>
           </motion.div>

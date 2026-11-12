@@ -143,7 +143,7 @@ export default function PreviewCover({
         style={fill ? { aspectRatio: `${1 / bookCoverAspectRatio}` } : { height: `${finalDimensions.imageHeight}px` }}
       >
         {showCoverBg && (
-          <div className="bg-primary absolute start-0 top-0 h-full w-full overflow-hidden rounded-xs">
+          <div className="absolute start-0 top-0 h-full w-full overflow-hidden rounded-xs bg-primary">
             <div className="cover-bg absolute" ref={coverBgRef} />
           </div>
         )}
@@ -165,7 +165,7 @@ export default function PreviewCover({
           className="absolute start-0 end-0 top-0 bottom-0 h-full w-full bg-red-100"
           style={{ padding: `${placeholderCoverPadding}rem` }}
         >
-          <div className="border-error flex h-full w-full flex-col items-center justify-center border-2">
+          <div className="flex h-full w-full flex-col items-center justify-center border-2 border-error">
             {width > 100 && (
               <Image
                 src="/images/Logo.png"
@@ -175,7 +175,7 @@ export default function PreviewCover({
                 className="mb-2"
               />
             )}
-            <p className="text-error text-center" style={{ fontSize: `${invalidCoverFontSize}rem` }}>
+            <p className="text-center text-error" style={{ fontSize: `${invalidCoverFontSize}rem` }}>
               {t('MessageInvalidCover')}
             </p>
           </div>
@@ -183,7 +183,7 @@ export default function PreviewCover({
       )}
 
       {!imageFailed && showResolution && resolution && (
-        <p className="text-foreground-muted absolute start-0 end-0 bottom-0 mx-auto text-center text-xs">
+        <p className="absolute start-0 end-0 bottom-0 mx-auto text-center text-xs text-foreground-muted">
           {resolution}
         </p>
       )}

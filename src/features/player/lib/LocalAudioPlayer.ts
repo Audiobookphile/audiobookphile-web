@@ -3,7 +3,6 @@ import { PlayerState } from '@/types/api'
 import type { AudioTrack } from './AudioTrack'
 import { AUDIO_MIME_TYPES } from './constants'
 import { PlayerEventEmitter } from './PlayerEventEmitter'
-import { HlsAudioProvider } from './providers/HlsAudioProvider'
 import { NativeAudioProvider } from './providers/NativeAudioProvider'
 import type { IAudioProvider } from './types'
 
@@ -18,6 +17,22 @@ export class LocalAudioPlayer extends PlayerEventEmitter {
   private startTime = 0
   private trackStartTime = 0
   private playWhenReady = false
+
+  // The provider generation.
+  //
+  // The HLS provider is loaded on demand, so `set()` can finish before the
+  // provider exists. The generation says which `set()` a provider that
+  // arrives belongs to: a chunk that lands after the track changed belongs
+  // to a track that is no longer playing.
+  private providerGeneration = 0
+
+  /**
+   * A seek that arrived before the provider was ready to take it.
+   *
+   * The HLS provider is a chunk fetch away, and a seek in that window used
+   * to be dropped. It is kept here and applied when the provider lands.
+   */
+  private pendingSeek: { time: number; playWhenReady: boolean } | null = null
 
   // Monotonic Seek Transaction Epochs
   private activeSeekEpoch = 0
@@ -176,18 +191,53 @@ export class LocalAudioPlayer extends PlayerEventEmitter {
 
     if (!this.player) return
 
+    // The HLS provider is loaded on demand.
+    //
+    // hls.js is 176 KB gzipped -- a twelfth of the whole client budget --
+    // and it is only ever needed for a transcoded stream. A static import
+    // put it in the app shell's chunk graph, so every authenticated page
+    // shipped it to every visitor, to play a stream most of them never
+    // play.
+    //
+    // The provider's own code is unchanged: it is the same class, the same
+    // options and the same events. Only the moment it is created moves.
+    const generation = ++this.providerGeneration
+
     if (this.isHlsTranscode) {
-      this.provider = new HlsAudioProvider(this.player, this.audioTracks, this.startTime, this.handleTrackLoad)
-    } else {
-      this.provider = new NativeAudioProvider(this.player, this.audioTracks, this.startTime, this.handleTrackLoad)
+      const player = this.player
+      void import('./providers/HlsAudioProvider').then(({ HlsAudioProvider }) => {
+        // The track changed, or the player was torn down, while the chunk
+        // was in flight.
+        if (generation !== this.providerGeneration || this.player !== player) return
+        this.provider = new HlsAudioProvider(player, this.audioTracks, this.startTime, this.handleTrackLoad)
+        this.provider.load()
+        this.applyPendingSeek()
+      })
+      return
     }
 
+    this.provider = new NativeAudioProvider(this.player, this.audioTracks, this.startTime, this.handleTrackLoad)
     this.provider.load()
+    this.applyPendingSeek()
+  }
+
+  /**
+   * Apply a seek that arrived before the provider was ready.
+   */
+  private applyPendingSeek(): void {
+    const pending = this.pendingSeek
+    if (!pending || !this.provider) return
+    this.pendingSeek = null
+    this.seek(pending.time, pending.playWhenReady)
   }
 
   destroy(): void {
     this.cancelRecovery()
     this.retryCount = 0
+    // Any provider still in flight belongs to a player that no longer
+    // exists, and any seek it was going to take went with it.
+    this.providerGeneration++
+    this.pendingSeek = null
 
     if (this.provider) {
       this.provider.destroy()
@@ -234,7 +284,7 @@ export class LocalAudioPlayer extends PlayerEventEmitter {
 
   play(): void {
     this.playWhenReady = true
-    this.player?.play()
+    void this.player?.play()
   }
 
   pause(): void {
@@ -275,8 +325,15 @@ export class LocalAudioPlayer extends PlayerEventEmitter {
   }
 
   seek(time: number, playWhenReady: boolean): void {
-    if (!this.player || !this.provider) return
+    if (!this.player) return
 
+    if (!this.provider) {
+      // The provider has not arrived yet -- the HLS chunk is still in
+      // flight. The seek is kept and applied the moment it lands, rather
+      // than dropped on the floor.
+      this.pendingSeek = { time, playWhenReady }
+      return
+    }
     this.activeSeekEpoch++
     const thisEpoch = this.activeSeekEpoch
     this.optimisticSeekTime = time

@@ -106,7 +106,7 @@ export default function SeriesClient({ series, libraryItems }: SeriesClientProps
               dateFormat={serverSettings.dateFormat ?? 'MM/dd/yyyy'}
               timeFormat={serverSettings.timeFormat ?? 'HH:mm'}
               userPermissions={user.permissions}
-              ereaderDevices={ereaderDevices as any}
+              ereaderDevices={ereaderDevices}
               showSubtitles={true}
               mediaProgress={entityProgress}
             />

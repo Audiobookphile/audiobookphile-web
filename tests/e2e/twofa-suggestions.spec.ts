@@ -1,8 +1,6 @@
 import { test, expect } from './fixtures'
 import { APIRequestContext } from '@playwright/test'
-import { readFileSync, existsSync } from 'node:fs'
-import path from 'node:path'
-import { randomBytes } from 'node:crypto'
+import { loadEnv } from '../../scripts/load-env'
 
 /**
  * 2FA method suggestion UX: the two-factor challenge screen must
@@ -17,30 +15,27 @@ import { randomBytes } from 'node:crypto'
 
 const PASSWORD = 'TestPass123!'
 
-function loadEnvFile(filePath: string): Record<string, string> {
-  const env: Record<string, string> = {}
-  if (!existsSync(filePath)) return env
-  for (const line of readFileSync(filePath, 'utf8').split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-    const idx = trimmed.indexOf('=')
-    if (idx === -1) continue
-    let value = trimmed.slice(idx + 1)
-    if (
-      value.length >= 2 &&
-      ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'")))
-    ) {
-      value = value.slice(1, -1)
-    }
-    env[trimmed.slice(0, idx)] = value
-  }
-  return env
+// Load .env.local so the admin credentials resolve without a manual export.
+// A variable already in the environment is never overridden by a file, so an
+// explicit export still wins.
+await loadEnv(`${import.meta.dir}/../..`)
+
+// Web Crypto instead of node:crypto — a standard global on every runtime
+// Bun supports, and it removes the last Node-only import from this spec.
+function randomHex(byteLength: number): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(byteLength)))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+function randomBase64(byteLength: number): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(byteLength))
+  return btoa(String.fromCharCode(...bytes))
 }
 
 function supabaseAdminEnv(): { url: string; serviceKey: string } {
-  const fromFile = loadEnvFile(path.resolve(__dirname, '../../.env.local'))
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || fromFile.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY || fromFile.SUPABASE_SERVICE_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY
   if (!url || !serviceKey) {
     throw new Error(
       'Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_KEY (.env.local). Cannot create the E2E test user.'
@@ -176,8 +171,8 @@ test('TOTP + biometric user: defaults to TOTP and never auto-triggers the passke
       headers,
       data: {
         user_id: userId,
-        credential_id: `cred-${randomBytes(16).toString('hex')}`,
-        public_key: randomBytes(64).toString('base64'),
+        credential_id: `cred-${randomHex(16)}`,
+        public_key: randomBase64(64),
       },
     })
     expect(cred.ok(), `passkey seeding failed: ${cred.status()} ${(await cred.text()).slice(0, 200)}`).toBeTruthy()

@@ -18,7 +18,7 @@ import { ENTITY_CONFIGS } from './entity-config'
 
 interface BookshelfClientProps {
   entityType: EntityType
-  initialData?: any
+  initialData?: unknown
   // Different APIs return different structures:
   // - items/series/collections/playlists: { results: T[], total?: number }
   // - authors: { authors: Author[], total?: number }
@@ -243,7 +243,7 @@ export default function BookshelfClient({ entityType }: BookshelfClientProps) {
   const { setToolbarExtras, setContextMenuItems, setContextMenuActionHandler } = useLibrary()
 
   // Get Entity Config
-  const config = validEntities.includes(entityType as string) ? ENTITY_CONFIGS[entityType] : null
+  const config = validEntities.includes(entityType) ? ENTITY_CONFIGS[entityType] : null
 
   useEffect(() => {
     if (!config) return
@@ -289,9 +289,9 @@ export default function BookshelfClient({ entityType }: BookshelfClientProps) {
     return messageKey ? t(messageKey) : ''
   }
 
-  if (!validEntities.includes(entityType as string) || !config) {
+  if (!validEntities.includes(entityType) || !config) {
     return (
-      <div className="text-foreground-muted flex h-full flex-col items-center justify-center">
+      <div className="flex h-full flex-col items-center justify-center text-foreground-muted">
         <h2 className="mb-2 text-2xl font-bold">{t('LabelPageNotFound')}</h2>
         <p>{t('MessagePageNotFoundForLibraryType')}</p>
       </div>
@@ -406,7 +406,7 @@ export default function BookshelfClient({ entityType }: BookshelfClientProps) {
                   )
                 })}
                 {!isAlternativeBookshelfView && (
-                  <div className="bookshelfDivider h-6e absolute right-0 bottom-0 left-0 z-20 w-full" />
+                  <div className="bookshelfDivider absolute right-0 bottom-0 left-0 z-20 h-6e w-full" />
                 )}
               </div>
             )

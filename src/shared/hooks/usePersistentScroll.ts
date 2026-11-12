@@ -12,7 +12,7 @@ export function usePersistentScroll({ scrollKey, containerRef, isEnabled }: UseP
   // Track the previous key to detect changes
   const prevKeyRef = useRef(scrollKey)
   // Scroll debounce timeout
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 1. Handle Reset on Key Change (Sort/Filter etc)
   useEffect(() => {

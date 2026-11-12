@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Activity, Library as LibraryIcon, Search, Settings, Upload } from 'lucide-react'
+import { Activity, Search, Settings, Upload } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useState } from 'react'
@@ -46,7 +46,7 @@ export default function AppBar({ libraries, currentLibraryId }: AppBarProps) {
       <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-white/5 p-1 shadow-inner transition-transform group-hover:scale-105 group-active:scale-95">
         <Image src="/images/logo.png" alt="Audiobookphile Logo" fill sizes="40px" className="object-contain" priority />
       </div>
-      <span className="text-foreground/90 group-hover:text-foreground hidden text-lg font-black tracking-tight transition-colors md:block">
+      <span className="hidden text-lg font-black tracking-tight text-foreground/90 transition-colors group-hover:text-foreground md:block">
         audiobookphile
       </span>
     </>
@@ -56,7 +56,7 @@ export default function AppBar({ libraries, currentLibraryId }: AppBarProps) {
     <div className="sticky top-0 z-50 h-16 w-full">
       <header
         cy-id="appbar"
-        className="bg-primary/95 absolute inset-0 flex items-center justify-between gap-4 border-b border-white/5 px-4 py-2 shadow-2xl backdrop-blur-xl md:px-8"
+        className="absolute inset-0 flex items-center justify-between gap-4 border-b border-white/5 bg-primary/95 px-4 py-2 shadow-2xl backdrop-blur-xl md:px-8"
       >
         <div className="flex min-w-0 flex-shrink-0 items-center gap-4">
           {redirectLibraryId ? (

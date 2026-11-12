@@ -172,11 +172,12 @@ export const deserialize = (el: DOMNode): Descendant[] | CustomText | null => {
     case 'BODY':
     case 'DIV':
       return children
-    case 'P':
+    case 'P': {
       // Filter out empty paragraphs
       const hasContent = children.some((child) => ('text' in child && child.text.trim()) || 'type' in child)
       if (!hasContent) return []
       return [{ type: 'paragraph', children }]
+    }
     case 'UL':
       return [{ type: 'bulleted-list', children }]
     case 'OL':
@@ -193,10 +194,11 @@ export const deserialize = (el: DOMNode): Descendant[] | CustomText | null => {
     case 'H3':
     case 'H4':
     case 'H5':
-    case 'H6':
+    case 'H6': {
       // Treat headings as bold paragraphs
       const headingChildren = children.map((child) => ('text' in child ? { ...child, bold: true as const } : child))
       return [{ type: 'paragraph', children: headingChildren }]
+    }
     case 'SPAN':
       // For spans, just return the children with any applied formatting
       // The formatting was already applied above based on classes
