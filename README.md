@@ -158,6 +158,17 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 
 Audiobookphile's web app descends from the [Audiobookshelf web client](https://github.com/advplyr/audiobookshelf). We forked it to build a serverless architecture (Supabase backend) that Audiobookshelf's self-hosted model never needed, and have since diverged significantly — this repository is a standalone project and no longer tracks upstream.
 
-## Contributing
+## Related Repositories
 
-Pull requests are welcome. For major changes, open an issue first to discuss what you'd like to change. Please ensure you do not use any GPLv3 assets or proprietary logos from other projects when contributing.
+- [Audiobookphile Backend](https://github.com/Audiobookphile/audiobookphile-backend) — Supabase PostgreSQL database schemas, migrations, and Deno Edge Functions.
+- [Audiobookphile Mobile App](https://github.com/Audiobookphile/audiobookphile-app) — Cross-platform iOS & Android mobile client.
+
+## Community & Contributing
+
+Pull requests are warmly welcomed! Please review our [Contributing Guide](./CONTRIBUTING.md) and [Code of Conduct](./CODE_OF_CONDUCT.md).
+
+For vulnerability reporting, see our [Security Policy](./SECURITY.md).
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
