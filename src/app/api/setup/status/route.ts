@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/shared/utils/supabase/env'
 import { createClient } from '@/shared/utils/supabase/server'
+import { createServiceRoleClient } from '@/shared/utils/supabase/service-role'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,34 +40,45 @@ export async function GET(request: Request) {
   let edgeApiDeployed = false
   let edgeApiStatus = 0
 
-  // 1. Check Database status via RPC get_system_status
+  // 1. Check Database status
   try {
-    const supabase = await createClient()
-    const { data, error } = await (supabase as unknown as { rpc: (name: string) => Promise<{ data: unknown; error: unknown }> }).rpc('get_system_status')
+    let supabase: any
+    try {
+      supabase = createServiceRoleClient()
+    } catch {
+      supabase = await createClient()
+    }
 
-    if (!error && data) {
-      const statusData = data as unknown as SystemStatusRpcResponse
-      databaseConnected = true
-      databaseInitialized = statusData.initialized ?? true
-      hasAdmin = statusData.has_admin ?? false
-      adminCount = statusData.admin_count ?? 0
-      libraryCount = statusData.library_count ?? 0
-      storageReady = statusData.storage_ready ?? false
-    } else {
-      // RPC might not exist if schema.sql hasn't been executed yet.
-      // Probe if the profiles table exists directly to differentiate uninitialized from down.
-      const { data: profileProbe, error: profileError } = await supabase
+    let rpcWorked = false
+    try {
+      const { data, error } = await supabase.rpc('get_system_status')
+      if (!error && data) {
+        const statusData = data as unknown as SystemStatusRpcResponse
+        databaseConnected = true
+        databaseInitialized = statusData.initialized ?? true
+        hasAdmin = statusData.has_admin ?? false
+        adminCount = statusData.admin_count ?? 0
+        libraryCount = statusData.library_count ?? 0
+        storageReady = statusData.storage_ready ?? false
+        rpcWorked = true
+      }
+    } catch {
+      rpcWorked = false
+    }
+
+    if (!rpcWorked) {
+      const { count: profileCount, error: profileError } = await supabase
         .from('profiles')
-        .select('id, user_type')
-        .limit(5)
+        .select('id', { count: 'exact', head: true })
+        .in('user_type', ['admin', 'root'])
 
       if (profileError) {
-        // Table doesn't exist or permissions error
         if (
           profileError.message.includes('relation') ||
           profileError.message.includes('does not exist') ||
           profileError.code === '42P01' ||
-          profileError.code === 'PGRST200'
+          profileError.code === 'PGRST200' ||
+          profileError.code === 'PGRST205'
         ) {
           databaseConnected = true
           databaseInitialized = false
@@ -76,9 +88,13 @@ export async function GET(request: Request) {
       } else {
         databaseConnected = true
         databaseInitialized = true
-        const admins = profileProbe?.filter((p) => p.user_type === 'admin' || p.user_type === 'root') || []
-        hasAdmin = admins.length > 0
-        adminCount = admins.length
+        adminCount = profileCount ?? 0
+        hasAdmin = adminCount > 0
+
+        const { count: libCount } = await supabase
+          .from('libraries')
+          .select('id', { count: 'exact', head: true })
+        libraryCount = libCount ?? 0
       }
     }
   } catch (err) {

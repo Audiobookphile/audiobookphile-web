@@ -155,6 +155,34 @@ export default function LoginForm() {
     [email, password, completeSession]
   )
 
+  const handleDemoLogin = useCallback(async () => {
+    setEmail('demo@audiobookphile.app')
+    setPassword('AudiobookphileDemo2026!')
+    setLoading(true)
+    setError('')
+    try {
+      const anonKey = getSupabaseAnonKey()
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(anonKey ? { apikey: anonKey } : {}),
+        },
+        body: JSON.stringify({ username: 'demo@audiobookphile.app', password: 'AudiobookphileDemo2026!' }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setError(data.error?.message || data.error || 'Demo login failed.')
+        setLoading(false)
+        return
+      }
+      await completeSession(data.user.token, data.user.refreshToken, data.userDefaultLibraryId)
+    } catch {
+      setError('Failed to connect to authentication service.')
+      setLoading(false)
+    }
+  }, [completeSession])
+
   const handlePasskeySignIn = useCallback(async () => {
     setError('')
     setLoading(true)
@@ -441,19 +469,34 @@ export default function LoginForm() {
           </Link>
         </div>
       )}
-      <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-sky-500/20 bg-sky-500/10 p-3 text-xs text-foreground">
-        <span className="flex items-center gap-1.5 text-sky-400">
-          <Sparkles size={14} className="shrink-0" />
-          <span>Evaluating Audiobookphile?</span>
-        </span>
-        <a
-          href="https://audiobookphile.app"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold text-sky-400 hover:text-sky-300 underline underline-offset-4 whitespace-nowrap"
-        >
-          Explore Live Demo &rarr;
-        </a>
+      <div className="mb-4 flex flex-col gap-2 rounded-xl border border-sky-500/25 bg-sky-500/10 p-3.5 text-xs text-foreground backdrop-blur-md">
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-1.5 font-medium text-sky-400">
+            <Sparkles size={14} className="shrink-0" />
+            <span>Live Demonstration Available</span>
+          </span>
+          <button
+            type="button"
+            onClick={handleDemoLogin}
+            disabled={loading}
+            className="flex items-center gap-1 font-semibold text-sky-300 hover:text-white bg-sky-500/20 hover:bg-sky-500/35 px-2.5 py-1 rounded-lg transition-all border border-sky-500/30 cursor-pointer disabled:opacity-50"
+          >
+            <span>🚀 Try Demo (1-Click)</span>
+          </button>
+        </div>
+        <div className="flex items-center justify-between text-[11px] text-foreground-muted border-t border-sky-500/15 pt-2">
+          <span>Demo User: <strong className="font-mono text-foreground">demo@audiobookphile.app</strong></span>
+          <button
+            type="button"
+            onClick={() => {
+              setEmail('demo@audiobookphile.app')
+              setPassword('AudiobookphileDemo2026!')
+            }}
+            className="text-accent hover:underline font-medium cursor-pointer"
+          >
+            Fill Inputs
+          </button>
+        </div>
       </div>
       <div className="mb-4 flex flex-col gap-4">
         <TextInput label="Email" value={email} type="email" autocomplete="email" onChange={setEmail} />
