@@ -289,7 +289,8 @@ CREATE TABLE IF NOT EXISTS public."library_items" (
     "publisher" TEXT,
     "subtitle" TEXT,
     "tags" JSONB,
-    "embedding" vector,
+    "num_tracks" INTEGER DEFAULT 0 NOT NULL,
+    "embedding" vector(1536),
     CONSTRAINT "library_items_pkey" PRIMARY KEY ("id")
 );
 
