@@ -67,12 +67,21 @@ export default function PrivacyPolicyPage() {
               <span className="text-emerald-400">5.</span> Open Source Verification &amp; Contact
             </h2>
             <p>
-              Our code is transparent and auditable. If you have questions about this policy or security practices, reach out on our official repository or contact the project team at{' '}
+              Our code is transparent and auditable. If you have questions about this policy or security practices, reach out on our{' '}
               <a
-                href="mailto:organicnz2@gmail.com"
+                href="https://github.com/Audiobookphile/audiobookphile-web"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-emerald-400 hover:text-emerald-300 underline underline-offset-4"
               >
-                organicnz2@gmail.com
+                official repository
+              </a>{' '}
+              or contact the project team at{' '}
+              <a
+                href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'privacy@audiobookphile.app'}`}
+                className="text-emerald-400 hover:text-emerald-300 underline underline-offset-4"
+              >
+                {process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'privacy@audiobookphile.app'}
               </a>.
             </p>
           </div>

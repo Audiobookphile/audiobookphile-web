@@ -90,3 +90,4 @@ bun run format:check
 3. **Push to your fork and submit a PR:**
    - Link any related GitHub issues.
    - Provide a clear summary of changes and before/after screenshots for visual UI changes.
+

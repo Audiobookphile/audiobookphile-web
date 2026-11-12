@@ -41,12 +41,20 @@ export default function SupportPage() {
             <p>
               For bug reports, feature suggestions, or account help, email our support team directly at{' '}
               <a
-                href="mailto:organicnz2@gmail.com"
+                href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@audiobookphile.app'}`}
                 className="text-sky-400 hover:text-sky-300 underline underline-offset-4"
               >
-                organicnz2@gmail.com
+                {process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@audiobookphile.app'}
               </a>{' '}
-              or visit our open-source community tracker.
+              or visit our{' '}
+              <a
+                href="https://github.com/Audiobookphile/audiobookphile-web/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sky-400 hover:text-sky-300 underline underline-offset-4"
+              >
+                open-source community tracker
+              </a>.
             </p>
           </div>
         </section>

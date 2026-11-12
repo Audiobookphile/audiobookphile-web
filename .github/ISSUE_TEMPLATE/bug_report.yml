@@ -48,3 +48,4 @@ body:
       description: Paste any browser console errors or drag-and-drop screenshots here.
     validations:
       required: false
+
