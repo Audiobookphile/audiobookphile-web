@@ -17,6 +17,8 @@
     "typecheck:watch": "bun run scripts/tsrs.ts --watch --noEmit",
     "types:sync": "bun run scripts/sync-types.ts",
     "supabase": "bun run scripts/supabase.ts",
+    "db:push": "bun run scripts/supabase.ts db push",
+    "functions:deploy": "bun run scripts/supabase.ts functions deploy api --no-verify-jwt",
     "size": "bun run scripts/size-budget.ts",
     "lhci": "bun x lhci",
     "test": "bun run --bun playwright test",

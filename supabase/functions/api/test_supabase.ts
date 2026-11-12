@@ -1,0 +1,17 @@
+import { createClient } from "npm:@supabase/supabase-js@2.44.0";
+
+// Using the local environment variables or standard defaults
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "http://127.0.0.1:54321";
+const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") || "dummy";
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function test() {
+  const { data, error: _error } = await supabase.from("series").select(
+    "*, book_series(book_id, sequence, library_items(id, title, cover_path))",
+  ).limit(1);
+
+  console.log(JSON.stringify(data, null, 2));
+}
+
+test();

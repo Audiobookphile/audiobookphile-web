@@ -1,0 +1,468 @@
+// Unit tests for the PlaybackService self-heal logic (the "black screen" fix).
+//
+// Strategy: drive PlaybackService.startSession() against a minimal fake
+// supabase client while stubbing StorageRouter's storage primitives on the
+// prototype. This exercises exactly the decision logic under test:
+//   * scheme'd paths are existence-probed before being served
+//   * dead paths trigger cross-tier/prefix re-resolution and DB patching
+//   * unresolvable tracks become "missing" instead of silent 404 URLs
+//   * legacy paths skip the probe (already verified by resolveAndSign)
+import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { PlaybackService } from "./playbackService.ts";
+import { StorageRouter } from "../_shared/storage-router.ts";
+
+interface FakeResult {
+  data: unknown;
+  error: unknown;
+}
+
+type FakeClient = Record<string, unknown> & {
+  __patchedAudioFiles: unknown[][];
+};
+
+/**
+ * Minimal chainable query builder covering every access pattern startSession
+ * uses on the fake client.
+ */
+function chainable(result: FakeResult): Record<string, unknown> {
+  const build = (): Record<string, unknown> =>
+    new Proxy({}, {
+      get(_t, prop: string) {
+        if (prop === "then") {
+          return (resolve: (r: FakeResult) => void) => resolve(result);
+        }
+        if (prop === "maybeSingle" || prop === "single") {
+          return () => Promise.resolve(result);
+        }
+        return () => build();
+      },
+    });
+  return build();
+}
+
+type RealClient = Parameters<typeof PlaybackService.startSession>[0];
+
+function fakeSupabase(item: Record<string, unknown>): RealClient {
+  const patchedAudioFiles: unknown[][] = [];
+  const client: Record<string, unknown> = {
+    __patchedAudioFiles: patchedAudioFiles,
+    from(table: string) {
+      if (table === "library_items") {
+        return {
+          select(_cols?: string) {
+            return {
+              eq(_col: string, _val: string) {
+                return {
+                  maybeSingle: () =>
+                    Promise.resolve({ data: item, error: null }),
+                  single: () =>
+                    Promise.resolve({
+                      data: { audio_files: item.audio_files },
+                      error: null,
+                    }),
+                };
+              },
+            };
+          },
+          update(patch: Record<string, unknown>) {
+            if (Array.isArray(patch.audio_files)) {
+              patchedAudioFiles.push(patch.audio_files as unknown[]);
+            }
+            return { eq: () => Promise.resolve({ data: null, error: null }) };
+          },
+        };
+      }
+      // media_progress and anything else: no rows
+      return chainable({ data: null, error: null });
+    },
+  };
+  return client as unknown as RealClient;
+}
+
+// --- StorageRouter stubbing -------------------------------------------------
+
+interface RouterControl {
+  resolveAndSign: (path: string, itemId: string, expires: number) => Promise<{
+    signedUrl: string;
+    canonicalPath: string;
+  }>;
+  getSignedUrl: (path: string, expires: number) => Promise<string>;
+  fileExists: (path: string) => Promise<boolean>;
+  signFirstExisting: (
+    keys: string[],
+    expires: number,
+  ) => Promise<{ signedUrl: string; canonicalPath: string } | null>;
+}
+
+function stubStorage(control: Partial<RouterControl>): void {
+  const proto = StorageRouter.prototype as unknown as Record<string, unknown>;
+  proto.resolveAndSign = async (path: string, itemId: string) =>
+    control.resolveAndSign ? control.resolveAndSign(path, itemId, 604800) : {
+      signedUrl: `signed:${path}`,
+      canonicalPath: `b2://${itemId}/${path}`,
+    };
+  proto.getSignedUrl = async (path: string) =>
+    control.getSignedUrl
+      ? control.getSignedUrl(path, 604800)
+      : `signed:${path}`;
+  proto.fileExists = async (path: string) =>
+    control.fileExists ? control.fileExists(path) : true;
+  proto.signFirstExisting = async (keys: string[]) =>
+    control.signFirstExisting
+      ? control.signFirstExisting(keys, 604800)
+      : keys.length > 0
+      ? { signedUrl: `healed:${keys[0]}`, canonicalPath: keys[0] }
+      : null;
+}
+
+const ITEM_ID = "11111111-2222-3333-4444-555555555555";
+
+function itemWith(audioFiles: Record<string, unknown>[]) {
+  return {
+    id: ITEM_ID,
+    title: "Self Heal Fixture",
+    library_id: "lib-1",
+    media_type: "book",
+    cover_path: null,
+    duration: 100,
+    audio_files: audioFiles,
+    book_authors: [],
+    book_series: [],
+    chapters: [],
+  };
+}
+
+Deno.test("self-heal: live scheme'd path is served without re-resolution", async () => {
+  let probed = false;
+  stubStorage({
+    fileExists: () => {
+      probed = true;
+      return Promise.resolve(true);
+    },
+    signFirstExisting: () => {
+      throw new Error("must not re-resolve when file exists");
+    },
+  });
+  const session = await PlaybackService.startSession(
+    fakeSupabase(itemWith([
+      {
+        duration: 10,
+        metadata: { filename: "a.mp3", path: "b2://media/a.mp3" },
+      },
+    ])),
+    "user-1",
+    ITEM_ID,
+  );
+  assertEquals(probed, true);
+  assertEquals(session.missingTrackCount, 0);
+  assertEquals(session.audioTracks.length, 1);
+});
+
+Deno.test("self-heal: dead scheme'd path is re-resolved across candidate prefixes", async () => {
+  const seenCandidates: string[][] = [];
+  stubStorage({
+    fileExists: () => Promise.resolve(false),
+    signFirstExisting: (keys: string[]) => {
+      seenCandidates.push(keys);
+      // file actually lives under the recorded prefix (media_id), not item id
+      return Promise.resolve({
+        signedUrl: "healed-url",
+        canonicalPath: keys.find((k) => k.startsWith("media-id/")) ?? keys[0],
+      });
+    },
+    // Presigning is purely local math and must succeed even for dead objects
+    // - that is precisely why the existence probe exists.
+    getSignedUrl: (path: string) => Promise.resolve(`blind:${path}`),
+  });
+  const session = await PlaybackService.startSession(
+    fakeSupabase(itemWith([
+      {
+        duration: 10,
+        metadata: { filename: "a.mp3", path: "b2://media-id/a.mp3" },
+      },
+    ])),
+    "user-1",
+    ITEM_ID,
+  );
+  assertEquals(seenCandidates.length, 1);
+  // candidates must include both the item-id key and the recorded-prefix key
+  assertEquals(seenCandidates[0].includes(`${ITEM_ID}/a.mp3`), true);
+  assertEquals(seenCandidates[0].includes("media-id/a.mp3"), true);
+  assertEquals(session.missingTrackCount, 0);
+  assertEquals(
+    (session.audioTracks[0] as Record<string, unknown>).contentUrl,
+    "healed-url",
+  );
+});
+
+Deno.test("self-heal: unresolvable track becomes missing, honest 404 when none survive", async () => {
+  stubStorage({
+    fileExists: () => Promise.resolve(false),
+    signFirstExisting: () => Promise.resolve(null),
+  });
+  await assertRejects(
+    () =>
+      PlaybackService.startSession(
+        fakeSupabase(itemWith([
+          {
+            duration: 10,
+            metadata: { filename: "gone.mp3", path: "b2://x/gone.mp3" },
+          },
+        ])),
+        "user-1",
+        ITEM_ID,
+      ),
+    Error,
+    "All audio files are missing",
+  );
+});
+
+Deno.test("self-heal: partial book reports missingTrackCount instead of dropping content", async () => {
+  stubStorage({
+    // first track dead, second lives in an alternate tier
+    fileExists: () => Promise.resolve(false),
+    signFirstExisting: (keys: string[]) =>
+      Promise.resolve(
+        keys.some((k) => k.includes("live"))
+          ? {
+            signedUrl: "ok-url",
+            canonicalPath: keys.find((k) => k.includes("live"))!,
+          }
+          : null,
+      ),
+    getSignedUrl: (path: string) =>
+      path.includes("dead")
+        ? Promise.reject(new Error("presign ok but object gone"))
+        : Promise.resolve("unused"),
+  });
+  const session = await PlaybackService.startSession(
+    fakeSupabase(itemWith([
+      {
+        duration: 10,
+        metadata: { filename: "dead.mp3", path: "b2://p/dead.mp3" },
+      },
+      {
+        duration: 20,
+        metadata: { filename: "live.mp3", path: "b2://other/live.mp3" },
+      },
+    ])),
+    "user-1",
+    ITEM_ID,
+  );
+  assertEquals(session.missingTrackCount, 1);
+  assertEquals(session.audioTracks.length, 1);
+});
+
+Deno.test("self-heal: legacy paths skip the probe - already verified by resolveAndSign", async () => {
+  let probeCalls = 0;
+  stubStorage({
+    resolveAndSign: (path: string, itemId: string) =>
+      Promise.resolve({
+        signedUrl: "legacy-signed",
+        canonicalPath: `b2-secondary://${itemId}/${path}`,
+      }),
+    fileExists: () => {
+      probeCalls++;
+      return Promise.resolve(false);
+    },
+  });
+  const session = await PlaybackService.startSession(
+    fakeSupabase(itemWith([
+      {
+        duration: 5,
+        metadata: { filename: "l.mp3", path: "/audiobooks/Book/l.mp3" },
+      },
+    ])),
+    "user-1",
+    ITEM_ID,
+  );
+  assertEquals(probeCalls, 0);
+  assertEquals(session.missingTrackCount, 0);
+  assertEquals(session.audioTracks.length, 1);
+});
+
+Deno.test("StorageRouter: parsePath correctly normalizes all 5 B2 tiers and Supabase prefixes", () => {
+  const router = new StorageRouter(null);
+  assertEquals(router.parsePath("supabase://item/file.mp3"), {
+    tier: "SUPABASE",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("b2-tertiary://item/file.mp3"), {
+    tier: "B2_TERTIARY",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("b2_tertiary://item/file.mp3"), {
+    tier: "B2_TERTIARY",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("b2-secondary://item/file.mp3"), {
+    tier: "B2_SECONDARY",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("b2_secondary://item/file.mp3"), {
+    tier: "B2_SECONDARY",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("b2-quartet://item/file.mp3"), {
+    tier: "B2_QUARTET",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("b2_quartet://item/file.mp3"), {
+    tier: "B2_QUARTET",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("b2-quinta://item/file.mp3"), {
+    tier: "B2_QUINTET",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("b2_quinta://item/file.mp3"), {
+    tier: "B2_QUINTET",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("b2_quintet://item/file.mp3"), {
+    tier: "B2_QUINTET",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("b2://item/file.mp3"), {
+    tier: "B2",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("b2-primary://item/file.mp3"), {
+    tier: "B2",
+    key: "item/file.mp3",
+  });
+  assertEquals(router.parsePath("/audiobooks/Yuval/21 Lessons/01.mp3"), {
+    tier: "B2",
+    key: "audiobooks/Yuval/21 Lessons/01.mp3",
+    isLegacy: true,
+  });
+});
+
+Deno.test("self-heal: recovers even when initial presigning threw for all tracks", async () => {
+  stubStorage({
+    getSignedUrl: () => Promise.reject(new Error("invalid tier/scheme")),
+    fileExists: () => Promise.resolve(false),
+    signFirstExisting: (keys: string[]) =>
+      Promise.resolve({
+        signedUrl: "recovered-signed-url",
+        canonicalPath: `b2-quinta://${keys[0]}`,
+      }),
+  });
+  const session = await PlaybackService.startSession(
+    fakeSupabase(itemWith([
+      {
+        duration: 10,
+        metadata: {
+          filename: "track1.mp3",
+          path: "b2_unknown://custom/track1.mp3",
+        },
+      },
+    ])),
+    "user-1",
+    ITEM_ID,
+  );
+  assertEquals(session.missingTrackCount, 0);
+  assertEquals(session.audioTracks.length, 1);
+  assertEquals(
+    (session.audioTracks[0] as Record<string, unknown>).contentUrl,
+    "recovered-signed-url",
+  );
+});
+
+Deno.test("self-heal: multi-track audiobook derives prefix from track 0 with exactly 1 probe", async () => {
+  let probeCount = 0;
+  stubStorage({
+    fileExists: () => Promise.resolve(false),
+    signFirstExisting: (_keys: string[]) => {
+      probeCount++;
+      return Promise.resolve({
+        signedUrl:
+          "signed:b2-quinta://11111111-2222-3333-4444-555555555555/01.mp3",
+        canonicalPath:
+          `b2-quinta://11111111-2222-3333-4444-555555555555/01.mp3`,
+      });
+    },
+    getSignedUrl: (path: string) => Promise.resolve(`signed:${path}`),
+  });
+
+  const fiveTracks = Array.from({ length: 5 }, (_, i) => ({
+    duration: 10,
+    metadata: {
+      filename: `0${i + 1}.mp3`,
+      path: `b2://old-tier/0${i + 1}.mp3`,
+    },
+  }));
+
+  const session = await PlaybackService.startSession(
+    fakeSupabase(itemWith(fiveTracks)),
+    "user-1",
+    ITEM_ID,
+  );
+
+  // Exactly ONE probe across all 5 tracks!
+  assertEquals(probeCount, 1);
+  assertEquals(session.missingTrackCount, 0);
+  assertEquals(session.audioTracks.length, 5);
+  for (let i = 0; i < 5; i++) {
+    const track = session.audioTracks[i] as Record<string, unknown>;
+    assertEquals(
+      track.contentUrl,
+      `signed:b2-quinta://11111111-2222-3333-4444-555555555555/0${i + 1}.mp3`,
+    );
+  }
+});
+
+Deno.test("self-heal: structured multi-disc tracks presign inside their own subfolder, not track 0's", async () => {
+  const signedPaths: string[] = [];
+  stubStorage({
+    fileExists: () => Promise.resolve(true),
+    getSignedUrl: (path: string) => {
+      signedPaths.push(path);
+      return Promise.resolve(`signed:${path}`);
+    },
+  });
+  const session = await PlaybackService.startSession(
+    fakeSupabase(itemWith([
+      {
+        duration: 10,
+        size: 120000,
+        metadata: {
+          filename: "Track 1.mp3",
+          path: `b2-tertiary://${ITEM_ID}/Disc 1/Track 1.mp3`,
+        },
+      },
+      {
+        duration: 10,
+        size: 120000,
+        metadata: {
+          filename: "Track 2.mp3",
+          path: `b2-tertiary://${ITEM_ID}/Disc 1/Track 2.mp3`,
+        },
+      },
+      {
+        duration: 10,
+        size: 120000,
+        metadata: {
+          filename: "Track 1.mp3",
+          path: `b2-tertiary://${ITEM_ID}/Disc 2/Track 1.mp3`,
+        },
+      },
+    ])),
+    "user-1",
+    ITEM_ID,
+  );
+  assertEquals(session.missingTrackCount, 0);
+  assertEquals(session.audioTracks.length, 3);
+  assertEquals(session.duration, 30);
+  // The Disc 2 track must be signed at its own folder — the old flat template
+  // would have produced `Disc 1/Track 1.mp3` (wrong disc, silent content swap).
+  assertEquals(
+    signedPaths.includes(`b2-tertiary://${ITEM_ID}/Disc 2/Track 1.mp3`),
+    true,
+  );
+  assertEquals(
+    (session.audioTracks[2] as Record<string, unknown>).contentUrl,
+    `signed:b2-tertiary://${ITEM_ID}/Disc 2/Track 1.mp3`,
+  );
+});

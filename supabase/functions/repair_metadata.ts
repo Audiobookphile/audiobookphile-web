@@ -1,0 +1,432 @@
+// Repair corrupted library_items metadata detected by detect_merged_books.ts.
+//
+// Strategy (deterministic-first, LLM never re-identifies):
+//   1. Derive the true title from the longest common token-cluster across
+//      track filenames (e.g. "Deep Work Rules ... - 001..008" -> "Deep Work
+//      Rules for Focused Success in a Distracted World").
+//   2. Scrub display garbage from titles: torrent/URL prefixes, glued years,
+//      bracketed junk.
+//   3. Gate every proposal through titlesLikelySameWork so we never merge
+//      distinct works.
+//   4. For every retitled item, fetch an accurate cover via
+//      _shared/coverFetch (iTunes/OpenLibrary/GoogleBooks) and upload it.
+//
+// Usage:
+//   deno run --allow-all --env-file .env.local repair_metadata.ts           # dry run
+//   deno run --allow-all --env-file .env.local repair_metadata.ts --apply   # write
+//   deno run --allow-all repair_metadata.ts --apply --id <uuid>             # single item
+//   deno run --allow-all repair_metadata.ts --apply --covers-only --ids <uuid,uuid>
+//
+// --covers-only: skip title repair entirely and refetch covers for the
+//   selected items (or ALL items when no --id/--ids given). Use when the
+//   stored cover art is for the wrong book (e.g. "The Prince" art on an
+//   "Art of War" item) — fetchBookMetadata identity-gates every provider
+//   result, so a refetch can only store art for a plausibly-same work.
+
+import { createClient } from "npm:@supabase/supabase-js@2.44.0";
+import { Sentry } from "./_shared/sentry.ts";
+import {
+  significantTokens,
+  titlesLikelySameWork,
+} from "./_shared/titleMatch.ts";
+import { prettifyFilenameTitle } from "./_shared/titleAuthorParser.ts";
+import { fetchBookMetadata } from "./_shared/coverFetch.ts";
+import "https://deno.land/std@0.208.0/dotenv/load.ts";
+
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  Deno.env.get("SUPABASE_ANON_KEY")!;
+const zaiApiKey = Deno.env.get("ZAI_API_KEY") ??
+  Deno.env.get("ZHIPU_API_KEY") ?? "";
+const supabase = createClient(supabaseUrl, key);
+
+const args = Deno.args;
+const apply = args.includes("--apply");
+const idIdx = args.indexOf("--id");
+const onlyId = idIdx >= 0 ? args[idIdx + 1] : null;
+const idsIdx = args.indexOf("--ids");
+const onlyIds = idsIdx >= 0
+  ? new Set(
+    args[idsIdx + 1].split(",").map((s) => s.trim()).filter(Boolean),
+  )
+  : null;
+const coversOnly = args.includes("--covers-only");
+// --force: in --covers-only mode, re-fetch even when a cover object already
+// exists. Without it the tool can only ever repair items whose art is absent,
+// so a cover showing the WRONG book ("The Prince" on an "Art of War" item)
+// could never be corrected — the exact case this workflow exists for. Safety
+// comes from the identity gate in fetchBookMetadata, which refuses art for a
+// different work, and repairCover leaves the existing cover in place when no
+// cover is found.
+const force = args.includes("--force");
+
+function isSelected(id: string): boolean {
+  if (onlyId) return id === onlyId;
+  if (onlyIds) return onlyIds.has(id);
+  return true;
+}
+
+const AUDIO_EXT = /\.(mp3|m4b|m4a|aac|ogg|oga|flac|wav|webm)$/i;
+
+function entryFilename(entry: unknown): string {
+  const e = (entry ?? {}) as Record<string, unknown>;
+  const metadata = (e.metadata ?? {}) as Record<string, unknown>;
+  const raw = String(
+    e.filename ?? metadata.filename ?? e.name ?? e.path ??
+      metadata.relPath ?? e.storage_path ?? "",
+  );
+  return raw.split("/").pop() ?? raw;
+}
+
+/** Split glued CamelCase/digit compounds ("33TheThreeBodyProblemChapter33"). */
+function splitGlued(name: string): string {
+  return name
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .replace(/(\d)([A-Za-z])/g, "$1 $2")
+    .replace(/([A-Za-z])(\d)/g, "$1 $2");
+}
+
+/** Human-name heuristic: 2-3 capitalized words ("Eugenia Cheng"). */
+function looksLikePersonName(s: string): boolean {
+  const parts = s.trim().split(/\s+/);
+  if (parts.length < 2 || parts.length > 3) return false;
+  return parts.every((w) => /^[A-Z][a-z'’-]+$/.test(w));
+}
+
+/** Remove numbering/disc markers so clustered filenames become comparable. */
+function stripTrackNumbering(name: string): string {
+  let s = splitGlued(name.replace(AUDIO_EXT, "").trim());
+  s = s.replace(/^\[?\d{1,3}(-\d{1,3})?\]?[\s._-]+/, ""); // [01-22] name | 001 name
+  s = s.replace(
+    /^(cd|disc|disk|part|pt|track|ch(apter)?)\s*\d+\s*[-_.]?\s*/i,
+    "",
+  );
+  s = s.replace(/\s*[-_.]?\s*\d{1,4}\s*$/, ""); // trailing " - 007"
+  s = s.replace(/\s*-\s*Copy$/i, "");
+  s = s.replace(/[_]+/g, " ");
+  return s.trim();
+}
+
+const CLUSTER_NOISE =
+  /^(ch|chapter|chap|disc|cd|disk|part|pt|track|book|file|section|introduction|preface|epilogue)$/;
+
+/** Longest common token cluster across >=70% of the track files. */
+function dominantCluster(names: string[]): string | null {
+  if (names.length < 3) return null;
+  const counts = new Map<string, number>();
+  for (const name of names) {
+    for (const t of new Set(significantTokens(name))) {
+      counts.set(t, (counts.get(t) ?? 0) + 1);
+    }
+  }
+  const threshold = Math.ceil(names.length * 0.7);
+  const cluster = [...counts.entries()]
+    .filter(([t, c]) =>
+      c >= threshold && !CLUSTER_NOISE.test(t) && t.length >= 2
+    )
+    .map(([t]) => t);
+  if (cluster.length === 0) return null;
+  // Re-order cluster tokens by their earliest typical position for readability.
+  const pos = new Map<string, number>();
+  for (const name of names) {
+    significantTokens(name).forEach((t, i) => {
+      if (cluster.includes(t)) pos.set(t, Math.min(pos.get(t) ?? 1e9, i));
+    });
+  }
+  cluster.sort((a, b) => (pos.get(a) ?? 999) - (pos.get(b) ?? 999));
+  return cluster.join(" ");
+}
+
+const SMALL_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "as",
+  "at",
+  "but",
+  "by",
+  "for",
+  "in",
+  "of",
+  "on",
+  "or",
+  "the",
+  "to",
+  "with",
+]);
+
+function smartTitleCase(s: string): string {
+  return s.split(" ").map((w, i) =>
+    i > 0 && SMALL_WORDS.has(w.toLowerCase())
+      ? w.toLowerCase()
+      : w.charAt(0).toUpperCase() + w.slice(1)
+  ).join(" ");
+}
+
+function looksLikeGarbage(title: string): boolean {
+  const t = title.toLowerCase();
+  if (/^www\.|\.org$|\.com$|torrent|demonoid/.test(t)) return true;
+  if (/^\d{4}\b/.test(t.trim())) return true; // "2011 (unabridged) ..."
+  return false;
+}
+
+function scrubDisplayTitle(title: string): string {
+  let s = title.trim();
+  s = s.replace(/^www\.[^\s]+\s*/, "");
+  s = s.replace(/\s*[\(\[]?\d{4}[\)\]]?\s*$/, ""); // trailing "(1520)" / "1990 г."
+  s = s.replace(/\s*-\s*Collectors edition\s*$/i, "");
+  s = s.replace(/\s{2,}/g, " ").trim();
+  return s;
+}
+
+interface Repair {
+  itemId: string;
+  oldTitle: string;
+  newTitle: string;
+  reason: string;
+}
+
+async function repairCover(itemId: string, title: string, author: string) {
+  try {
+    const res = await fetchBookMetadata(title, author);
+    if (!res?.cover) {
+      console.log(`      cover: none found for "${title}"`);
+      return false;
+    }
+    const fileData = new Uint8Array(res.cover.buffer);
+    const ext = res.cover.extension || "jpg";
+    const coverPath = `${itemId}/cover.${ext}`;
+    const contentType = `image/${ext === "png" ? "png" : "jpeg"}`;
+    const { error: upErr } = await supabase.storage.from("covers").upload(
+      coverPath,
+      fileData,
+      { upsert: true, contentType },
+    );
+    if (upErr && !upErr.message.includes("exists")) {
+      console.log(`      cover upload failed: ${upErr.message}`);
+      return false;
+    }
+    const { error: dbErr } = await supabase.from("library_items")
+      .update({ cover_path: coverPath }).eq("id", itemId);
+    if (dbErr) {
+      console.log(`      cover_path update failed: ${dbErr.message}`);
+      return false;
+    }
+    console.log(`      cover: uploaded ${coverPath}`);
+    return true;
+  } catch (err) {
+    console.log(
+      `      cover fetch error for "${title}":`,
+      err instanceof Error ? err.message : String(err),
+    );
+    return false;
+  }
+}
+
+async function main() {
+  console.log(
+    `🛠  repair_metadata (${apply ? "APPLY" : "DRY RUN"}) — zai:${
+      zaiApiKey ? "on" : "off"
+    }${coversOnly ? " — COVERS ONLY" : ""}`,
+  );
+
+  const { data: items, error } = await supabase.from("library_items")
+    .select(
+      "id, title, author_names_first_last, cover_path, audio_files, library_files",
+    );
+  if (error) {
+    console.error("query failed:", error.message);
+    Deno.exit(1);
+  }
+
+  const repairs: Repair[] = [];
+
+  for (const item of items ?? []) {
+    if (!isSelected(item.id)) continue;
+    const title = String(item.title ?? "").trim();
+    const entries: unknown[] = [
+      ...((item.audio_files as unknown[]) ?? []),
+      ...((item.library_files as unknown[]) ?? []),
+    ];
+    if (!title) continue;
+
+    const audioNames = entries.map(entryFilename).filter((n) =>
+      AUDIO_EXT.test(n)
+    );
+    // Cluster on ALL files (not deduped): identical-after-strip names are
+    // themselves the strongest cluster signal ("Steve Jobs - 01..08").
+    const stripped = audioNames.map(stripTrackNumbering).filter(Boolean);
+    const author = String(item.author_names_first_last ?? "").trim();
+
+    // Cover-only mode: refetch art for the item's CURRENT identity, no
+    // title/cluster logic. The identity gate inside fetchBookMetadata makes
+    // this safe to run against every item in the library.
+    if (coversOnly) {
+      const itemCoverPath = String(item.cover_path ?? "");
+      if (
+        !force &&
+        itemCoverPath && itemCoverPath !== "missing" &&
+        !itemCoverPath.startsWith("/")
+      ) {
+        const { data: existingData } = await supabase.storage.from("covers")
+          .list(item.id);
+        if (existingData && existingData.length > 0) {
+          console.log(
+            `✓ [${item.id}] "${title}" — cover already present in storage (use --force to re-verify)`,
+          );
+          continue;
+        }
+      }
+      console.log(
+        `🎨 [${item.id}] "${title}" — cover refetch${force ? " (forced)" : ""}`,
+      );
+      if (apply) {
+        await repairCover(item.id, title, author);
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      continue;
+    }
+
+    // Zero-duration stowaways: unreadable-metadata files (often whole other
+    // audiobooks uploaded alongside, e.g. a Homo Deus .m4b inside Sapiens).
+    // When >=5 healthy siblings exist, entries without a parsable duration
+    // are detached from the item.
+    const entryDuration = (e: unknown): number | null => {
+      const m = ((e as Record<string, unknown>)?.metadata ??
+        {}) as Record<string, unknown>;
+      for (const k of ["duration", "durationSec", "length"]) {
+        const v = m[k] ?? (e as Record<string, unknown>)[k];
+        if (typeof v === "number" && v > 0) return v;
+        if (typeof v === "string" && Number(v) > 0) return Number(v);
+      }
+      return null;
+    };
+    const withDurations = entries.filter((e) => entryDuration(e) !== null);
+    const stowaways = entries.filter((e) => entryDuration(e) === null);
+    // Only a SMALL minority may be detached — items whose metadata largely
+    // lacks durations are a different (unknown-shape) problem, not stowaways.
+    // Targeted runs skip detachment ON PURPOSE: --id/--ids are for title and
+    // cover repairs; bulk stowaway detachment stays the auto-detach cron's
+    // job so a spot fix can never amputate a whole-book file by accident.
+    const targeted = Boolean(onlyId || onlyIds);
+    const minority = stowaways.length > 0 &&
+      stowaways.length <= Math.ceil(entries.length * 0.2);
+    if (withDurations.length >= 5 && minority && !targeted) {
+      console.log(
+        `⚠️  [${item.id}] "${title}": detaching ${stowaways.length} zero-duration file(s)`,
+      );
+      for (const e of stowaways) {
+        console.log(`      ✂️  ${entryFilename(e)}`);
+      }
+      if (apply) {
+        await supabase.from("library_items").update({
+          audio_files: withDurations,
+          library_files: withDurations,
+        }).eq("id", item.id);
+      }
+      continue;
+    }
+
+    let newTitle: string | null = null;
+    let reason = "";
+
+    // 1. Cluster-derived rename — ONLY when the current title is garbage,
+    //    is just the author's name, or the cluster strictly contains the
+    //    current title (adds information, never loses it).
+    const cluster = dominantCluster(stripped);
+    if (cluster && cluster.length >= 8) {
+      const curTokens = significantTokens(title);
+      const clusterTokens = cluster.split(" ");
+      const curIsGarbage = looksLikeGarbage(title);
+      const authorAsTitle =
+        (author.length > 0 && titlesLikelySameWork(title, author)) ||
+        looksLikePersonName(title);
+      const addsInfo = curTokens.length > 0 &&
+        curTokens.every((t) => clusterTokens.includes(t)) &&
+        clusterTokens.length > curTokens.length;
+      // Glued compounds ("33TheThreeBodyProblemChapter33"): the cluster,
+      // squashed, appears inside the current title — same work, unreadable.
+      const squashedTitle = title.toLowerCase().replace(/[^a-z]/g, "");
+      const squashedCluster = cluster.replace(/\s+/g, "").toLowerCase();
+      const gluedMatch = squashedCluster.length >= 6 &&
+        squashedTitle.includes(squashedCluster);
+      if (
+        !titlesLikelySameWork(title, cluster) &&
+        (curIsGarbage || authorAsTitle || addsInfo || gluedMatch)
+      ) {
+        newTitle = smartTitleCase(prettifyFilenameTitle(cluster));
+        reason = `track-cluster "${cluster}" (${
+          curIsGarbage
+            ? "garbage"
+            : authorAsTitle
+            ? "author-as-title"
+            : "adds-info"
+        })`;
+      }
+    }
+
+    // 2. Garbage-title scrub even without a usable cluster.
+    if (!newTitle && (looksLikeGarbage(title))) {
+      const scrubbed = scrubDisplayTitle(title);
+      if (scrubbed.length >= 3 && scrubbed !== title) {
+        newTitle = scrubbed;
+        reason = "garbage scrub";
+      }
+    }
+
+    // 3. Trailing-year scrub for otherwise-fine titles ("Art of War (1520)").
+    if (!newTitle) {
+      const scrubbed = scrubDisplayTitle(title);
+      if (
+        scrubbed.length >= 3 && scrubbed !== title &&
+        titlesLikelySameWork(scrubbed, title)
+      ) {
+        newTitle = scrubbed;
+        reason = "year scrub";
+      }
+    }
+
+    if (newTitle && newTitle !== title) {
+      repairs.push({ itemId: item.id, oldTitle: title, newTitle, reason });
+    }
+  }
+
+  console.log(`\nProposed repairs: ${repairs.length}`);
+  for (const r of repairs) {
+    console.log(`  • [${r.itemId}] "${r.oldTitle}"`);
+    console.log(`      → "${r.newTitle}"  (${r.reason})`);
+  }
+  if (!apply) {
+    console.log("\n(dry run — pass --apply to write)");
+    return;
+  }
+
+  for (const r of repairs) {
+    console.log(`\n✍️  applying [${r.itemId}]`);
+    const { error: upErr } = await supabase.from("library_items")
+      .update({ title: r.newTitle }).eq("id", r.itemId);
+    if (upErr) {
+      console.log(`      title update failed: ${upErr.message}`);
+      continue;
+    }
+    const { data: fresh } = await supabase.from("library_items")
+      .select("author_names_first_last, cover_path").eq("id", r.itemId)
+      .maybeSingle();
+    const author = String(fresh?.author_names_first_last ?? "");
+    // Always refetch: identity changed, so the old cover may be wrong.
+    await repairCover(r.itemId, r.newTitle, author);
+  }
+  console.log(`\n✅ applied ${repairs.length} repairs`);
+}
+
+main().catch(async (err) => {
+  console.error(
+    "❌ Fatal error:",
+    err instanceof Error ? err.message : String(err),
+  );
+  // No-op when Sentry is not configured; flushed before exit otherwise.
+  Sentry.captureException(err);
+  await Sentry.flush(2000);
+  Deno.exit(1);
+});

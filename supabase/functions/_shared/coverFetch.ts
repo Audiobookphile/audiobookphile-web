@@ -1,0 +1,383 @@
+/**
+ * Cover image and metadata fetching from external providers.
+ *
+ * Tries providers in order:
+ *   1. iTunes Search API (highest quality for audiobooks)
+ *   2. Open Library (free, no key)
+ *   3. Google Books (free, no key for basic search)
+ *
+ * Every provider result passes a deterministic identity gate
+ * (titlesLikelySameWork) before it is accepted: search APIs rank by
+ * relevance, not identity, and have served covers for a DIFFERENT work by
+ * the same author (e.g. Machiavelli's "The Prince" for "Art of War").
+ * A rejected result falls through to the next provider/strategy.
+ *
+ * Returns the cover image data and metadata, or null if not found.
+ */
+
+import { titlesLikelySameWork } from "./titleMatch.ts";
+
+export interface FetchedCover {
+  buffer: ArrayBuffer;
+  contentType: string;
+  extension: string;
+}
+
+export interface BookMetadata {
+  title: string;
+  author?: string;
+  description?: string;
+  publishedYear?: string;
+  genres?: string[];
+  publisher?: string;
+  language?: string;
+}
+
+export interface FetchResult {
+  cover: FetchedCover | null;
+  metadata: BookMetadata | null;
+  /**
+   * True when every provider attempt for every strategy failed with an
+   * exception (network reset, provider 5xx, DNS, TLS) and none returned a
+   * usable answer. This is a *transient* condition, not evidence that the work
+   * has no cover: callers must not persist a terminal "no cover" marker on it.
+   */
+  allProvidersFailed?: boolean;
+}
+
+/**
+ * Aggressively cleans up messy titles/authors for better API matching.
+ */
+function normalizeString(str: string): string {
+  if (!str) return "";
+
+  let cleaned = str
+    // 1. Split CamelCase/PascalCase
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    // 2. Remove bracketed content
+    .replace(/\[[^\]]*\]/g, " ")
+    // 3. Remove parenthesized content
+    .replace(/\([^)]*\)/g, " ")
+    // 4. Replace dots, underscores, and dashes with spaces
+    .replace(/[._-]/g, " ")
+    // 5. Remove common audiobook suffixes
+    .replace(
+      /\b(audiobook|unabridged|abridged|collection|series|vol|volume|book|complete|part|chapter|of|v\d+)\b/gi,
+      " ",
+    )
+    // 6. Clean up extra whitespace
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned;
+}
+
+function parseRawTitle(
+  rawTitle: string,
+): { cleanTitle: string; extractedAuthor?: string } {
+  let title = rawTitle;
+  let author: string | undefined = undefined;
+
+  if (title.includes(" -- ")) {
+    const parts = title.split(" -- ");
+    author = normalizeString(parts[0]);
+    title = normalizeString(parts[1]);
+  } else if (title.includes(" - ")) {
+    const parts = title.split(" - ");
+    author = normalizeString(parts[0]);
+    title = normalizeString(parts[1]);
+  } else {
+    title = normalizeString(title);
+  }
+
+  return { cleanTitle: title, extractedAuthor: author };
+}
+
+function getExtensionFromType(contentType: string): string {
+  if (contentType.includes("png")) return "png";
+  if (contentType.includes("webp")) return "webp";
+  if (contentType.includes("gif")) return "gif";
+  return "jpg";
+}
+
+/**
+ * Fetch a cover image for a book by title and/or author.
+ */
+export async function fetchBookCover(
+  title: string,
+  author?: string,
+): Promise<FetchedCover | null> {
+  const result = await fetchBookMetadata(title, author);
+  return result.cover;
+}
+
+/**
+ * Fetch full metadata and cover for a book.
+ * Uses a multi-pass strategy to maximize match chances even with noisy metadata.
+ */
+export async function fetchBookMetadata(
+  title: string,
+  author?: string,
+): Promise<FetchResult> {
+  const { cleanTitle, extractedAuthor } = parseRawTitle(title);
+  const cleanAuthor = author ? normalizeString(author) : extractedAuthor;
+
+  const strategies = [{ title: cleanTitle, author: cleanAuthor }, {
+    title: cleanTitle,
+  }];
+
+  const words = cleanTitle.split(" ");
+  if (words.length > 5) {
+    strategies.push({ title: words.slice(0, 4).join(" ") });
+  }
+
+  const providers = [
+    fetchFromITunes,
+    fetchFromOpenLibrary,
+    fetchFromGoogleBooks,
+  ];
+
+  // Tracks whether the "no cover" outcome is a real answer or just a run of
+  // transient provider errors. See allProvidersFailed on FetchResult.
+  let providerFailed = false;
+  let providerAnswered = false;
+
+  for (const strategy of strategies) {
+    if (!strategy.title) continue;
+
+    for (const provider of providers) {
+      try {
+        const result = await provider(strategy.title, strategy.author);
+        if (result && (result.cover || result.metadata)) {
+          // Identity gate: the provider's idea of the book must plausibly be
+          // the requested work. Gated against the ORIGINAL title (not the
+          // truncated strategy title) so a "first 4 words" query can't accept
+          // a different book that merely shares its opening words.
+          const providerTitle = result.metadata?.title;
+          if (
+            providerTitle && !titlesLikelySameWork(title, providerTitle)
+          ) {
+            console.warn(
+              `[coverFetch] REJECTED "${providerTitle}" for "${title}": titles are dissimilar`,
+            );
+            continue;
+          }
+          return result;
+        }
+        // The provider answered and had nothing for this work. That is a
+        // genuine answer, so a later provider/strategy may still find one, but
+        // it is not a failure.
+        providerAnswered = true;
+      } catch (err) {
+        providerFailed = true;
+        console.warn(
+          `[coverFetch] Provider failed for "${strategy.title}":`,
+          err,
+        );
+      }
+    }
+  }
+
+  // Nothing found. Only report a transient failure when no provider ever gave
+  // us a usable answer — otherwise the caller would persist a terminal
+  // "this work has no cover" marker for what was really a network blip.
+  return {
+    cover: null,
+    metadata: null,
+    allProvidersFailed: providerFailed && !providerAnswered,
+  };
+}
+
+async function fetchFromITunes(
+  title: string,
+  author?: string,
+): Promise<FetchResult | null> {
+  try {
+    const queryTerm = author ? `${title} ${author}` : title;
+    const searchRes = await fetch(
+      `https://itunes.apple.com/search?term=${
+        encodeURIComponent(queryTerm)
+      }&media=audiobook&limit=1`,
+      {
+        signal: AbortSignal.timeout(8000),
+      },
+    );
+    if (!searchRes.ok) {
+      throw new Error(`iTunes responded ${searchRes.status}`);
+    }
+
+    const data = await searchRes.json();
+    if (!data?.results?.length) {
+      if (author) return fetchFromITunes(title);
+      return null;
+    }
+
+    const item = data.results[0];
+
+    const metadata: BookMetadata = {
+      title: item.trackName || title,
+      author: item.artistName,
+      description: item.description
+        ? item.description.replace(/<[^>]*>/g, "")
+        : undefined,
+      publishedYear: item.releaseDate
+        ? new Date(item.releaseDate).getFullYear().toString()
+        : undefined,
+      genres: item.primaryGenreName ? [item.primaryGenreName] : [],
+    };
+
+    let cover: FetchedCover | null = null;
+    if (item.artworkUrl100) {
+      const imgUrl = item.artworkUrl100.replace(
+        "100x100bb.jpg",
+        "600x600bb.jpg",
+      );
+      const imgRes = await fetch(imgUrl, {
+        signal: AbortSignal.timeout(10000),
+      });
+      if (imgRes.ok) {
+        const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+        const buffer = await imgRes.arrayBuffer();
+        if (buffer.byteLength > 3000) {
+          cover = {
+            buffer,
+            contentType,
+            extension: getExtensionFromType(contentType),
+          };
+        }
+      }
+    }
+
+    return { cover, metadata };
+  } catch (err) {
+    // Propagate: fetchBookMetadata already isolates each provider, and a
+    // swallowed error here is indistinguishable from "this work has no cover".
+    // That ambiguity is what let a transient blip persist a terminal "missing".
+    throw err;
+  }
+}
+
+async function fetchFromOpenLibrary(
+  title: string,
+  author?: string,
+): Promise<FetchResult | null> {
+  try {
+    const queryTerm = author ? `${title} ${author}` : title;
+    const query = new URLSearchParams({ q: queryTerm, limit: "3" });
+
+    const searchRes = await fetch(
+      `https://openlibrary.org/search.json?${query.toString()}`,
+      { signal: AbortSignal.timeout(8000) },
+    );
+    if (!searchRes.ok) {
+      throw new Error(`OpenLibrary responded ${searchRes.status}`);
+    }
+
+    const data = await searchRes.json();
+    const docs = data?.docs as any[];
+    if (!docs?.length) return null;
+
+    const withCover = docs.find((d) => d.cover_i) || docs[0];
+
+    const metadata: BookMetadata = {
+      title: withCover.title || title,
+      author: withCover.author_name?.[0],
+      publishedYear: withCover.first_publish_year?.toString(),
+      genres: withCover.subject?.slice(0, 5),
+    };
+
+    let cover: FetchedCover | null = null;
+    if (withCover.cover_i) {
+      const imgRes = await fetch(
+        `https://covers.openlibrary.org/b/id/${withCover.cover_i}-L.jpg`,
+        { signal: AbortSignal.timeout(10000) },
+      );
+      if (imgRes.ok) {
+        const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+        if (!contentType.includes("text/html")) {
+          const buffer = await imgRes.arrayBuffer();
+          if (buffer.byteLength > 3000) {
+            cover = {
+              buffer,
+              contentType,
+              extension: getExtensionFromType(contentType),
+            };
+          }
+        }
+      }
+    }
+
+    return { cover, metadata };
+  } catch (err) {
+    throw err;
+  }
+}
+
+async function fetchFromGoogleBooks(
+  title: string,
+  author?: string,
+): Promise<FetchResult | null> {
+  try {
+    const queryTerm = author ? `${title} ${author}` : title;
+    const searchRes = await fetch(
+      `https://www.googleapis.com/books/v1/volumes?q=${
+        encodeURIComponent(queryTerm)
+      }&maxResults=3&printType=books`,
+      {
+        signal: AbortSignal.timeout(8000),
+      },
+    );
+    if (!searchRes.ok) {
+      throw new Error(`Google Books responded ${searchRes.status}`);
+    }
+
+    const data = await searchRes.json();
+    const items = data?.items as any[];
+    if (!items?.length) return null;
+
+    const item = items.find((it) => it.volumeInfo?.imageLinks?.thumbnail) ||
+      items[0];
+    const info = item.volumeInfo;
+
+    const metadata: BookMetadata = {
+      title: info.title || title,
+      author: info.authors?.[0],
+      description: info.description
+        ? info.description.replace(/<[^>]*>/g, "")
+        : undefined,
+      publishedYear: info.publishedDate
+        ? info.publishedDate.split("-")[0]
+        : undefined,
+      publisher: info.publisher,
+      genres: info.categories,
+      language: info.language,
+    };
+
+    let cover: FetchedCover | null = null;
+    if (info.imageLinks) {
+      let imgUrl: string = info.imageLinks.extraLarge ||
+        info.imageLinks.large || info.imageLinks.thumbnail;
+
+      imgUrl = imgUrl.replace("http://", "https://").replace("&edge=curl", "");
+
+      const imgRes = await fetch(imgUrl, {
+        signal: AbortSignal.timeout(10000),
+      });
+      if (imgRes.ok) {
+        const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+        const buffer = await imgRes.arrayBuffer();
+        if (buffer.byteLength > 3000) {
+          cover = {
+            buffer,
+            contentType,
+            extension: getExtensionFromType(contentType),
+          };
+        }
+      }
+    }
+
+    return { cover, metadata };
+  } catch (err) {
+    throw err;
+  }
+}

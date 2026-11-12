@@ -1,0 +1,123 @@
+import { NextResponse } from 'next/server'
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/shared/utils/supabase/env'
+import { createClient } from '@/shared/utils/supabase/server'
+
+export const dynamic = 'force-dynamic'
+
+interface SystemStatusRpcResponse {
+  initialized: boolean
+  has_admin: boolean
+  admin_count: number
+  library_count: number
+  storage_ready: boolean
+}
+
+export async function GET() {
+  const supabaseUrl = getSupabaseUrl()
+  const anonKey = getSupabaseAnonKey()
+
+  if (!supabaseUrl || !anonKey) {
+    return NextResponse.json({
+      configured: false,
+      reason: 'Missing Supabase URL or API Anon Key',
+      supabaseUrl: supabaseUrl || null,
+      database: { connected: false, initialized: false, hasAdmin: false, adminCount: 0 },
+      storage: { ready: false },
+      edgeApi: { deployed: false, status: 0 },
+    })
+  }
+
+  const isSupabaseCloud = supabaseUrl.includes('.supabase.co')
+  const projectRef = isSupabaseCloud ? supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || null : null
+
+  let databaseConnected = false
+  let databaseInitialized = false
+  let hasAdmin = false
+  let adminCount = 0
+  let libraryCount = 0
+  let storageReady = false
+  let edgeApiDeployed = false
+  let edgeApiStatus = 0
+
+  // 1. Check Database status via RPC get_system_status
+  try {
+    const supabase = await createClient()
+    const { data, error } = await (supabase as unknown as { rpc: (name: string) => Promise<{ data: unknown; error: unknown }> }).rpc('get_system_status')
+
+    if (!error && data) {
+      const statusData = data as unknown as SystemStatusRpcResponse
+      databaseConnected = true
+      databaseInitialized = statusData.initialized ?? true
+      hasAdmin = statusData.has_admin ?? false
+      adminCount = statusData.admin_count ?? 0
+      libraryCount = statusData.library_count ?? 0
+      storageReady = statusData.storage_ready ?? false
+    } else {
+      // RPC might not exist if schema.sql hasn't been executed yet.
+      // Probe if the profiles table exists directly to differentiate uninitialized from down.
+      const { data: profileProbe, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, user_type')
+        .limit(5)
+
+      if (profileError) {
+        // Table doesn't exist or permissions error
+        if (
+          profileError.message.includes('relation') ||
+          profileError.message.includes('does not exist') ||
+          profileError.code === '42P01' ||
+          profileError.code === 'PGRST200'
+        ) {
+          databaseConnected = true
+          databaseInitialized = false
+        } else {
+          databaseConnected = false
+        }
+      } else {
+        databaseConnected = true
+        databaseInitialized = true
+        const admins = profileProbe?.filter((p) => p.user_type === 'admin' || p.user_type === 'root') || []
+        hasAdmin = admins.length > 0
+        adminCount = admins.length
+      }
+    }
+  } catch (err) {
+    console.warn('[Setup Status] Database probe error:', err)
+  }
+
+  // 2. Check Edge Function health
+  try {
+    const healthUrl = `${supabaseUrl}/functions/v1/api/health`
+    const res = await fetch(healthUrl, {
+      method: 'GET',
+      headers: anonKey ? { apikey: anonKey } : {},
+      signal: AbortSignal.timeout(4000),
+    })
+    edgeApiStatus = res.status
+    edgeApiDeployed = res.status === 200
+  } catch {
+    edgeApiDeployed = false
+    edgeApiStatus = 0
+  }
+
+  return NextResponse.json({
+    configured: true,
+    supabaseUrl,
+    projectRef,
+    sqlEditorUrl: projectRef ? `https://supabase.com/dashboard/project/${projectRef}/sql/new` : null,
+    database: {
+      connected: databaseConnected,
+      initialized: databaseInitialized,
+      hasAdmin,
+      adminCount,
+      libraryCount,
+    },
+    storage: {
+      ready: storageReady,
+    },
+    edgeApi: {
+      deployed: edgeApiDeployed,
+      status: edgeApiStatus,
+    },
+  })
+}

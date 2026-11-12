@@ -1246,6 +1246,40 @@ AS $function$
 $function$
 ;
 
+CREATE OR REPLACE FUNCTION public.get_system_status()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'storage'
+AS $function$
+DECLARE
+  v_admin_count integer := 0;
+  v_library_count integer := 0;
+  v_covers_bucket boolean := false;
+  v_audio_bucket boolean := false;
+BEGIN
+  -- Count active administrators
+  SELECT count(*) INTO v_admin_count FROM public.profiles WHERE user_type IN ('admin', 'root');
+  -- Count libraries
+  SELECT count(*) INTO v_library_count FROM public.libraries;
+  -- Check storage buckets
+  SELECT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'covers') INTO v_covers_bucket;
+  SELECT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'audio-files') INTO v_audio_bucket;
+
+  RETURN jsonb_build_object(
+    'initialized', true,
+    'has_admin', (v_admin_count > 0),
+    'admin_count', v_admin_count,
+    'library_count', v_library_count,
+    'storage_ready', (v_covers_bucket AND v_audio_bucket)
+  );
+END;
+$function$
+;
+
+REVOKE ALL ON FUNCTION public.get_system_status() FROM public;
+GRANT EXECUTE ON FUNCTION public.get_system_status() TO anon, authenticated, service_role;
+
 CREATE OR REPLACE FUNCTION public.list_storage_orphans(p_bucket text DEFAULT 'audio-files'::text)
  RETURNS TABLE(name text, size_bytes bigint, pretty text, created_at timestamp with time zone)
  LANGUAGE sql

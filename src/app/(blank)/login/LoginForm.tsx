@@ -23,6 +23,18 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [magicLoading, setMagicLoading] = useState(false)
+  const [needsSetup, setNeedsSetup] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/setup/status')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.database && data.database.hasAdmin === false) {
+          setNeedsSetup(true)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const [requires2FA, setRequires2FA] = useState(false)
   const [tempToken, setTempToken] = useState('')
@@ -421,6 +433,14 @@ export default function LoginForm() {
 
   return (
     <AuthCard title="Login" onSubmit={handleSubmit}>
+      {needsSetup && (
+        <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent/10 p-3 text-xs text-foreground">
+          <span>First-time deployer? No administrator configured yet.</span>
+          <Link href="/setup" className="font-semibold text-accent hover:underline whitespace-nowrap">
+            Setup &rarr;
+          </Link>
+        </div>
+      )}
       <div className="mb-4 flex flex-col gap-4">
         <TextInput label="Email" value={email} type="email" autocomplete="email" onChange={setEmail} />
         <TextInput

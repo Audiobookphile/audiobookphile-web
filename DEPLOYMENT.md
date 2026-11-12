@@ -16,7 +16,14 @@ When deploying via the template clone flow:
    - `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_SECRET_KEY`
    - Database connection strings (`POSTGRES_URL`)
 3. The centralized resolver in `src/shared/utils/supabase/env.ts` automatically detects and maps these variables without requiring any manual variable renaming.
-4. Database initialization is performed by executing `supabase/schema.sql` in the new Supabase SQL Editor.
+4. **First-Time Setup Wizard (`/setup`)**:
+   - When visiting an uninitialized instance or before any administrator accounts exist, navigate to `/setup`.
+   - The setup diagnostic endpoint (`/api/setup/status`) verifies Supabase connectivity, table initialization, storage buckets (`covers`, `audio-files`, `backups`), and Edge API health.
+   - If tables are uninitialized, a 1-click link to the Supabase SQL editor is displayed (`https://supabase.com/dashboard/project/<ref>/sql/new`) to run `supabase/schema.sql`.
+   - The wizard allows creating the root administrator account directly. The database's `handle_new_user()` trigger automatically awards the `root` role to the first registered user (`user_type = 'root'`), ensuring zero-friction onboarding for template deployers.
+5. **Automated CI/CD**:
+   - To automate database schema migrations and Edge API deployment via GitHub Actions, configure `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_ID` in your repository secrets.
+   - The included `.github/workflows/deploy-supabase.yml` workflow automatically runs `bun run db:push` and `bun run functions:deploy`.
 
 ---
 

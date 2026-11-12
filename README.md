@@ -27,10 +27,13 @@ Audiobookphile is optimized for 1-click deployment on Vercel with automatic Supa
 1. **Click Deploy**: Click the **Deploy with Vercel** button above.
 2. **Auto-Map Supabase**: During the deployment flow, Vercel will prompt you to connect the official **Supabase Integration**. You can create a new Supabase project or select an existing one with one click.
 3. **Automated Credentials**: Vercel and Supabase automatically map and inject all required environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, database connection strings) into your project.
-4. **Initialize Database**:
-   - In your [Supabase Dashboard](https://supabase.com/dashboard), open the **SQL Editor**.
-   - Paste and run [`supabase/schema.sql`](./supabase/schema.sql) (or run `bun run supabase db push`).
-   - Your database schema, tables, and Row Level Security policies are immediately active!
+4. **First-Time Setup Wizard**:
+   - Once your deployment completes, visit your deployed site and follow the prompt or open `/setup`.
+   - The interactive setup wizard verifies database connectivity, confirms storage buckets, and provides a direct link to execute `supabase/schema.sql` in the Supabase SQL editor.
+   - You can then create your root administrator account directly through the setup wizard.
+5. **Database & Edge Functions Management**:
+   - For automated deployments of migrations and Edge Functions from GitHub Actions, add `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_ID` to your GitHub repository secrets.
+   - Or deploy from your terminal with `bun run db:push` and `bun run functions:deploy`.
 
 ## Environment Variables
 

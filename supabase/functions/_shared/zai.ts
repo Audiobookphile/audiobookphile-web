@@ -1,0 +1,685 @@
+// Shared Z.AI (GLM-4) AI integration module for sorting, matching, metadata enrichment, and chapter insights
+
+import { titlesLikelySameWork } from "./titleMatch.ts";
+
+function getEnvOrDefault(key: string, fallback: string): string {
+  try {
+    return Deno.env.get(key) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Chat model for all z.ai calls. glm-4-flash was retired upstream (API now
+ * returns error 1211 "model not found"), which silently degraded every AI
+ * feature to its heuristic fallback. Overridable via ZAI_MODEL edge secret.
+ */
+export const ZAI_CHAT_MODEL = getEnvOrDefault("ZAI_MODEL", "glm-4.5-air");
+
+const cacheMap = new Map<string, { result: any; expiresAt: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minute in-memory TTL
+
+function getCachedResult<T>(key: string): T | null {
+  const cached = cacheMap.get(key);
+  if (!cached) return null;
+  if (Date.now() > cached.expiresAt) {
+    cacheMap.delete(key);
+    return null;
+  }
+  return cached.result as T;
+}
+
+function setCachedResult<T>(key: string, result: T): void {
+  cacheMap.set(key, { result, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
+export function naturalSortFilenames(filenames: string[]): string[] {
+  return [...filenames].sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+  );
+}
+
+function extractJsonArray(text: string): string[] | null {
+  if (!text) return null;
+  let cleaned = text
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+  const match = cleaned.match(/\[[\s\S]*\]/);
+  if (!match) return null;
+  try {
+    const parsed = JSON.parse(match[0]);
+    if (
+      Array.isArray(parsed) && parsed.every((item) => typeof item === "string")
+    ) {
+      return parsed as string[];
+    }
+  } catch (_e) {
+    // Return null on parse error
+  }
+  return null;
+}
+
+/**
+ * Optimizes the sorting of audiobook chapter/track filenames into exact narrative chronological order using Z.AI (GLM-4).
+ * Handles multi-disc structures (Disc 1, CD 02), track numbers, multi-part chapters, prologues, epilogues, and bonus content.
+ */
+export async function sortFilesWithZAI(
+  filenames: string[],
+  zaiApiKey: string,
+): Promise<string[]> {
+  if (filenames.length <= 1) return filenames;
+  if (!zaiApiKey) return naturalSortFilenames(filenames);
+
+  const cacheKey = `sort_files_${filenames.join("||")}`;
+  const cached = getCachedResult<string[]>(cacheKey);
+  if (cached) {
+    console.info(
+      `[z.ai] Cache hit for ${filenames.length} track sequence sorting.`,
+    );
+    return cached;
+  }
+
+  try {
+    const prompt =
+      `You are an expert audiobook librarian. Sort these audiobook chapter/track filenames into exact narrative chronological reading order.
+Consider:
+1. Multi-disc structures (e.g., Disc 1, CD01, Disc 2) precede track/chapter numbers.
+2. Prologues, Prefaces, and Introductions come before Chapter 1.
+3. Track and Chapter numbers in sequence.
+4. Epilogues, Afterwords, and Bonus Tracks come after final chapters.
+
+Filenames to sort:
+${JSON.stringify(filenames)}
+
+Return ONLY a valid JSON array of strings containing every exact filename in chronological order: ["file1.mp3", "file2.mp3", ...]`;
+
+    const res = await fetch(
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${zaiApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: ZAI_CHAT_MODEL,
+          thinking: { type: "disabled" },
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.0,
+        }),
+        signal: AbortSignal.timeout(15_000),
+      },
+    );
+
+    if (res.ok) {
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content || "";
+      const sortedList = extractJsonArray(content);
+      if (
+        sortedList &&
+        sortedList.length === filenames.length &&
+        new Set(sortedList).size === filenames.length &&
+        filenames.every((f) => sortedList.includes(f))
+      ) {
+        console.info(
+          `[z.ai] Successfully optimized chapter sequence sorting for ${filenames.length} tracks.`,
+        );
+        setCachedResult(cacheKey, sortedList);
+        return sortedList;
+      }
+    }
+  } catch (err: unknown) {
+    const e = err as Error;
+    console.warn("[z.ai] Chapter sorting fallback to natural sort:", e.message);
+  }
+
+  return naturalSortFilenames(filenames);
+}
+
+/**
+ * Checks if an uploading book (title & author) semantically matches any existing book record in the library.
+ * Returns the matching existing item ID or null if no match.
+ */
+export async function matchExistingBookWithZAI(
+  uploadTitle: string,
+  uploadAuthor: string,
+  existingBooks: {
+    id: string;
+    title?: string | null;
+    author_names_first_last?: string | null;
+  }[],
+  zaiApiKey: string,
+): Promise<string | null> {
+  if (
+    !uploadTitle || !existingBooks || existingBooks.length === 0 || !zaiApiKey
+  ) {
+    return null;
+  }
+
+  const cacheKey =
+    `match_book_${uploadTitle.toLowerCase().trim()}||${uploadAuthor.toLowerCase().trim()}||${
+      existingBooks.map((b) => b.id).join(",")
+    }`;
+  const cachedMatch = getCachedResult<string | null>(cacheKey);
+  if (cachedMatch !== null) {
+    return cachedMatch;
+  }
+
+  try {
+    const candidates = existingBooks.map((b) => ({
+      id: b.id,
+      title: b.title || "",
+      author: b.author_names_first_last || "Unknown",
+    }));
+
+    const prompt =
+      `You are an authoritative digital librarian and metadata auditor.
+An audiobook file is being uploaded with:
+- Upload Title: "${uploadTitle}"
+- Upload Author: "${uploadAuthor || "Unknown"}"
+
+Compare it against the existing books in the library:
+${JSON.stringify(candidates)}
+
+CRITICAL RULES:
+1. Different books by the same author (e.g. "Sapiens" vs "Homo Deus" vs "21 Lessons for the 21st Century" by Yuval Noah Harari, or "The Hobbit" vs "The Fellowship of the Ring" by J.R.R. Tolkien) are DISTINCT INDEPENDENT WORKS and MUST NEVER MATCH.
+2. Different volumes in a series (e.g., Book 1 vs Book 2) MUST NEVER MATCH.
+3. ONLY match if the candidate represents the EXACT SAME book title (allowing for minor subtitle differences like "Sapiens" vs "Sapiens: A Brief History of Humankind", narrator tags, or punctuation differences).
+4. If it matches an existing book, return ONLY a JSON object: {"matchedId": "matching-candidate-id"}.
+5. If it is a distinct or new book, return ONLY: {"matchedId": null}`;
+
+    const res = await fetch(
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${zaiApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: ZAI_CHAT_MODEL,
+          thinking: { type: "disabled" },
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.0,
+        }),
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+
+    if (res.ok) {
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content || "";
+      const cleaned = content
+        .replace(/```json\s*/gi, "")
+        .replace(/```\s*/g, "")
+        .trim();
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) {
+        const result = JSON.parse(match[0]);
+        if (
+          result.matchedId &&
+          existingBooks.some((b) => b.id === result.matchedId)
+        ) {
+          // Deterministic gate: glm-4-flash sometimes matches distinct works by
+          // the same author (e.g. "Sapiens" → "Homo Deus") despite instructions.
+          // Never trust an LLM identity claim without title corroboration — a
+          // false merge corrupts the target book's metadata and playback state.
+          const matchedBook = existingBooks.find((b) =>
+            b.id === result.matchedId
+          );
+          if (
+            matchedBook?.title &&
+            !titlesLikelySameWork(uploadTitle, matchedBook.title)
+          ) {
+            console.warn(
+              `[z.ai] REJECTED LLM match "${uploadTitle}" → "${matchedBook.title}" (${result.matchedId}): titles are dissimilar`,
+            );
+            return null;
+          }
+          console.info(
+            `[z.ai] Matched uploading book "${uploadTitle}" to existing record ID: ${result.matchedId}`,
+          );
+          setCachedResult(cacheKey, result.matchedId);
+          return result.matchedId;
+        }
+      }
+    }
+  } catch (err: unknown) {
+    const e = err as Error;
+    console.warn("[z.ai] Book matching error:", e.message);
+  }
+
+  return null;
+}
+
+/**
+ * Optimizes the sorting of library items (books) by a given criteria (e.g. chronological reading order, series order).
+ * Guarantees all input IDs are present in the returned array.
+ */
+export async function smartSortLibraryItems(
+  items: {
+    id: string;
+    title?: string | null;
+    author_names_first_last?: string | null;
+    published_year?: string | null;
+  }[],
+  criteria: string,
+  zaiApiKey: string,
+): Promise<string[]> {
+  if (!items || items.length === 0) return [];
+  const defaultSortedIds = [...items].sort((a, b) =>
+    (a.title || "").localeCompare(b.title || "", undefined, { numeric: true })
+  ).map((i) => i.id);
+
+  if (items.length <= 1 || !zaiApiKey) return defaultSortedIds;
+
+  const cacheKey = `smart_sort_${criteria}||${
+    items.map((i) => i.id).join(",")
+  }`;
+  const cachedSort = getCachedResult<string[]>(cacheKey);
+  if (cachedSort) {
+    console.info(`[z.ai] Cache hit for smart sort by criteria: "${criteria}"`);
+    return cachedSort;
+  }
+
+  try {
+    const payload = items.map((i) => ({
+      id: i.id,
+      title: i.title || "",
+      author: i.author_names_first_last || "",
+      year: i.published_year || "",
+    }));
+
+    const prompt = `Given the following audiobooks:
+${JSON.stringify(payload)}
+
+Sort them intelligently according to criteria: "${criteria}".
+Return ONLY a valid JSON array of string IDs representing the sorted order: ["id1", "id2", ...]`;
+
+    const res = await fetch(
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${zaiApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: ZAI_CHAT_MODEL,
+          thinking: { type: "disabled" },
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.1,
+        }),
+      },
+    );
+
+    if (res.ok) {
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content || "";
+      const sortedIds = extractJsonArray(content);
+      if (sortedIds && sortedIds.length > 0) {
+        const missingIds = defaultSortedIds.filter((id) =>
+          !sortedIds.includes(id)
+        );
+        const validSortedIds = sortedIds.filter((id) =>
+          defaultSortedIds.includes(id)
+        );
+        const finalSorted = [...validSortedIds, ...missingIds];
+        setCachedResult(cacheKey, finalSorted);
+        return finalSorted;
+      }
+    }
+  } catch (err: unknown) {
+    const e = err as Error;
+    console.warn("[z.ai] Library smart-sort error:", e.message);
+  }
+
+  return defaultSortedIds;
+}
+
+/**
+ * Enriches audiobook metadata (canonical title, subtitle, description, genres, published year, narrator, series) using Z.AI (GLM-4).
+ */
+export async function enrichMetadataWithZAI(
+  title: string,
+  author: string,
+  zaiApiKey: string,
+): Promise<
+  {
+    title?: string;
+    author?: string;
+    subtitle?: string;
+    description?: string;
+    genres?: string[];
+    publishedYear?: string;
+    series?: string;
+    narrator?: string;
+  } | null
+> {
+  if (!title || !zaiApiKey) return null;
+
+  const cacheKey = `enrich_meta_${title.toLowerCase().trim()}||${
+    (author || "").toLowerCase().trim()
+  }`;
+  const cachedMeta = getCachedResult<
+    {
+      title?: string;
+      author?: string;
+      subtitle?: string;
+      description?: string;
+      genres?: string[];
+      publishedYear?: string;
+      series?: string;
+      narrator?: string;
+    }
+  >(cacheKey);
+  if (cachedMeta) return cachedMeta;
+
+  try {
+    const res = await fetch(
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${zaiApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: ZAI_CHAT_MODEL,
+          thinking: { type: "disabled" },
+          messages: [
+            {
+              role: "user",
+              content:
+                `Provide accurate executive metadata for the specific audiobook "${title}" by author "${
+                  author || "Unknown"
+                }".
+Ensure you distinguish accurately between different works by the same author (e.g., Sapiens vs Homo Deus vs 21 Lessons for the 21st Century).
+
+Return ONLY a JSON object with:
+{
+  "title": "Exact Main Book Title",
+  "subtitle": "Subtitle or empty string",
+  "author": "Author Full Name",
+  "description": "2-3 paragraph compelling summary",
+  "genres": ["Genre1", "Genre2", "Genre3"],
+  "publishedYear": "YYYY",
+  "series": "Series Name (or empty string)",
+  "narrator": "Narrator Name (if known, or empty string)"
+}`,
+            },
+          ],
+          temperature: 0.1,
+        }),
+      },
+    );
+
+    if (res.ok) {
+      const aiData = await res.json();
+      const text = aiData.choices?.[0]?.message?.content || "";
+      const cleaned = text
+        .replace(/```json\s*/gi, "")
+        .replace(/```\s*/g, "")
+        .trim();
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) {
+        const result = JSON.parse(match[0]);
+
+        // Deterministic gate: if the model returned a title for a DIFFERENT
+        // work, discard the ENTIRE enrichment. Everything else in the payload
+        // (description, genres, year, narrator) was written about that wrong
+        // book — passing it through is how a Homo Deus description ends up on
+        // a Sapiens record. Enrichment may describe, but must never
+        // re-identify (or mis-describe) the book.
+        const enrichedTitle = typeof result.title === "string"
+          ? result.title.trim()
+          : "";
+        if (enrichedTitle && !titlesLikelySameWork(title, enrichedTitle)) {
+          console.warn(
+            `[z.ai] REJECTED enrichment for "${title}": model described a different work "${enrichedTitle}"`,
+          );
+          // Deliberately NOT cached: a rejected attempt means the model
+          // misidentified the work; a retry may succeed. Caching the rejection
+          // would poison the 5-minute window against recovery.
+          return {};
+        }
+
+        // Field sanity: the model occasionally emits malformed values that
+        // would render as broken UI (a "year" of "recent", a one-word
+        // "description", non-string genres). Drop them — callers keep their
+        // previous values rather than persisting junk.
+        if (
+          typeof result.publishedYear === "string" &&
+          !/^\d{4}$/.test(result.publishedYear.trim())
+        ) {
+          delete result.publishedYear;
+        }
+        if (typeof result.description === "string") {
+          const trimmed = result.description.trim();
+          if (trimmed.length < 40 || trimmed.length > 5000) {
+            delete result.description;
+          }
+        }
+        if (Array.isArray(result.genres)) {
+          result.genres = result.genres
+            .filter((g: unknown) =>
+              typeof g === "string" && g.length > 0 && g.length <= 60
+            )
+            .slice(0, 6);
+        } else if (result.genres !== undefined) {
+          delete result.genres;
+        }
+
+        setCachedResult(cacheKey, result);
+        return result;
+      }
+    }
+  } catch (err: unknown) {
+    const e = err as Error;
+    console.warn("[z.ai] Metadata enrichment error:", e.message);
+  }
+
+  return null;
+}
+
+/**
+ * Generates chapter executive summary, key takeaways, and mood insights using Z.AI (GLM-4).
+ */
+export async function generateChapterAIInsights(
+  title: string,
+  author: string,
+  chapterTitle: string,
+  chapterIndex: number | undefined,
+  zaiApiKey: string,
+): Promise<{ summary: string; keyTakeaways: string[]; mood: string }> {
+  const fallback = {
+    summary: chapterTitle,
+    keyTakeaways: [],
+    mood: "Engaging",
+  };
+  if (!title || !chapterTitle || !zaiApiKey) return fallback;
+
+  const cacheKey = `chapter_insights_${title.toLowerCase().trim()}||${
+    chapterIndex ?? 0
+  }||${chapterTitle.toLowerCase().trim()}`;
+  const cachedInsights = getCachedResult<
+    { summary: string; keyTakeaways: string[]; mood: string }
+  >(cacheKey);
+  if (cachedInsights) return cachedInsights;
+
+  try {
+    const prompt = `You are an expert literary scholar and audiobook companion. 
+Provide a concise, high-level executive summary and key takeaways for Chapter ${
+      chapterIndex ?? ""
+    }: "${chapterTitle}" from the audiobook "${title}" by ${
+      author || "Unknown Author"
+    }.
+
+Format response in valid JSON with key "summary" (2-3 sentences), "keyTakeaways" (array of 3 bullet strings), and "mood" (string).`;
+
+    const res = await fetch(
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${zaiApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: ZAI_CHAT_MODEL,
+          thinking: { type: "disabled" },
+          messages: [
+            {
+              role: "system",
+              content: "You respond strictly in valid JSON format.",
+            },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.3,
+        }),
+      },
+    );
+
+    if (res.ok) {
+      const zaiData = await res.json();
+      const rawContent = zaiData.choices?.[0]?.message?.content ?? "{}";
+      const cleaned = rawContent
+        .replace(/```json\s*/gi, "")
+        .replace(/```\s*/g, "")
+        .trim();
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        const result = {
+          summary: parsed.summary || fallback.summary,
+          keyTakeaways: Array.isArray(parsed.keyTakeaways)
+            ? parsed.keyTakeaways
+            : [],
+          mood: parsed.mood || "Engaging",
+        };
+        setCachedResult(cacheKey, result);
+        return result;
+      }
+    }
+  } catch (err: unknown) {
+    const e = err as Error;
+    console.warn("[z.ai] Chapter AI insights error:", e.message);
+  }
+
+  return fallback;
+}
+
+/**
+ * Generates full book executive summary, key takeaways, emotional mood, and thematic tags using Z.AI (GLM-4).
+ */
+export async function generateBookAIInsights(
+  title: string,
+  author: string | null | undefined,
+  zaiApiKey: string,
+): Promise<{
+  summary: string;
+  keyTakeaways: string[];
+  mood: string;
+  themes: string[];
+}> {
+  const authorName = author || "Unknown Author";
+  const fallbackSummary =
+    `"${title}" by ${authorName} explores key narrative themes of human resilience, transformation, and self-discovery. Through intricate storytelling, it weaves together emotional depth and thought-provoking dialogue that resonates deeply with listeners.`;
+  const fallbackTakeaways = [
+    "Core Theme: Growth through challenge and adaptability.",
+    "Character Dynamics: Complex relationships reveal deeper human truths.",
+    "Key Lesson: Perspective shapes our understanding of choices and outcomes.",
+  ];
+  const fallbackMood = "Inspiring & Thought-Provoking";
+  const fallbackThemes = ["Resilience", "Identity", "Transformation"];
+
+  const fallback = {
+    summary: fallbackSummary,
+    keyTakeaways: fallbackTakeaways,
+    mood: fallbackMood,
+    themes: fallbackThemes,
+  };
+
+  if (!title) return fallback;
+
+  const cacheKey =
+    `book_insights_${title.toLowerCase().trim()}||${authorName.toLowerCase().trim()}`;
+  const cachedInsights = getCachedResult<{
+    summary: string;
+    keyTakeaways: string[];
+    mood: string;
+    themes: string[];
+  }>(cacheKey);
+  if (cachedInsights) return cachedInsights;
+
+  if (!zaiApiKey) return fallback;
+
+  try {
+    const prompt = `You are an expert literary scholar and audiobook critic.
+Provide a rich, structured AI insight summary for the complete audiobook "${title}" by ${authorName}.
+
+Requirements:
+- "summary": A 3-4 sentence comprehensive executive summary of the overall narrative, central thesis, or core story arcs.
+- "keyTakeaways": Array of 3-5 concise bullet points highlighting key insights, lessons, or memorable story beats.
+- "mood": String (2-3 words) describing the emotional tone/mood of the book (e.g. "Inspiring & Philosophical", "Dark & Suspenseful", "Witty & Irreverent").
+- "themes": Array of 3-5 single-word or short phrase thematic tags (e.g. ["Resilience", "Humor", "Society", "Mortality"]).
+
+Format response strictly in valid JSON with keys: "summary", "keyTakeaways", "mood", "themes".`;
+
+    const res = await fetch(
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${zaiApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: ZAI_CHAT_MODEL,
+          thinking: { type: "disabled" },
+          messages: [
+            {
+              role: "system",
+              content: "You respond strictly in valid JSON format.",
+            },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.3,
+        }),
+      },
+    );
+
+    if (res.ok) {
+      const zaiData = await res.json();
+      const rawContent = zaiData.choices?.[0]?.message?.content ?? "{}";
+      const cleaned = rawContent
+        .replace(/```json\s*/gi, "")
+        .replace(/```\s*/g, "")
+        .trim();
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        const result = {
+          summary: parsed.summary || fallbackSummary,
+          keyTakeaways:
+            Array.isArray(parsed.keyTakeaways) && parsed.keyTakeaways.length > 0
+              ? parsed.keyTakeaways
+              : fallbackTakeaways,
+          mood: parsed.mood || fallbackMood,
+          themes: Array.isArray(parsed.themes) && parsed.themes.length > 0
+            ? parsed.themes
+            : fallbackThemes,
+        };
+        setCachedResult(cacheKey, result);
+        return result;
+      }
+    }
+  } catch (err: unknown) {
+    const e = err as Error;
+    console.warn("[z.ai] Book AI insights error:", e.message);
+  }
+
+  return fallback;
+}

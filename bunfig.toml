@@ -264,7 +264,7 @@ tsconfig = "./tsconfig.json"
 # reporting is loud rather than silent: it lints a file with a deliberate
 # violation and requires the rule to fire. A lint run that reports nothing
 # is otherwise indistinguishable from a lint run with nothing to report.
-ignorePatterns = ["next-env.d.ts", "public/**", "src/types/supabase.ts"]
+ignorePatterns = ["next-env.d.ts", "public/**", "src/types/supabase.ts", "supabase/**"]
 
 # React 19 is in dependencies; declare the version explicitly so rules that
 # depend on it (jsx-runtime, the new JSX transform) do not have to guess.
@@ -444,7 +444,7 @@ sortTailwindcss = { stylesheet = "./src/assets/globals.css" }
 # would reflow every row of a table on each cell edit and turn a one-line
 # change into a whole-table diff. The docs in this repository are hand
 # maintained with aligned tables, and that alignment is worth keeping.
-ignorePatterns = ["next-env.d.ts", ".next/**", "node_modules/**", "**/*.md"]
+ignorePatterns = ["next-env.d.ts", ".next/**", "node_modules/**", "**/*.md", "supabase/**"]
 
 # ── Test runner ────────────────────────────────────────────────────────────
 [test]
@@ -465,7 +465,7 @@ root = "."
 # Playwright specs are driven by `bun run test`, not by the unit runner.
 # Without this, `bun test` would try to execute the .spec.ts files as unit
 # tests and fail on the missing Playwright fixture registration.
-pathIgnorePatterns = ["tests/e2e/**", "node_modules/**", ".next/**", "playwright-report/**"]
+pathIgnorePatterns = ["tests/e2e/**", "node_modules/**", ".next/**", "playwright-report/**", "supabase/**"]
 randomize = true
 
 # Test files themselves are not part of the coverage denominator.
