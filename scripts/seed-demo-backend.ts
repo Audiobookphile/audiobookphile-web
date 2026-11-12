@@ -54,7 +54,8 @@ const BOOKS: RealDemoBook[] = [
     narratorName: 'Alex Foster (LibriVox)',
     description:
       'The Time Traveller, a brilliant Victorian scientist, journeys into the fourth dimension to the year 802,701 AD. He discovers humanity divided into two divergent evolutionary paths: the gentle, child-like Eloi living in idyllic gardens, and the sinister, nocturnal Morlocks labouring in the subterranean depths. Narrated by Alex Foster.',
-    coverUrl: 'https://archive.org/download/time_machine_0805_librivox/Time_Machine_1112.jpg',
+    coverUrl:
+      'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/91/d0/57/91d057cb-f593-41df-b116-6fe6bb4fd2bd/9781106701701_cover.jpg/1000x1000bb.jpg',
     audioUrl: 'https://archive.org/download/time_machine_0805_librivox/timemachinewells_01_ae_64kb.mp3',
     trackTitle: 'Chapter 01 - The Time Traveller Expounds',
   },
@@ -70,7 +71,8 @@ const BOOKS: RealDemoBook[] = [
     narratorName: 'David Clarke (LibriVox)',
     description:
       "The quintessential adventure of the world's most famous consulting detective, Sherlock Holmes, and his companion Dr. John Watson. Holmes is engaged by the King of Bohemia to recover a compromising photograph from the formidable opera singer and adventuress Irene Adler. Narrated by David Clarke.",
-    coverUrl: 'https://archive.org/download/adventures_holmes/Adventures_of_Sherlock_Holmes_1403.jpg',
+    coverUrl:
+      'https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/6b/9b/eb/6b9beb31-3bbf-4035-933f-2abffd5280e0/9789895620906.jpg/1000x1000bb.jpg',
     audioUrl: 'https://archive.org/download/adventures_holmes/adventureholmes_01_doyle_64kb.mp3',
     trackTitle: '01 - A Scandal in Bohemia',
   },
@@ -86,7 +88,8 @@ const BOOKS: RealDemoBook[] = [
     narratorName: 'Cori Samuel (LibriVox)',
     description:
       "Mary Shelley's seminal gothic tragedy. Victor Frankenstein, consumed by the desire to unravel the mystery of life, constructs a sentient being from deceased human remains, only to recoil in terror from the consequences of his ambition. Narrated by Cori Samuel.",
-    coverUrl: 'https://archive.org/download/frankenstein_cs_librivox/Frankenstein_1111.jpg',
+    coverUrl:
+      'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/b3/c2/3f/b3c23fe9-6b33-e629-e573-375baa59762b/9781106701718_cover.jpg/1000x1000bb.jpg',
     audioUrl: 'https://archive.org/download/frankenstein_cs_librivox/frankenstein_01_shelley_64kb.mp3',
     trackTitle: '01 - Dedication and Preface',
   },
@@ -102,7 +105,8 @@ const BOOKS: RealDemoBook[] = [
     narratorName: 'Moira Fogarty (LibriVox)',
     description:
       'The foundational military treatise by ancient Chinese strategist Sun Tzu, translated with authoritative notes by Lionel Giles. Composed of timeless maxims on planning, maneuvering, adaptation, and decisive leadership. Narrated by Moira Fogarty.',
-    coverUrl: 'https://archive.org/download/art_of_war_librivox/Art_War_1107.jpg',
+    coverUrl:
+      'https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/be/23/9e/be239e6e-752d-9b6d-d284-59989052e8ad/9781596599574.jpg/1000x1000bb.jpg',
     audioUrl: 'https://archive.org/download/art_of_war_librivox/art_of_war_01-02_sun_tzu_64kb.mp3',
     trackTitle: '01 - Laying Plans & Waging War',
   },
