@@ -55,3 +55,4 @@ When `apiFetch` receives a `401 Unauthorized` response:
 Audiobook playback state synchronizes across browser tabs using the `BroadcastChannel` API:
 - When a user starts playback in Tab B, Tab A pauses immediately to prevent dual audio playback.
 - Progress updates are broadcast so all tabs display identical elapsed timestamps.
+

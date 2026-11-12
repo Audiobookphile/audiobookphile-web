@@ -87,3 +87,4 @@ async rewrites() {
 ```
 
 This pattern guarantees that the browser always talks to the origin host on `/api/...`, making OAuth cookies and session headers work identically in local development and production.
+

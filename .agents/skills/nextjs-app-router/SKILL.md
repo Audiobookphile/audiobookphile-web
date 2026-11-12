@@ -28,3 +28,4 @@ description: Guidelines for Next.js 16 App Router architecture, Server Actions, 
 4. **Server Actions with Optimistic UI**:
    - Form submissions, bookmarks, and shelf additions use React 19 Server Actions (`'use server'`).
    - Coordinate client state updates with `useOptimistic` for instant feedback.
+

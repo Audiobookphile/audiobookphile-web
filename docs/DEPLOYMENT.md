@@ -41,3 +41,4 @@ When deploying against a fresh Supabase database:
 | `NEXT_PUBLIC_POSTHOG_HOST` | *Optional* | PostHog ingestion host (defaults to `https://us.i.posthog.com`). |
 | `NEXT_PUBLIC_SENTRY_DSN` | *Optional* | Client-side Sentry error monitoring DSN. |
 | `SENTRY_DSN` | *Optional* | Server-side Sentry error monitoring DSN. |
+

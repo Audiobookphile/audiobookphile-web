@@ -34,3 +34,4 @@ This repository runs exclusively on **Bun**. Never invoke `npm`, `npx`, `yarn`, 
    ```
 5. **Zero Node.js Overhead**:
    - Do not add Node.js polyfills or dependencies requiring native C++ Node addons unless verified with Bun.
+

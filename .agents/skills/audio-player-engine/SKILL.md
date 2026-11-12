@@ -23,3 +23,4 @@ The audio player engine is the core streaming runtime of `audiobookphile-web`.
 4. **Cover Art Cache-Busting**:
    - Audio cover URLs route through `/api/items/:id/cover`.
    - Stable cache-busting uses `updatedAt` timestamps (never `Date.now()`) to ensure reliable browser caching while avoiding stale images.
+

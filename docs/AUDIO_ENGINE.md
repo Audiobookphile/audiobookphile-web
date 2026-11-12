@@ -76,3 +76,4 @@ if ('mediaSession' in navigator) {
 When switching between books rapidly, in-flight progress synchronization requests for previous titles can arrive out of order.
 
 The `isStaleSessionResponse` utility checks incoming response IDs against the currently playing item. Any response belonging to an older session is silently ignored, preventing playback state cross-wiring.
+

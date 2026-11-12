@@ -25,3 +25,4 @@ bun run build        # Production Next.js build
 bun run lint         # Lint codebase
 bun run format       # Format codebase
 ```
+
