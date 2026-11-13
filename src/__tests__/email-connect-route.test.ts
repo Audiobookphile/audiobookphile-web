@@ -47,3 +47,4 @@ describe('POST /api/setup/email-connect', () => {
     expect(data.deepLink).toContain('autoLogin=1')
   })
 })
+
