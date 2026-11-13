@@ -42,6 +42,32 @@ export const GUARD_FILES: string[] = [
 ]
 
 /**
+ * Runtime files that are allowed to use one Node API, with the reason.
+ *
+ * This is not the same thing as `GUARD_FILES`. A guard file is excluded
+ * because it has to spell out every API it looks for. An allowance is a
+ * deliberate exception for code that genuinely cannot use the Bun
+ * equivalent on every target it runs on.
+ *
+ * Keep the list short, and keep the reason specific enough that removing the
+ * exception is an obvious decision once the constraint is gone.
+ */
+export const NODE_API_ALLOWANCES: { file: string; api: string; reason: string }[] = [
+  {
+    file: 'src/features/auth/actions/setupActions.ts',
+    api: 'a node: import',
+    reason:
+      'Server-only schema read. Vercel runs the Next.js server on Node, where Bun.file does not exist, so node:fs is the portable choice. next.config.ts adds supabase/schema.sql to the server trace.',
+  },
+]
+
+/**
+ * Whether a finding in `file` is covered by an explicit allowance.
+ */
+export const isNodeApiAllowed = (file: string, api: string): boolean =>
+  NODE_API_ALLOWANCES.some((allowance) => file.endsWith(allowance.file) && allowance.api === api)
+
+/**
  * The Node builtins a module can import by their bare name.
  *
  * The linter's `import/no-nodejs-modules` rule covers the full list of

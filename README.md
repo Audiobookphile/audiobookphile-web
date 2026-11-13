@@ -4,7 +4,7 @@ A serverless, open-source audiobook and podcast client. Built with Next.js 16, S
 
 Audiobookphile is designed for users who want a beautiful, premium "Liquid Glass" UI for their audiobooks, without the hassle of managing servers or docker containers. It's an excellent, zero-maintenance alternative to traditional self-hosted solutions.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAudiobookphile%2Faudiobookphile-web&project-name=audiobookphile&repository-name=audiobookphile-web&demo-title=Audiobookphile&demo-description=The%20Liquid%20Glass%20Audiobook%20Streaming%20Platform&demo-url=https%3A%2F%2Faudiobookphile.app&integration-ids=oac_V3R1GIpkoZwAOoGGteLHPUWa&skippable-integrations=1&env=NEXT_PUBLIC_SITE_URL&envDescription=Optional%3A%20Canonical%20public%20URL%20for%20OAuth%20redirects%20(defaults%20to%20your%20Vercel%20deployment%20domain)&envLink=https%3A%2F%2Fgithub.com%2FAudiobookphile%2Faudiobookphile-web%23environment-variables)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAudiobookphile%2Faudiobookphile-web&project-name=audiobookphile&repository-name=audiobookphile-web&demo-title=Audiobookphile&demo-description=The%20Liquid%20Glass%20Audiobook%20Streaming%20Platform&demo-url=https%3A%2F%2Faudiobookphile.app&integration-ids=oac_VqOgBHqhEoFTPzGkPd7L0iH6&skippable-integrations=1&env=NEXT_PUBLIC_SITE_URL&envDescription=Optional%3A%20Canonical%20public%20URL%20for%20OAuth%20redirects%20(defaults%20to%20your%20Vercel%20deployment%20domain)&envLink=https%3A%2F%2Fgithub.com%2FAudiobookphile%2Faudiobookphile-web%23environment-variables)
 
 > 🌟 **Live Demonstration**: [**audiobookphile.app**](https://audiobookphile.app)  
 > Experience the fully deployed web app live with 1-click demo access (`demo@audiobookphile.app`). Scan the on-screen QR code to map the live server directly to your iOS / Android mobile client.
@@ -30,13 +30,20 @@ Audiobookphile is optimized for 1-click deployment on Vercel with automatic Supa
 1. **Click Deploy**: Click the **Deploy with Vercel** button above.
 2. **Auto-Map Supabase**: During the deployment flow, Vercel will prompt you to connect the official **Supabase Integration**. You can create a new Supabase project or select an existing one with one click.
 3. **Automated Credentials**: Vercel and Supabase automatically map and inject all required environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, database connection strings) into your project.
-4. **First-Time Setup Wizard**:
+4. **Configure Supabase Auth URLs**: In your Supabase project open **Authentication → URL Configuration**. Set **Site URL** to your deployment URL, and add `https://<your-domain>/auth/callback` plus `https://<your-domain>/auth/confirm` to **Redirect URLs**. The Vercel integration sets up preview URLs, not your production domain.
+5. **First-Time Setup Wizard**:
    - Once your deployment completes, visit your deployed site and follow the prompt or open `/setup`.
-   - The interactive setup wizard verifies database connectivity, confirms storage buckets, and provides a direct link to execute `supabase/schema.sql` in the Supabase SQL editor.
-   - You can then create your root administrator account directly through the setup wizard.
-5. **Database & Edge Functions Management**:
-   - For automated deployments of migrations and Edge Functions from GitHub Actions, add `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_ID` to your GitHub repository secrets.
-   - Or deploy from your terminal with `bun run db:push` and `bun run functions:deploy`.
+   - The wizard verifies database connectivity and storage, bootstraps `supabase/schema.sql`, and creates your root administrator account.
+6. **Deploy the Edge API (required)**: every `/api/*` request — including `/api/login` — is rewritten to the `api` Edge Function. There is no PostgREST fallback, so the app cannot log in or load a library until it is deployed.
+   - From your machine: `SUPABASE_ACCESS_TOKEN=… SUPABASE_PROJECT_ID=… bun run db:push && bun run functions:deploy`
+   - Or enable the **Deploy Supabase (Migrations & Edge API)** GitHub workflow by adding `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_ID` to your repository secrets. The workflow runs on hosted `ubuntu-latest` by default; set the `SUPABASE_RUNNER` repository variable (a JSON array such as `["self-hosted","Linux","ram-3g"]`) to use your own runners.
+7. **Set the email-link origin**: add `SITE_URL=https://<your-domain>` to **Supabase → Edge Functions → Secrets**. Server actions also send an `X-Web-Origin` header, but the secret is what keeps server-generated invite, magic-link, and password-reset links correct for every client.
+8. **Connect Your Native iOS Client (Automatic Onboarding Email)**:
+   - Upon creating your root administrator account in the `/setup` wizard, Audiobookphile automatically dispatches a deployment welcome email with your server address, credentials, and a 1-click mobile deep link.
+   - Open that email on your iPhone or iPad and tap **Connect Audiobookphile iOS Client** to automatically configure the server in the downloaded app with zero typing.
+   - You can also scan the interactive QR code from the setup completion screen, `/login`, or `/account` at any time.
+
+> **Choose one schema path.** The setup wizard applies `supabase/schema.sql` (a snapshot that does not record `supabase_migrations` history). If you instead initialize with `bun run db:push`, do not run the wizard's bootstrap afterwards — and vice versa. Running both replays every migration against an already-provisioned database.
 
 ## Environment Variables
 
@@ -55,7 +62,9 @@ Production and CI values are configured on the platforms (Vercel env vars, Supab
 | `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase project URL                                                                                    |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon/public key                                                                                |
 | `SUPABASE_SERVICE_ROLE_KEY`     | Server-side service role key (never expose to browser)                                                       |
+| `POSTGRES_URL_NON_POOLING`      | Direct Postgres URL used by the setup wizard for schema DDL (injected by the Supabase integration)            |
 | `NEXT_PUBLIC_SITE_URL`          | Public URL of your app (required for OAuth redirects)                                                        |
+| `SITE_URL`                      | **Edge Function secret** used for invite/reset/magic-link origins — set it in the Supabase dashboard          |
 | `NEXT_PUBLIC_POSTHOG_KEY`       | (Optional) PostHog analytics + feature flags (flags use `useFeatureFlag`, see `src/shared/lib/analytics.ts`) |
 | `NEXT_PUBLIC_POSTHOG_HOST`      | (Optional) PostHog ingest host (default `https://us.i.posthog.com`)                                          |
 
@@ -137,14 +146,15 @@ To enable this, provide the `B2_*` environment variables. The client and backend
 
 ## CI/CD (GitHub Actions)
 
-The repository comes pre-configured with two GitHub Actions workflows:
+GitHub Actions are **optional** for deploying Audiobookphile: Vercel's Git integration builds and deploys the web app on its own, and the [first-time setup guide](#one-click-deployment-vercel-template) covers the Supabase side.
 
-1. **Deploy Next.js Web App (`deploy-web.yml`)**: On pushes to `main` and PRs, runs the full verification pipeline — the tsrs type gate, Bun's own checker as a second opinion, `bun lint`, `bun fmt --check`, the unit suite, the production dependency audit, the deploy file check, a production build, and the client bundle budget. A separate job then runs Lighthouse CI. On `main` pushes it deploys a preview to Vercel via the Vercel CLI, runs the end-to-end suite against that preview, and promotes it to production only if the suite passes.
-2. **CodeQL Security Scan (`codeql.yml`)**: Static security analysis on pushes, PRs, and a weekly schedule.
+The repository ships these workflows:
 
-Both workflows install the Bun **canary**, not a pinned version: `bun lint` and `bun fmt` exist only in canary builds, so a stable Bun cannot run this pipeline at all.
+- **Deploy Supabase (`deploy-supabase.yml`)**: on changes under `supabase/`, pushes migrations and deploys the unified `api` Edge Function. Runs on hosted `ubuntu-latest` by default; set the `SUPABASE_RUNNER` repository variable to a JSON array (e.g. `["self-hosted","Linux","ram-3g"]`) to use your own runners. Skips cleanly when `SUPABASE_ACCESS_TOKEN` or `SUPABASE_PROJECT_ID` is absent.
+- **CI Web Verification (`ci-web.yml`)**: source security scan, dependency audit and lockfile scan, lint with its canary and debt ratchet, Node API scan, type gate, unit tests, deploy-file check, and production build. Runs on hosted `ubuntu-latest` by default; set the `CI_RUNNER` repository variable to a JSON array (e.g. `["self-hosted","Linux","ram-3g"]`) to use your own runners.
+- **PR Pipeline, Release, Error Remediation**: run on hosted `ubuntu-latest`. **CodeQL** and **Deploy Web** are parked on manual dispatch and still name the self-hosted fleet; re-point their `runs-on:` at hosted runners if you want them in a fork.
 
-Ensure you configure your GitHub Repository Secrets (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `LHCI_GITHUB_APP_TOKEN`, `PLAYWRIGHT_ADMIN_EMAIL`, `PLAYWRIGHT_ADMIN_PASSWORD`, `PLAYWRIGHT_MEMBER_EMAIL`, `PLAYWRIGHT_MEMBER_PASSWORD`) to enable production deploys and E2E verification.
+The Bun jobs install the Bun **canary**, not a pinned version: `bun lint` and `bun fmt` exist only in canary builds, so a stable Bun cannot run them.
 
 ## Container Images (Local / Self-Hosted)
 

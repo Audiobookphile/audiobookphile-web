@@ -23,7 +23,7 @@
  * definition of what a Node API is.
  */
 
-import { findNodeApis, isGuardFile, NODE_API_MESSAGE } from './node-api'
+import { findNodeApis, isGuardFile, isNodeApiAllowed, NODE_API_MESSAGE } from './node-api'
 
 const REPO_ROOT = `${import.meta.dir}/..`
 
@@ -68,6 +68,7 @@ async function main(): Promise<void> {
     scanned++
 
     for (const finding of findNodeApis(content)) {
+      if (isNodeApiAllowed(relative, finding.api)) continue
       findings.push(`${relative}:${finding.line}: ${finding.text}`)
     }
   }

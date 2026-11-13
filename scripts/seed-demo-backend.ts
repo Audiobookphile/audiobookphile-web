@@ -7,14 +7,17 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { readFileSync, statSync, existsSync } from 'fs'
-import { join } from 'path'
-import { execSync } from 'child_process'
 
 const SUPABASE_URL = process.env.DEMO_SUPABASE_URL || 'https://trbxxtanyichimxlbmhy.supabase.co'
-const SERVICE_KEY =
-  process.env.DEMO_SERVICE_ROLE_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyYnh4dGFueWljaGlteGxibWh5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NDUyMzEwNiwiZXhwIjoyMTEwMDk5MTA2fQ.P0QjCBpbWIiFGs3vkXDzq4_YShwQAb5hZsTHKj4rzHI'
+const SERVICE_KEY = process.env.DEMO_SERVICE_ROLE_KEY
+
+if (!SERVICE_KEY) {
+  console.error(
+    'DEMO_SERVICE_ROLE_KEY is required. Export it for this run (or put it in a git-ignored env file) — ' +
+      'the service-role key is deliberately not committed to the repository.'
+  )
+  process.exit(1)
+}
 
 console.log('🚀 Connecting to Demo Supabase backend:', SUPABASE_URL)
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
@@ -113,12 +116,19 @@ const BOOKS: RealDemoBook[] = [
 ]
 
 async function downloadFile(url: string, destPath: string): Promise<void> {
-  if (existsSync(destPath) && statSync(destPath).size > 1000) {
-    console.log(`  ⚡ Cache hit: ${destPath} (${statSync(destPath).size} bytes)`)
+  const file = Bun.file(destPath)
+  if ((await file.exists()) && file.size > 1000) {
+    console.log(`  ⚡ Cache hit: ${destPath} (${file.size} bytes)`)
     return
   }
   console.log(`  📥 Downloading: ${url}`)
-  execSync(`curl -sL --retry 3 "${url}" -o "${destPath}"`)
+  const result = Bun.spawnSync(['curl', '-sL', '--retry', '3', url, '-o', destPath], {
+    stdout: 'inherit',
+    stderr: 'inherit',
+  })
+  if (result.exitCode !== 0) {
+    throw new Error(`curl failed for ${url} (exit ${result.exitCode})`)
+  }
 }
 
 async function main() {
@@ -163,7 +173,10 @@ async function main() {
   }
 
   const tmpDir = '/tmp/audiobookphile_real_demo'
-  execSync(`mkdir -p ${tmpDir}`)
+  const mkdir = Bun.spawnSync(['mkdir', '-p', tmpDir])
+  if (mkdir.exitCode !== 0) {
+    throw new Error(`Could not create ${tmpDir} (exit ${mkdir.exitCode})`)
+  }
 
   console.log('\n--- Step 2: Seed Real Audiobook Demos with Real Covers ---')
   for (const book of BOOKS) {
@@ -179,9 +192,9 @@ async function main() {
     })
 
     // 2. Real cover download & storage upload
-    const coverLocalPath = join(tmpDir, `${book.id}_cover.jpg`)
+    const coverLocalPath = `${tmpDir}/${book.id}_cover.jpg`
     await downloadFile(book.coverUrl, coverLocalPath)
-    const coverBytes = readFileSync(coverLocalPath)
+    const coverBytes = await Bun.file(coverLocalPath).arrayBuffer()
     const coverStoragePath = `${book.id}/cover.jpg`
 
     const { error: coverErr } = await supabase.storage.from('covers').upload(coverStoragePath, coverBytes, {
@@ -191,28 +204,29 @@ async function main() {
     if (coverErr) {
       console.warn('  ⚠️ Cover upload warning:', coverErr.message)
     } else {
-      console.log(`  🖼️  Real cover uploaded -> covers/${coverStoragePath} (${coverBytes.length} bytes)`)
+      console.log(`  🖼️  Real cover uploaded -> covers/${coverStoragePath} (${coverBytes.byteLength} bytes)`)
     }
 
     // 3. Real audio download & storage upload
-    const audioLocalPath = join(tmpDir, `${book.id}_audio.mp3`)
+    const audioLocalPath = `${tmpDir}/${book.id}_audio.mp3`
     await downloadFile(book.audioUrl, audioLocalPath)
-    const audioBytes = readFileSync(audioLocalPath)
-    const audioStat = statSync(audioLocalPath)
+    const audioBytes = await Bun.file(audioLocalPath).arrayBuffer()
+    const audioSize = Bun.file(audioLocalPath).size
     const audioStoragePath = `${book.id}/track-01.mp3`
 
     let duration = 300
     try {
-      const afinfoOut = execSync(`afinfo "${audioLocalPath}"`).toString()
-      const durMatch = afinfoOut.match(/estimated duration:\s*([0-9.]+)\s*sec/i)
+      const afinfo = Bun.spawnSync(['afinfo', audioLocalPath])
+      if (afinfo.exitCode !== 0) throw new Error(`afinfo exited ${afinfo.exitCode}`)
+      const durMatch = afinfo.stdout.toString().match(/estimated duration:\s*([0-9.]+)\s*sec/i)
       if (durMatch && durMatch[1]) {
         duration = parseFloat(durMatch[1])
       }
     } catch {
-      duration = Math.round(audioStat.size / 8000)
+      duration = Math.round(audioSize / 8000)
     }
 
-    console.log(`  🎵 Real audio ready: ${audioStat.size} bytes (${duration.toFixed(1)}s, ${book.narratorName})`)
+    console.log(`  🎵 Real audio ready: ${audioSize} bytes (${duration.toFixed(1)}s, ${book.narratorName})`)
 
     const { error: audioErr } = await supabase.storage.from('audio-files').upload(audioStoragePath, audioBytes, {
       contentType: 'audio/mpeg',
@@ -229,7 +243,7 @@ async function main() {
       {
         index: 0,
         ino: `${book.id}-track-01`,
-        size: audioStat.size,
+        size: audioSize,
         duration: duration,
         mimeType: 'audio/mpeg',
         codec: 'mp3',
@@ -239,7 +253,7 @@ async function main() {
           ext: '.mp3',
           path: `supabase://${audioStoragePath}`,
           relPath: `${book.title}/${book.trackTitle}.mp3`,
-          size: audioStat.size,
+          size: audioSize,
           duration: duration,
           mimeType: 'audio/mpeg',
           codec: 'mp3',
@@ -279,7 +293,7 @@ async function main() {
       language: 'English',
       path: `/demo/${book.title}`,
       rel_path: book.title,
-      size: audioStat.size,
+      size: audioSize,
       updated_at: new Date().toISOString(),
     })
 

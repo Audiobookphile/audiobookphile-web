@@ -14,16 +14,24 @@ When deploying via the template clone flow:
    - `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_SECRET_KEY`
-   - Database connection strings (`POSTGRES_URL`)
+   - Database connection strings (`POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`)
 3. The centralized resolver in `src/shared/utils/supabase/env.ts` automatically detects and maps these variables without requiring any manual variable renaming.
-4. **First-Time Setup Wizard (`/setup`)**:
+4. **Deploy the Edge API.** Every `/api/*` request is rewritten to `${SUPABASE_URL}/functions/v1/api/*`; the web app has no PostgREST fallback. Until the `api` function is deployed (`bun run functions:deploy`, or the `deploy-supabase.yml` workflow), an administrator can be created but login and the library will not work. `/setup` reports this state as **Edge API: Not deployed — required**.
+5. **Configure Supabase Auth.** Set **Authentication → URL Configuration → Site URL** to the deployment URL and allowlist `https://<domain>/auth/callback` and `https://<domain>/auth/confirm`. Set the `SITE_URL` Edge Function secret to the same origin so invite/reset/magic-link emails point at this deployment.
+6. **First-Time Setup Wizard (`/setup`)**:
    - When visiting an uninitialized instance or before any administrator accounts exist, navigate to `/setup`.
    - The setup diagnostic endpoint (`/api/setup/status`) verifies Supabase connectivity, table initialization, storage buckets (`covers`, `audio-files`, `backups`), and Edge API health.
-   - If tables are uninitialized, a 1-click link to the Supabase SQL editor is displayed (`https://supabase.com/dashboard/project/<ref>/sql/new`) to run `supabase/schema.sql`.
+   - If tables are uninitialized, the wizard bootstraps `supabase/schema.sql` over the direct Postgres connection (or shows a 1-click SQL editor link when no connection is available).
    - The wizard allows creating the root administrator account directly. The database's `handle_new_user()` trigger automatically awards the `root` role to the first registered user (`user_type = 'root'`), ensuring zero-friction onboarding for template deployers.
-5. **Automated CI/CD**:
+   - Bootstrap is one-shot: once an administrator exists, the unauthenticated `/api/setup/bootstrap` endpoint returns `409`. Use either the wizard's `schema.sql` path or `bun run db:push`, not both.
+7. **Automatic Admin Onboarding Email & iOS Client Auto-Mapping**:
+   - Upon successfully provisioning the Root Administrator account in `/setup`, Audiobookphile automatically dispatches a deployment welcome email to the owner.
+   - The email contains the canonical server address, username, credentials, and a 1-click native iOS deep link (`audiobookphile://connect?server=...&username=...&autoLogin=1`).
+   - When opened on an iPhone or iPad, tapping the deep link automatically maps the server address in the native iOS app and logs in with zero manual typing required.
+   - Community testers and users can also send the connection deep link on-demand from `/setup`, the login page, or `/account` via the embedded `MobileConnectCard`.
+8. **Automated CI/CD**:
    - To automate database schema migrations and Edge API deployment via GitHub Actions, configure `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_ID` in your repository secrets.
-   - The included `.github/workflows/deploy-supabase.yml` workflow automatically runs `bun run db:push` and `bun run functions:deploy`.
+   - The included `.github/workflows/deploy-supabase.yml` workflow runs `bun run db:push` and `bun run functions:deploy` on hosted `ubuntu-latest`; set the `SUPABASE_RUNNER` repository variable (JSON array) to use self-hosted runners.
 
 ---
 
@@ -47,6 +55,8 @@ Variables are grouped by the Vercel environment in which they are required. "Bui
 | --- | --- | --- | --- | --- | --- |
 | `SUPABASE_SERVICE_ROLE_KEY` | Required | Required | Required for admin operations | Canonical service role key for server-side Supabase admin operations. Bypasses Row Level Security entirely. See [§2](#2-supabase_service_role_key-vs-supabase_service_key) for the alias. | `createServiceRoleClient()` throws `Missing environment variable: SUPABASE_SERVICE_ROLE_KEY` and all server-side admin operations fail with a 500 error. |
 | `SUPABASE_SERVICE_KEY` | — | — | — | Legacy alias for `SUPABASE_SERVICE_ROLE_KEY`. Accepted as a fallback during a rename transition. Prefer the canonical name for all new configurations. | If this is the only name set, the fallback in `service-role.ts` keeps things working, but any future removal of that fallback would silently break the app. |
+| `RESEND_API_KEY` | Optional | Optional | Optional | Resend API key (`re_...`) used to dispatch onboarding credentials and mobile 1-click connection emails to deployers and community testers. | When absent, emails are safely logged to console/audit log without throwing errors. |
+| `RESEND_FROM` / `EMAIL_FROM` | Optional | Optional | Optional | Custom email sender address (e.g. `Audiobookphile <onboarding@yourdomain.com>`). Defaults to `Audiobookphile <onboarding@resend.dev>`. | Default sender is used. |
 
 ### Storage — Backblaze B2 (optional group)
 
@@ -114,6 +124,10 @@ The auth callback route (`src/app/callback/route.ts`) uses the `x-forwarded-host
    - `http://localhost:3000/**` — local development
 
 > **Why the wildcard is needed:** Each Vercel Preview deployment gets a unique URL. Adding a wildcard pattern (e.g. `https://audiobookphile-web-*.vercel.app/**`) to the Supabase redirect allow list means you do not need to register each preview URL individually.
+
+#### In Supabase Edge Function secrets
+
+Set `SITE_URL` to the same production origin under **Edge Functions → Secrets** (or with `bun run supabase secrets set SITE_URL=https://your-domain --project-ref <ref>`). The `api` Edge Function puts this origin in invite, magic-link, and password-reset URLs. Server actions also send an `X-Web-Origin` header so Preview deployments get their own origin without changing the secret; the request origin is the last resort, and a Supabase hostname is never treated as a web origin.
 
 ---
 

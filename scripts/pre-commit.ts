@@ -6,7 +6,7 @@
  * Usage: bun run scripts/pre-commit.ts <staged-files...>
  */
 
-import { findNodeApis, isGuardFile, NODE_API_MESSAGE } from './node-api'
+import { findNodeApis, isGuardFile, isNodeApiAllowed, NODE_API_MESSAGE } from './node-api'
 
 const files = process.argv.slice(2)
 if (files.length === 0) {
@@ -226,6 +226,7 @@ if (TS_FILES.length > 0) {
     if (isGuardFile(file)) continue
 
     for (const finding of findNodeApis(await read(file))) {
+      if (isNodeApiAllowed(file, finding.api)) continue
       nodeGlobals.push(`${file}:${finding.line}: ${finding.text}`)
     }
   }

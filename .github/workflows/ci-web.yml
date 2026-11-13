@@ -8,12 +8,11 @@ on:
       - 'public/**'
       - 'package.json'
       - 'bun.lock'
+      - 'bunfig.toml'
       - 'tsconfig.json'
-      - 'biome.json'
-      - '.oxlintrc.json'
-      - 'scripts/host-pressure.sh'
-      - 'scripts/linux-host-pressure.sh'
-      - 'scripts/host-capacity.test.ts'
+      - 'next.config.ts'
+      - 'scripts/**'
+      - 'supabase/schema.sql'
       - '.github/workflows/ci-web.yml'
   pull_request:
     branches: [main]
@@ -22,12 +21,11 @@ on:
       - 'public/**'
       - 'package.json'
       - 'bun.lock'
+      - 'bunfig.toml'
       - 'tsconfig.json'
-      - 'biome.json'
-      - '.oxlintrc.json'
-      - 'scripts/host-pressure.sh'
-      - 'scripts/linux-host-pressure.sh'
-      - 'scripts/host-capacity.test.ts'
+      - 'next.config.ts'
+      - 'scripts/**'
+      - 'supabase/schema.sql'
       - '.github/workflows/ci-web.yml'
   workflow_dispatch:
 
@@ -41,8 +39,12 @@ concurrency:
 jobs:
   verify:
     name: Verify Web Build & Quality
-    runs-on: [self-hosted, Linux, ram-3g]
-    timeout-minutes: 15
+    # Hosted by default so a cloned or forked repository can run this
+    # workflow without the project's self-hosted fleet. Set the repository
+    # variable CI_RUNNER to a JSON array (e.g. ["self-hosted","Linux","ram-3g"])
+    # to route the job back onto your own runners.
+    runs-on: ${{ vars.CI_RUNNER != '' && fromJSON(vars.CI_RUNNER) || 'ubuntu-latest' }}
+    timeout-minutes: 25
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
@@ -50,14 +52,19 @@ jobs:
           persist-credentials: false
 
       # Select a real resident-RAM class, then verify current host and worker
-      # headroom before installing dependencies or building.
+      # headroom before installing dependencies or building. This only makes
+      # sense on the self-hosted fleet, where a starved box can fail a build
+      # for reasons that are not in the diff.
       - name: Host Pressure Preflight
+        if: vars.CI_RUNNER != ''
         run: ./scripts/host-pressure.sh
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          # `bun lint`, `bun fmt` and `bun audit` ship only in canary builds;
+          # .mise.toml pins the same channel for local development.
+          bun-version: canary
 
       - name: Verify Linux Capacity Guard
         run: bun test scripts/host-capacity.test.ts
@@ -65,20 +72,50 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: Security & Package Audit
-        run: ./scripts/security-audit.sh
+      - name: Source Security Scan
+        run: bun run scripts/security-audit.ts
 
-      - name: Biome Format & Lint Check
-        run: bunx biome check src/
+      - name: Dependency Audit
+        run: bun run audit:all
 
-      - name: Oxlint High-Performance Linter
-        run: bunx oxlint src/
+      # The install-time scanner only sees this platform. This one reads the
+      # whole lockfile, including packages another platform would install.
+      - name: Dependency Scan
+        run: bun pm scan
+
+      - name: Lint
+        run: bun run lint
+
+      # A lint run that reports nothing looks exactly like a lint run whose
+      # configuration stopped applying, so prove the rules actually fire.
+      - name: Lint Canary
+        run: bun run scripts/lint-canary.ts
+
+      # The deferred rules are counted rather than switched off. The debt may
+      # shrink; it may not grow.
+      - name: Lint Debt Ratchet
+        run: bun run scripts/lint-debt.ts
+
+      # The linter covers imports; this scans the whole tree for Node globals
+      # (`Buffer`, `__dirname`, `require`) as well.
+      - name: Node API Scan
+        run: bun run scripts/node-api-scan.ts
+
+      # Bun blocks lifecycle scripts by default. This keeps the blocked list
+      # visible instead of letting it grow silently.
+      - name: Lifecycle Script Audit
+        run: bun run scripts/lifecycle-audit.ts
 
       - name: TypeScript Strict Typecheck
         run: bun run typecheck
 
       - name: Bun Unit Tests
-        run: bun test src/__tests__
+        run: bun run test:unit
+
+      # The build needs files that .vercelignore must not exclude. Checking
+      # before the build turns a red deploy into a red CI step.
+      - name: Deploy File Check
+        run: bun run scripts/verify-deploy-files.ts
 
       - name: Build Next.js Production Bundle
         run: bun run build
@@ -95,5 +132,5 @@ jobs:
       # host at 2% free memory is not the same defect as a red build on a calm
       # box, and without this the distinction is invisible in the log.
       - name: Host Pressure Postmortem
-        if: always()
+        if: always() && vars.CI_RUNNER != ''
         run: ./scripts/host-pressure.sh --report

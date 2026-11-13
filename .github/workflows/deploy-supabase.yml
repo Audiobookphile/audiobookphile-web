@@ -18,7 +18,11 @@ concurrency:
 jobs:
   deploy:
     name: Push Migrations & Edge Functions
-    runs-on: [self-hosted, Linux, ram-3g]
+    # Hosted by default so a cloned/forked repository can deploy without the
+    # project's self-hosted fleet. Set the repository variable
+    # SUPABASE_RUNNER to a JSON array (e.g. ["self-hosted","Linux","ram-3g"])
+    # to route the job back onto your own runners.
+    runs-on: ${{ vars.SUPABASE_RUNNER != '' && fromJSON(vars.SUPABASE_RUNNER) || 'ubuntu-latest' }}
     timeout-minutes: 20
     steps:
       - name: Checkout Repository
@@ -27,6 +31,7 @@ jobs:
           persist-credentials: false
 
       - name: Host Pressure Preflight
+        if: vars.SUPABASE_RUNNER != ''
         run: ./scripts/host-pressure.sh
 
       - name: Setup Bun

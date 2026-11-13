@@ -25,6 +25,7 @@ export default function LoginForm() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [magicLoading, setMagicLoading] = useState(false)
   const [needsSetup, setNeedsSetup] = useState(false)
+  const [demoAccount, setDemoAccount] = useState<{ username: string; password: string } | null>(null)
   const [showMobileConnect, setShowMobileConnect] = useState(false)
 
   useEffect(() => {
@@ -33,6 +34,11 @@ export default function LoginForm() {
       .then((data) => {
         if (data?.database && data.database.hasAdmin === false) {
           setNeedsSetup(true)
+        }
+        // The demo account only exists on the official demo deployments; a
+        // private instance gets `hasDemoAccount: false` and no credentials.
+        if (data?.credentials?.hasDemoAccount && data.credentials.demoAccount) {
+          setDemoAccount(data.credentials.demoAccount)
         }
       })
       .catch(() => {})
@@ -158,8 +164,9 @@ export default function LoginForm() {
   )
 
   const handleDemoLogin = useCallback(async () => {
-    setEmail('demo@audiobookphile.app')
-    setPassword('AudiobookphileDemo2026!')
+    if (!demoAccount) return
+    setEmail(demoAccount.username)
+    setPassword(demoAccount.password)
     setLoading(true)
     setError('')
     try {
@@ -170,7 +177,7 @@ export default function LoginForm() {
           'Content-Type': 'application/json',
           ...(anonKey ? { apikey: anonKey } : {}),
         },
-        body: JSON.stringify({ username: 'demo@audiobookphile.app', password: 'AudiobookphileDemo2026!' }),
+        body: JSON.stringify({ username: demoAccount.username, password: demoAccount.password }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
@@ -183,7 +190,7 @@ export default function LoginForm() {
       setError('Failed to connect to authentication service.')
       setLoading(false)
     }
-  }, [completeSession])
+  }, [completeSession, demoAccount])
 
   const handlePasskeySignIn = useCallback(async () => {
     setError('')
@@ -466,56 +473,60 @@ export default function LoginForm() {
       {needsSetup && (
         <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent/10 p-3 text-xs text-foreground">
           <span>First-time deployer? No administrator configured yet.</span>
-          <Link href="/setup" className="font-semibold text-accent hover:underline whitespace-nowrap">
+          <Link href="/setup" className="font-semibold whitespace-nowrap text-accent hover:underline">
             Setup &rarr;
           </Link>
         </div>
       )}
-      <div className="mb-4 flex flex-col gap-2 rounded-xl border border-sky-500/25 bg-sky-500/10 p-3.5 text-xs text-foreground backdrop-blur-md">
-        <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-1.5 font-medium text-sky-400">
-            <Sparkles size={14} className="shrink-0" />
-            <span>Live Demonstration Available</span>
-          </span>
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={loading}
-            className="flex items-center gap-1 font-semibold text-sky-300 hover:text-white bg-sky-500/20 hover:bg-sky-500/35 px-2.5 py-1 rounded-lg transition-all border border-sky-500/30 cursor-pointer disabled:opacity-50"
-          >
-            <span>🚀 Try Demo (1-Click)</span>
-          </button>
-        </div>
-        <div className="flex items-center justify-between text-[11px] text-foreground-muted border-t border-sky-500/15 pt-2">
-          <span>Demo User: <strong className="font-mono text-foreground">demo@audiobookphile.app</strong></span>
-          <div className="flex items-center gap-2">
+      {demoAccount && (
+        <div className="mb-4 flex flex-col gap-2 rounded-xl border border-sky-500/25 bg-sky-500/10 p-3.5 text-xs text-foreground backdrop-blur-md">
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1.5 font-medium text-sky-400">
+              <Sparkles size={14} className="shrink-0" />
+              <span>Live Demonstration Available</span>
+            </span>
             <button
               type="button"
-              onClick={() => setShowMobileConnect((v) => !v)}
-              className="text-sky-400 hover:underline font-medium cursor-pointer flex items-center gap-1"
+              onClick={handleDemoLogin}
+              disabled={loading}
+              className="flex cursor-pointer items-center gap-1 rounded-lg border border-sky-500/30 bg-sky-500/20 px-2.5 py-1 font-semibold text-sky-300 transition-all hover:bg-sky-500/35 hover:text-white disabled:opacity-50"
             >
-              <Smartphone size={12} />
-              <span>{showMobileConnect ? 'Hide QR' : 'Mobile App'}</span>
-            </button>
-            <span>•</span>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('demo@audiobookphile.app')
-                setPassword('AudiobookphileDemo2026!')
-              }}
-              className="text-accent hover:underline font-medium cursor-pointer"
-            >
-              Fill Inputs
+              <span>🚀 Try Demo (1-Click)</span>
             </button>
           </div>
+          <div className="flex items-center justify-between border-t border-sky-500/15 pt-2 text-[11px] text-foreground-muted">
+            <span>
+              Demo User: <strong className="font-mono text-foreground">{demoAccount.username}</strong>
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowMobileConnect((v) => !v)}
+                className="flex cursor-pointer items-center gap-1 font-medium text-sky-400 hover:underline"
+              >
+                <Smartphone size={12} />
+                <span>{showMobileConnect ? 'Hide QR' : 'Mobile App'}</span>
+              </button>
+              <span>•</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail(demoAccount.username)
+                  setPassword(demoAccount.password)
+                }}
+                className="cursor-pointer font-medium text-accent hover:underline"
+              >
+                Fill Inputs
+              </button>
+            </div>
+          </div>
+          {showMobileConnect && (
+            <div className="pt-2">
+              <MobileConnectCard compact credentials={{ hasDemoAccount: true, demoAccount }} />
+            </div>
+          )}
         </div>
-        {showMobileConnect && (
-          <div className="pt-2">
-            <MobileConnectCard compact />
-          </div>
-        )}
-      </div>
+      )}
       <div className="mb-4 flex flex-col gap-4">
         <TextInput label="Email" value={email} type="email" autocomplete="email" onChange={setEmail} />
         <TextInput

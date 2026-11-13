@@ -14,23 +14,21 @@ const env = Deno.env.toObject()
 const SENTRY_API = env.SENTRY_API || 'https://sentry.io/api/0'
 const ORG = env.SENTRY_ORG || 'organicnz'
 const PROJECT = env.SENTRY_PROJECT || 'audiobookphile'
-const MAX_PRS = Number.parseInt(env.MAX_PRS || '2', 10)
-const ZAI_MODEL = env.ZAI_MODEL || 'glm-4-plus'
-const ZAI_URL = env.ZAI_URL || 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
 const REPO = env.GITHUB_REPOSITORY || ''
-const CHECKPOINT_BRANCH = 'sentry-checkpoint'
-const CHECKPOINT_FILE = 'checkpoint.json'
-const DEFAULT_BRANCH = (env.GITHUB_REF_NAME || 'main').replace('refs/heads/', '')
-const DRY_RUN = env.DRY_RUN === '1'
 const SENTRY_AUTH_TOKEN = env.SENTRY_AUTH_TOKEN || ''
-const ZAI_API_KEY = env.ZAI_API_KEY || env.ZHIPU_API_KEY || ''
 const GITHUB_TOKEN = env.GITHUB_TOKEN || ''
-const BOT_NAME = 'audiobookphile-bot'
-const BOT_EMAIL = 'bot@audiobookphile.app'
 
-interface Checkpoint {
-  lastProcessedAt: string | null
-  processedIssueIds: string[]
+/**
+ * Sentry payloads are untrusted JSON, so every field arrives as `unknown`.
+ * `String(value)` would happily produce "[object Object]" for the object
+ * shapes Sentry sometimes uses, so only primitives are stringified.
+ */
+function asString(value: unknown, fallback = ''): string {
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+    return String(value)
+  }
+  return fallback
 }
 
 function log(msg: string) {
@@ -75,16 +73,16 @@ async function sentryGet(path: string): Promise<unknown> {
   return await res.json()
 }
 
-async function ensureGitHubIssue(issue: Record<string, unknown>): Promise<void> {
-  const id = String(issue.id ?? '')
-  const shortId = String(issue.shortId ?? id)
-  const title = String(issue.title ?? 'Unknown Error')
-  const permalink = String(issue.permalink ?? `https://${ORG}.sentry.io/issues/${id}/`)
-  const count = String(issue.count ?? '1')
-  const userCount = String(issue.userCount ?? '0')
-  const firstSeen = String(issue.firstSeen ?? '')
-  const lastSeen = String(issue.lastSeen ?? '')
-  const culprit = String(issue.culprit ?? '')
+function ensureGitHubIssue(issue: Record<string, unknown>): void {
+  const id = asString(issue.id)
+  const shortId = asString(issue.shortId, id)
+  const title = asString(issue.title, 'Unknown Error')
+  const permalink = asString(issue.permalink, `https://${ORG}.sentry.io/issues/${id}/`)
+  const count = asString(issue.count, '1')
+  const userCount = asString(issue.userCount, '0')
+  const firstSeen = asString(issue.firstSeen)
+  const lastSeen = asString(issue.lastSeen)
+  const culprit = asString(issue.culprit)
 
   const ghList = exec([
     'gh',
@@ -167,7 +165,7 @@ async function main(): Promise<void> {
 
   log(`Found ${issues.length} unresolved issue(s). Syncing GitHub Issues...`)
   for (const issue of issues.slice(0, 5)) {
-    await ensureGitHubIssue(issue)
+    ensureGitHubIssue(issue)
   }
 
   log('Sentry issue sync complete.')

@@ -1614,6 +1614,7 @@ export type Database = {
         Returns: Json
       }
       get_library_stats: { Args: { p_library_id: string }; Returns: Json }
+      get_system_status: { Args: never; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       list_storage_orphans: {
         Args: { p_bucket?: string }

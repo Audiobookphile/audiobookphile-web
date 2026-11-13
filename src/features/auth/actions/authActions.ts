@@ -113,6 +113,9 @@ export async function resetPassword(password: string) {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${session.access_token}`,
+      // The Edge Function cannot see the browser's Host through the Next.js
+      // rewrite; tell it which web origin to put in its email links.
+      'X-Web-Origin': getSiteUrl(),
     },
     body: JSON.stringify({ password, accessToken: session.access_token }),
   })
@@ -167,6 +170,9 @@ export async function inviteUserByEmail(email: string, username?: string, userTy
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${session.access_token}`,
+      // Invitation links are generated inside the Edge Function; it needs the
+      // deployment's own origin, which the rewrite hides from the request.
+      'X-Web-Origin': getSiteUrl(),
     },
     body: JSON.stringify({ email, username, userType: userType || 'user' }),
   })

@@ -55,6 +55,14 @@ const nextConfig = async (phase: string, { defaultConfig }: { defaultConfig: Nex
     // backported to 16.3. On 16.4 the build succeeds with the standalone
     // output and VERCEL=1 set, so the conditional is no longer needed.
     output: 'standalone',
+    // `autoBootstrapDatabase` reads supabase/schema.sql at runtime. Next's
+    // trace follows imports, not arbitrary filesystem reads, so without this
+    // the file is missing from the serverless bundle and first-run setup
+    // fails on Vercel with "Could not locate supabase/schema.sql".
+    outputFileTracingIncludes: {
+      '/api/setup/bootstrap': ['./supabase/schema.sql'],
+      '/setup': ['./supabase/schema.sql'],
+    },
     // Pin the trace and bundler roots to the app directory. Next otherwise
     // infers the root by walking up for a lockfile, which mis-traces the
     // standalone bundle whenever an unrelated lockfile exists above the repo.

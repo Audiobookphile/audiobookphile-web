@@ -1,15 +1,26 @@
 'use server'
 
+// Server-only: this module reads supabase/schema.sql from disk when the
+// a-priori schema is missing. next.config.ts adds that file to the server
+// trace so it exists on Vercel as well as in the Bun container.
+// eslint-disable-next-line import/no-nodejs-modules -- server-only schema read
 import fs from 'node:fs'
+// eslint-disable-next-line import/no-nodejs-modules -- server-only schema path
 import path from 'node:path'
 import postgres from 'postgres'
 import { createClient } from '@/shared/utils/supabase/server'
 import { createServiceRoleClient } from '@/shared/utils/supabase/service-role'
+import { sendDeploymentWelcomeEmail, buildMobileConnectDeepLink } from '@/shared/lib/email/deploymentEmail'
 
 export interface SetupResult {
   ok: boolean
   error?: string
   redirectTo?: string
+  emailSent?: boolean
+  emailRecipient?: string
+  emailTransport?: string
+  serverUrl?: string
+  deepLink?: string
 }
 
 export interface BootstrapResult {
@@ -18,13 +29,54 @@ export interface BootstrapResult {
 }
 
 /**
- * Automatically initializes the PostgreSQL database schema, tables, and RLS policies
+ * Checks whether any administrator already exists.
+ *
+ * Returns `true` when at least one admin/root profile exists, `false` when the
+ * profiles table is readable and empty, and `null` when the answer cannot be
+ * determined (missing service-role key, or the schema has not been created
+ * yet). Callers treat `null` as "probably uninitialized" so a fresh project
+ * can still bootstrap.
+ */
+export async function hasExistingAdmin(): Promise<boolean | null> {
+  let client: ReturnType<typeof createServiceRoleClient>
+  try {
+    client = createServiceRoleClient()
+  } catch {
+    return null
+  }
+
+  const { count, error } = await client
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+    .in('user_type', ['admin', 'root'])
+
+  if (error) return null
+  return (count ?? 0) > 0
+}
+
+/**
+ * Automatically initializes the PostgreSQL schema, tables, and RLS policies
  * using the connection string injected by Vercel's Supabase Integration.
+ *
+ * The bootstrap is one-shot: once an administrator exists the schema is
+ * already initialized, so a second call is refused rather than replaying DDL
+ * on a live database.
  */
 export async function autoBootstrapDatabase(): Promise<BootstrapResult> {
+  const adminExists = await hasExistingAdmin()
+  if (adminExists === true) {
+    return {
+      ok: true,
+      message: 'Database is already initialized (an administrator exists); bootstrap was skipped.',
+    }
+  }
+
+  // Prefer the direct (non-pooling) connection for DDL. The transaction pooler
+  // in front of POSTGRES_URL is fine for app queries but is the wrong place to
+  // run extensions and multi-statement schema DDL.
   const connectionString =
-    process.env.POSTGRES_URL ||
     process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.POSTGRES_URL ||
     process.env.DATABASE_URL
 
   // 1. Direct Postgres execution (instant execution via node-postgres driver)
@@ -94,7 +146,7 @@ export async function autoBootstrapDatabase(): Promise<BootstrapResult> {
   return {
     ok: false,
     message:
-      'POSTGRES_URL environment variable is required for automated database bootstrapping. Please ensure your Vercel project is linked with Supabase.',
+      'No database connection string is available for automated bootstrapping. Link the Supabase integration to this Vercel project and redeploy so POSTGRES_URL_NON_POOLING (or POSTGRES_URL) is injected.',
   }
 }
 
@@ -183,7 +235,30 @@ export async function createInitialAdmin(prevState: SetupResult | null, formData
       }
     }
 
-    // 3. Authenticate the newly created root user
+    // 3. Resolve canonical server URL for mobile deep-linking
+    const serverUrl =
+      (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('localhost')
+        ? process.env.NEXT_PUBLIC_SITE_URL
+        : null) ||
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+      'https://audiobookphile.app'
+
+    // 4. Dispatch deployment credentials & iOS auto-mapping email
+    let emailResult = null
+    try {
+      emailResult = await sendDeploymentWelcomeEmail({
+        to: email,
+        username,
+        serverUrl,
+        password,
+        includeAutoLogin: true,
+      })
+    } catch (emailErr) {
+      console.warn('[createInitialAdmin] Failed to dispatch welcome email:', emailErr)
+    }
+
+    // 5. Authenticate the newly created root user
     const client = await createClient()
     const { error: signInError } = await client.auth.signInWithPassword({
       email,
@@ -192,12 +267,78 @@ export async function createInitialAdmin(prevState: SetupResult | null, formData
 
     if (signInError) {
       // Account created, but sign-in requires manual credentials entry
-      return { ok: true, redirectTo: '/login' }
+      return {
+        ok: true,
+        redirectTo: '/login',
+        emailSent: emailResult?.success ?? false,
+        emailRecipient: email,
+        emailTransport: emailResult?.transport ?? 'console-dev',
+        serverUrl,
+        deepLink: emailResult?.deepLink,
+      }
     }
 
-    return { ok: true, redirectTo: '/library' }
+    return {
+      ok: true,
+      redirectTo: '/library',
+      emailSent: emailResult?.success ?? false,
+      emailRecipient: email,
+      emailTransport: emailResult?.transport ?? 'console-dev',
+      serverUrl,
+      deepLink: emailResult?.deepLink,
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     return { ok: false, error: message }
+  }
+}
+
+/**
+ * Server action to dispatch mobile connection credentials email on demand.
+ */
+export async function sendMobileConnectEmailAction(
+  targetEmail: string,
+  includeDemoCredentials = false
+): Promise<{ ok: boolean; message: string; deepLink?: string }> {
+  const email = targetEmail.trim().toLowerCase()
+  if (!email || !email.includes('@')) {
+    return { ok: false, message: 'Please enter a valid email address.' }
+  }
+
+  const serverUrl =
+    (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('localhost')
+      ? process.env.NEXT_PUBLIC_SITE_URL
+      : null) ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    'https://audiobookphile.app'
+
+  const username = includeDemoCredentials ? 'demo@audiobookphile.app' : email.split('@')[0]
+  const password = includeDemoCredentials ? 'AudiobookphileDemo2026!' : undefined
+
+  try {
+    const result = await sendDeploymentWelcomeEmail({
+      to: email,
+      username,
+      serverUrl,
+      password,
+      includeAutoLogin: Boolean(password),
+    })
+
+    const transportDesc =
+      result.transport === 'resend'
+        ? 'dispatched via Resend'
+        : result.transport === 'smtp'
+          ? 'dispatched via SMTP'
+          : 'generated and logged'
+
+    return {
+      ok: true,
+      message: `Credentials & iOS connection link successfully ${transportDesc} to ${email}!`,
+      deepLink: result.deepLink,
+    }
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err)
+    return { ok: false, message: `Failed to send email: ${errorMsg}` }
   }
 }

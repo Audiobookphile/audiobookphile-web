@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isOfficialDemoHost } from '@/shared/lib/demo'
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/shared/utils/supabase/env'
 import { createClient } from '@/shared/utils/supabase/server'
 import { createServiceRoleClient } from '@/shared/utils/supabase/service-role'
@@ -37,12 +38,12 @@ export async function GET(request: Request) {
   let adminCount = 0
   let libraryCount = 0
   let storageReady = false
-  let edgeApiDeployed = false
-  let edgeApiStatus = 0
+  let edgeApiDeployed: boolean
+  let edgeApiStatus: number
 
   // 1. Check Database status
   try {
-    let supabase: any
+    let supabase: Awaited<ReturnType<typeof createClient>>
     try {
       supabase = createServiceRoleClient()
     } catch {
@@ -127,7 +128,7 @@ export async function GET(request: Request) {
     requestUrl ||
     (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-    'https://audiobookphile.app'
+    new URL(request.url).origin
 
   const canAutoBootstrap = Boolean(
     process.env.POSTGRES_URL ||
@@ -136,9 +137,16 @@ export async function GET(request: Request) {
       process.env.SUPABASE_ACCESS_TOKEN
   )
 
-  const demoUsername = 'demo@audiobookphile.app'
-  const demoPassword = 'AudiobookphileDemo2026!'
-  const mobileDeepLink = `audiobookphile://connect?server=${encodeURIComponent(serverUrl)}&username=${encodeURIComponent(demoUsername)}&password=${encodeURIComponent(demoPassword)}&autoLogin=1`
+  // The demo account lives only in the official demo backend. On a deployer's
+  // own instance it does not exist, so neither the credentials nor the deep
+  // link are returned at all.
+  const demoEnabled = isOfficialDemoHost(host)
+  const demoUsername = demoEnabled ? 'demo@audiobookphile.app' : null
+  const demoPassword = demoEnabled ? 'AudiobookphileDemo2026!' : null
+  const mobileDeepLink =
+    demoUsername && demoPassword
+      ? `audiobookphile://connect?server=${encodeURIComponent(serverUrl)}&username=${encodeURIComponent(demoUsername)}&password=${encodeURIComponent(demoPassword)}&autoLogin=1`
+      : null
 
   return NextResponse.json({
     configured: true,
@@ -151,11 +159,8 @@ export async function GET(request: Request) {
     credentials: {
       serverUrl,
       supabaseUrl,
-      hasDemoAccount: true,
-      demoAccount: {
-        username: demoUsername,
-        password: demoPassword,
-      },
+      hasDemoAccount: Boolean(demoUsername),
+      demoAccount: demoUsername && demoPassword ? { username: demoUsername, password: demoPassword } : null,
       deepLink: mobileDeepLink,
     },
     database: {

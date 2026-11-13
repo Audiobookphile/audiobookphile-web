@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { findNodeApis, isGuardFile, stripComments } from '../node-api'
+import { findNodeApis, isGuardFile, isNodeApiAllowed, stripComments } from '../node-api'
 
 /**
  * The Node API rules are a security invariant, and an invariant that is
@@ -125,5 +125,19 @@ describe('isGuardFile', () => {
   it('does not exempt anything else', () => {
     expect(isGuardFile('src/app/page.tsx')).toBe(false)
     expect(isGuardFile('scripts/node-api-scan.ts')).toBe(false)
+  })
+})
+
+describe('isNodeApiAllowed', () => {
+  it('allows the documented exception', () => {
+    expect(isNodeApiAllowed('src/features/auth/actions/setupActions.ts', 'a node: import')).toBe(true)
+  })
+
+  it('does not extend the exception to another API', () => {
+    expect(isNodeApiAllowed('src/features/auth/actions/setupActions.ts', 'require()')).toBe(false)
+  })
+
+  it('does not extend the exception to another file', () => {
+    expect(isNodeApiAllowed('src/app/page.tsx', 'a node: import')).toBe(false)
   })
 })
