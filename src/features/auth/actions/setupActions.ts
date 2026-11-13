@@ -7,6 +7,7 @@
 import fs from 'node:fs'
 // eslint-disable-next-line import/no-nodejs-modules -- server-only schema path
 import path from 'node:path'
+import { headers } from 'next/headers'
 import postgres from 'postgres'
 import { createClient } from '@/shared/utils/supabase/server'
 import { createServiceRoleClient } from '@/shared/utils/supabase/service-role'
@@ -236,10 +237,21 @@ export async function createInitialAdmin(prevState: SetupResult | null, formData
     }
 
     // 3. Resolve canonical server URL for mobile deep-linking
+    let requestOrigin: string | null = null
+    try {
+      const headerList = await headers()
+      const host = headerList.get('x-forwarded-host') || headerList.get('host')
+      const proto = headerList.get('x-forwarded-proto') || (host && !host.includes('localhost') ? 'https' : 'http')
+      if (host) {
+        requestOrigin = `${proto}://${host}`
+      }
+    } catch {}
+
     const serverUrl =
       (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('localhost')
         ? process.env.NEXT_PUBLIC_SITE_URL
         : null) ||
+      requestOrigin ||
       (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
       'https://audiobookphile.app'
@@ -298,17 +310,30 @@ export async function createInitialAdmin(prevState: SetupResult | null, formData
  */
 export async function sendMobileConnectEmailAction(
   targetEmail: string,
-  includeDemoCredentials = false
+  includeDemoCredentials = false,
+  explicitServerUrl?: string
 ): Promise<{ ok: boolean; message: string; deepLink?: string }> {
   const email = targetEmail.trim().toLowerCase()
   if (!email || !email.includes('@')) {
     return { ok: false, message: 'Please enter a valid email address.' }
   }
 
+  let requestOrigin: string | null = null
+  try {
+    const headerList = await headers()
+    const host = headerList.get('x-forwarded-host') || headerList.get('host')
+    const proto = headerList.get('x-forwarded-proto') || (host && !host.includes('localhost') ? 'https' : 'http')
+    if (host) {
+      requestOrigin = `${proto}://${host}`
+    }
+  } catch {}
+
   const serverUrl =
+    explicitServerUrl ||
     (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('localhost')
       ? process.env.NEXT_PUBLIC_SITE_URL
       : null) ||
+    requestOrigin ||
     (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
     'https://audiobookphile.app'
@@ -328,9 +353,13 @@ export async function sendMobileConnectEmailAction(
     const transportDesc =
       result.transport === 'resend'
         ? 'dispatched via Resend'
-        : result.transport === 'smtp'
-          ? 'dispatched via SMTP'
-          : 'generated and logged'
+        : result.transport === 'sendgrid'
+          ? 'dispatched via SendGrid'
+          : result.transport === 'postmark'
+            ? 'dispatched via Postmark'
+            : result.transport === 'smtp'
+              ? 'dispatched via SMTP'
+              : 'generated and logged'
 
     return {
       ok: true,

@@ -101,7 +101,7 @@ export default function MobileConnectCard({
     setSendingEmail(true)
     setEmailStatus(null)
     try {
-      const result = await sendMobileConnectEmailAction(trimmed, hasDemoCredentials)
+      const result = await sendMobileConnectEmailAction(trimmed, hasDemoCredentials, resolvedUrl)
       setEmailStatus({
         ok: result.ok,
         message:

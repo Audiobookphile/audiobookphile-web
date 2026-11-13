@@ -86,7 +86,11 @@ describe('buildDeploymentEmailText', () => {
 describe('sendDeploymentWelcomeEmail', () => {
   test('defaults to console-dev transport in audit/test mode', async () => {
     const originalResend = process.env.RESEND_API_KEY
+    const originalSendGrid = process.env.SENDGRID_API_KEY
+    const originalPostmark = process.env.POSTMARK_SERVER_TOKEN
     delete process.env.RESEND_API_KEY
+    delete process.env.SENDGRID_API_KEY
+    delete process.env.POSTMARK_SERVER_TOKEN
 
     try {
       const result = await sendDeploymentWelcomeEmail({
@@ -101,9 +105,10 @@ describe('sendDeploymentWelcomeEmail', () => {
       expect(result.serverUrl).toBe('https://demo.audiobookphile.app')
       expect(result.deepLink).toContain('audiobookphile://connect?')
     } finally {
-      if (originalResend) {
-        process.env.RESEND_API_KEY = originalResend
-      }
+      if (originalResend) process.env.RESEND_API_KEY = originalResend
+      if (originalSendGrid) process.env.SENDGRID_API_KEY = originalSendGrid
+      if (originalPostmark) process.env.POSTMARK_SERVER_TOKEN = originalPostmark
     }
   })
 })
+

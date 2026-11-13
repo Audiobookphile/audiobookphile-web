@@ -258,6 +258,11 @@ export default function SetupClient() {
                 <p className="text-[11px] text-sky-300/80 leading-relaxed">
                   Open this email on your iPhone and tap <strong>&ldquo;Connect Audiobookphile iOS Client&rdquo;</strong> to automatically map your server.
                 </p>
+                {formState.emailTransport === 'console-dev' && (
+                  <p className="mt-1 text-[10px] text-sky-300/60 italic">
+                    Note: Email logged to server audit console. To enable live delivery to your inbox, configure RESEND_API_KEY in your deployment environment variables.
+                  </p>
+                )}
               </div>
             )}
 

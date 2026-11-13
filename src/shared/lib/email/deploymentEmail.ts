@@ -13,9 +13,11 @@ export interface DeploymentEmailOptions {
   includeAutoLogin?: boolean
 }
 
+export type EmailTransport = 'resend' | 'sendgrid' | 'postmark' | 'smtp' | 'console-dev' | 'error'
+
 export interface DeploymentEmailResult {
   success: boolean
-  transport: 'resend' | 'smtp' | 'console-dev' | 'error'
+  transport: EmailTransport
   recipient: string
   serverUrl: string
   deepLink: string
@@ -343,6 +345,8 @@ export async function sendDeploymentWelcomeEmail(options: DeploymentEmailOptions
   const text = buildDeploymentEmailText(options)
 
   const resendApiKey = process.env.RESEND_API_KEY
+  const sendgridApiKey = process.env.SENDGRID_API_KEY
+  const postmarkToken = process.env.POSTMARK_SERVER_TOKEN || process.env.POSTMARK_API_KEY
   const emailFrom = process.env.EMAIL_FROM || process.env.RESEND_FROM || 'Audiobookphile <onboarding@resend.dev>'
 
   // 1. Try Resend API (Preferred for Vercel / Next.js)
@@ -383,7 +387,76 @@ export async function sendDeploymentWelcomeEmail(options: DeploymentEmailOptions
     }
   }
 
-  // 2. Fallback: Log payload for development / inspection
+  // 2. Try SendGrid API if configured
+  if (sendgridApiKey) {
+    try {
+      const fromEmail = emailFrom.includes('<') ? emailFrom.match(/<([^>]+)>/)?.[1] || emailFrom : emailFrom
+      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${sendgridApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email: to }] }],
+          from: { email: fromEmail },
+          subject: '🎧 Your Audiobookphile Server is Live — Connect Your iOS Client',
+          content: [
+            { type: 'text/plain', value: text },
+            { type: 'text/html', value: html },
+          ],
+        }),
+      })
+
+      if (response.ok || response.status === 202) {
+        console.log(`[DeploymentEmail] Successfully dispatched via SendGrid to ${to}`)
+        return {
+          success: true,
+          transport: 'sendgrid',
+          recipient: to,
+          serverUrl: cleanServer,
+          deepLink,
+        }
+      }
+    } catch (err) {
+      console.warn('[DeploymentEmail] Network error communicating with SendGrid:', err)
+    }
+  }
+
+  // 3. Try Postmark API if configured
+  if (postmarkToken) {
+    try {
+      const response = await fetch('https://api.postmarkapp.com/email', {
+        method: 'POST',
+        headers: {
+          'X-Postmark-Server-Token': postmarkToken,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          From: emailFrom,
+          To: to,
+          Subject: '🎧 Your Audiobookphile Server is Live — Connect Your iOS Client',
+          HtmlBody: html,
+          TextBody: text,
+        }),
+      })
+
+      if (response.ok) {
+        console.log(`[DeploymentEmail] Successfully dispatched via Postmark to ${to}`)
+        return {
+          success: true,
+          transport: 'postmark',
+          recipient: to,
+          serverUrl: cleanServer,
+          deepLink,
+        }
+      }
+    } catch (err) {
+      console.warn('[DeploymentEmail] Network error communicating with Postmark:', err)
+    }
+  }
+
+  // 4. Fallback: Log payload for development / inspection
   console.log(`[DeploymentEmail] Dev/Audit mode: Generated credentials email for ${to}:`)
   console.log(`  • Server URL: ${cleanServer}`)
   console.log(`  • Deep Link:  ${deepLink}`)
