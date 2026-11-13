@@ -61,6 +61,8 @@ describe('buildDeploymentEmailHtml', () => {
     expect(html).toContain('https://my-audiobooks.app')
     expect(html).toContain('rootowner')
     expect(html).toContain('owner@example.com')
+    expect(html).toContain('Initial Admin Password')
+    expect(html).toContain('StrongPassword99!')
     expect(html).toContain('audiobookphile://connect?')
     expect(html).toContain('Connect Audiobookphile iOS Client')
     expect(html).toContain('Next Step: Map Your Native iOS Client')
@@ -73,11 +75,14 @@ describe('buildDeploymentEmailText', () => {
       to: 'owner@example.com',
       username: 'rootowner',
       serverUrl: 'https://my-audiobooks.app',
+      password: 'StrongPassword99!',
     })
 
     expect(text).toContain('AUDIOBOOKPHILE — SERVER DEPLOYMENT READY')
     expect(text).toContain('https://my-audiobooks.app')
     expect(text).toContain('rootowner')
+    expect(text).toContain('Initial Password:')
+    expect(text).toContain('StrongPassword99!')
     expect(text).toContain('audiobookphile://connect?')
     expect(text).toContain('Download the Audiobookphile iOS app')
   })
@@ -108,6 +113,27 @@ describe('sendDeploymentWelcomeEmail', () => {
       if (originalResend) process.env.RESEND_API_KEY = originalResend
       if (originalSendGrid) process.env.SENDGRID_API_KEY = originalSendGrid
       if (originalPostmark) process.env.POSTMARK_SERVER_TOKEN = originalPostmark
+    }
+  })
+})
+
+describe('autoProvisionAdminFromEnv', () => {
+  test('returns null safely when no admin email is declared in environment', async () => {
+    const origAdmin = process.env.ADMIN_EMAIL
+    const origInit = process.env.INITIAL_ADMIN_EMAIL
+    const origOwner = process.env.OWNER_EMAIL
+    delete process.env.ADMIN_EMAIL
+    delete process.env.INITIAL_ADMIN_EMAIL
+    delete process.env.OWNER_EMAIL
+
+    try {
+      const { autoProvisionAdminFromEnv } = await import('../features/auth/actions/setupActions')
+      const result = await autoProvisionAdminFromEnv()
+      expect(result).toBeNull()
+    } finally {
+      if (origAdmin) process.env.ADMIN_EMAIL = origAdmin
+      if (origInit) process.env.INITIAL_ADMIN_EMAIL = origInit
+      if (origOwner) process.env.OWNER_EMAIL = origOwner
     }
   })
 })

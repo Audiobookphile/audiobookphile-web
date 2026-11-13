@@ -130,6 +130,20 @@ export async function GET(request: Request) {
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
     new URL(request.url).origin
 
+  if (databaseConnected && !hasAdmin) {
+    try {
+      const { autoProvisionAdminFromEnv } = await import('@/features/auth/actions/setupActions')
+      const autoResult = await autoProvisionAdminFromEnv(serverUrl)
+      if (autoResult?.ok) {
+        hasAdmin = true
+        adminCount = 1
+        databaseInitialized = true
+      }
+    } catch (autoErr) {
+      console.warn('[Setup Status] autoProvision error:', autoErr)
+    }
+  }
+
   const canAutoBootstrap = Boolean(
     process.env.POSTGRES_URL ||
       process.env.POSTGRES_URL_NON_POOLING ||

@@ -255,6 +255,14 @@ export function buildDeploymentEmailHtml(options: DeploymentEmailOptions): strin
             <div class="label">Registered Email</div>
             <div class="value">${to}</div>
           </div>
+          ${
+            password
+              ? `<div class="field">
+            <div class="label">Initial Admin Password</div>
+            <div class="value" style="color: #34d399; font-weight: 700;">${password}</div>
+          </div>`
+              : ''
+          }
           <div class="field">
             <div class="label">Web Client Access</div>
             <div class="value"><a href="${webLoginUrl}" style="color: #38bdf8; text-decoration: none;">${webLoginUrl} &rarr;</a></div>
@@ -316,7 +324,7 @@ YOUR SERVER CREDENTIALS:
 • Server Connection URL: ${cleanServer}
 • Admin Username:        ${username || to}
 • Admin Email:           ${to}
-• Web Client Access:     ${cleanServer}/login
+${password ? `• Initial Password:      ${password}\n` : ''}• Web Client Access:     ${cleanServer}/login
 
 NEXT STEP: CONNECT YOUR IOS CLIENT
 -----------------------------------

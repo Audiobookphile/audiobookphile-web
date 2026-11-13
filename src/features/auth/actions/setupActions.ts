@@ -371,3 +371,130 @@ export async function sendMobileConnectEmailAction(
     return { ok: false, message: `Failed to send email: ${errorMsg}` }
   }
 }
+
+function generateSecureInitialPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
+  const bytes = new Uint8Array(12)
+  crypto.getRandomValues(bytes)
+  let pass = 'Ab1!'
+  for (let i = 0; i < 12; i++) {
+    pass += chars.charAt(bytes[i] % chars.length)
+  }
+  return pass
+}
+
+/**
+ * Automatically provisions the root administrator upon deployment if ADMIN_EMAIL
+ * (or INITIAL_ADMIN_EMAIL / OWNER_EMAIL) is set in environment variables.
+ * Safe & idempotent: refuses to run if an administrator already exists.
+ * Sends welcome onboarding email with credentials and iOS 1-click deep link.
+ */
+export async function autoProvisionAdminFromEnv(explicitOrigin?: string): Promise<SetupResult | null> {
+  const adminEmail = (
+    process.env.ADMIN_EMAIL ||
+    process.env.INITIAL_ADMIN_EMAIL ||
+    process.env.OWNER_EMAIL
+  )?.trim().toLowerCase()
+
+  if (!adminEmail || !adminEmail.includes('@')) {
+    return null
+  }
+
+  // 1. Check if an administrator already exists
+  const existing = await hasExistingAdmin()
+  if (existing === true) {
+    return null
+  }
+
+  // 2. Ensure database schema is bootstrapped
+  await autoBootstrapDatabase()
+
+  let serviceClient: ReturnType<typeof createServiceRoleClient> | null = null
+  try {
+    serviceClient = createServiceRoleClient()
+  } catch {
+    console.warn('[autoProvisionAdminFromEnv] Service role client unavailable for auto-provisioning.')
+    return null
+  }
+
+  // Double check admin count under service client
+  const { count } = await serviceClient
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+    .in('user_type', ['admin', 'root'])
+
+  if (typeof count === 'number' && count > 0) {
+    return null
+  }
+
+  const username = adminEmail.split('@')[0]
+  const password =
+    process.env.ADMIN_PASSWORD ||
+    process.env.INITIAL_ADMIN_PASSWORD ||
+    process.env.OWNER_PASSWORD ||
+    generateSecureInitialPassword()
+
+  // 3. Create administrator in Supabase Auth
+  const { data: userData, error: createError } = await serviceClient.auth.admin.createUser({
+    email: adminEmail,
+    password,
+    email_confirm: true,
+    user_metadata: { username },
+  })
+
+  if (createError || !userData?.user) {
+    console.warn('[autoProvisionAdminFromEnv] Failed to create user:', createError?.message)
+    return null
+  }
+
+  // 4. Ensure profile is root role
+  await serviceClient.from('profiles').upsert({
+    id: userData.user.id,
+    username,
+    user_type: 'root',
+  })
+
+  // 5. Resolve canonical server URL for mobile deep-linking
+  let requestOrigin: string | null = null
+  try {
+    const headerList = await headers()
+    const host = headerList.get('x-forwarded-host') || headerList.get('host')
+    const proto = headerList.get('x-forwarded-proto') || (host && !host.includes('localhost') ? 'https' : 'http')
+    if (host) {
+      requestOrigin = `${proto}://${host}`
+    }
+  } catch {}
+
+  const serverUrl =
+    explicitOrigin ||
+    (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('localhost')
+      ? process.env.NEXT_PUBLIC_SITE_URL
+      : null) ||
+    requestOrigin ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    'https://audiobookphile.app'
+
+  // 6. Dispatch welcome email with credentials & iOS 1-click deep link
+  const emailResult = await sendDeploymentWelcomeEmail({
+    to: adminEmail,
+    username,
+    serverUrl,
+    password,
+    includeAutoLogin: true,
+  })
+
+  console.log(`[autoProvisionAdminFromEnv] ✅ Auto-provisioned root administrator for ${adminEmail} upon deployment!`)
+  console.log(`  • Server URL: ${serverUrl}`)
+  console.log(`  • Transport:  ${emailResult.transport}`)
+
+  return {
+    ok: true,
+    redirectTo: '/library',
+    emailSent: emailResult.success,
+    emailRecipient: adminEmail,
+    emailTransport: emailResult.transport,
+    serverUrl,
+    deepLink: emailResult.deepLink,
+  }
+}
