@@ -11,10 +11,10 @@ import { readFileSync, statSync, existsSync } from 'fs'
 import { join } from 'path'
 import { execSync } from 'child_process'
 
-const SUPABASE_URL = process.env.DEMO_SUPABASE_URL || 'https://uffjxiwowclumvtnyvol.supabase.co'
+const SUPABASE_URL = process.env.DEMO_SUPABASE_URL || 'https://trbxxtanyichimxlbmhy.supabase.co'
 const SERVICE_KEY =
   process.env.DEMO_SERVICE_ROLE_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmZmp4aXdvd2NsdW12dG55dm9sIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NDUxNjkwMywiZXhwIjoyMTEwMDkyOTAzfQ.vPkOVGigFfJt_hnR8r-qZc-2ZxS1EnY63cygYelHMUE'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyYnh4dGFueWljaGlteGxibWh5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NDUyMzEwNiwiZXhwIjoyMTEwMDk5MTA2fQ.P0QjCBpbWIiFGs3vkXDzq4_YShwQAb5hZsTHKj4rzHI'
 
 console.log('🚀 Connecting to Demo Supabase backend:', SUPABASE_URL)
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
