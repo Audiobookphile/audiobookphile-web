@@ -6,3 +6,9 @@ export async function changePassword(newPassword: string): Promise<void> {
     body: JSON.stringify({ newPassword }),
   })
 }
+
+export async function deleteAccount(userId: string): Promise<void> {
+  return apiRequest<void>(`/api/users/${encodeURIComponent(userId)}`, {
+    method: 'DELETE',
+  })
+}

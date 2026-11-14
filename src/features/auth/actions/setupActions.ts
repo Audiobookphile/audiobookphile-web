@@ -11,7 +11,7 @@ import { headers } from 'next/headers'
 import postgres from 'postgres'
 import { createClient } from '@/shared/utils/supabase/server'
 import { createServiceRoleClient } from '@/shared/utils/supabase/service-role'
-import { sendDeploymentWelcomeEmail, buildMobileConnectDeepLink } from '@/shared/lib/email/deploymentEmail'
+import { sendDeploymentWelcomeEmail } from '@/shared/lib/email/deploymentEmail'
 
 export interface SetupResult {
   ok: boolean
@@ -245,7 +245,9 @@ export async function createInitialAdmin(prevState: SetupResult | null, formData
       if (host) {
         requestOrigin = `${proto}://${host}`
       }
-    } catch {}
+    } catch {
+      // Ignore when invoked outside a Next.js server request context
+    }
 
     const serverUrl =
       (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('localhost')
@@ -326,7 +328,9 @@ export async function sendMobileConnectEmailAction(
     if (host) {
       requestOrigin = `${proto}://${host}`
     }
-  } catch {}
+  } catch {
+    // Ignore when invoked outside a Next.js server request context
+  }
 
   const serverUrl =
     explicitServerUrl ||
@@ -409,7 +413,7 @@ export async function autoProvisionAdminFromEnv(explicitOrigin?: string): Promis
   // 2. Ensure database schema is bootstrapped
   await autoBootstrapDatabase()
 
-  let serviceClient: ReturnType<typeof createServiceRoleClient> | null = null
+  let serviceClient: ReturnType<typeof createServiceRoleClient>
   try {
     serviceClient = createServiceRoleClient()
   } catch {
@@ -463,7 +467,9 @@ export async function autoProvisionAdminFromEnv(explicitOrigin?: string): Promis
     if (host) {
       requestOrigin = `${proto}://${host}`
     }
-  } catch {}
+  } catch {
+    // Ignore when invoked outside a Next.js server request context
+  }
 
   const serverUrl =
     explicitOrigin ||

@@ -18,7 +18,11 @@
  */
 
 const probe = (command: string): boolean => {
-  const result = Bun.spawnSync(['bun', command, '--help'], { stdout: 'pipe', stderr: 'pipe' })
+  const result = Bun.spawnSync(['bun', command, '--help'], {
+    cwd: Bun.env.TMPDIR || '/tmp',
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
   const output = `${result.stdout.toString()}${result.stderr.toString()}`
   return !output.includes('Script not found')
 }
