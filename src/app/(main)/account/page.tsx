@@ -5,6 +5,7 @@ import { getTypeSafeTranslations } from '@/shared/lib/getTypeSafeTranslations'
 import { getTheme } from '@/shared/lib/theme'
 import Btn from '@/shared/ui/Btn'
 import TextInput from '@/shared/ui/TextInput'
+import DeleteAccountBtn from './DeleteAccountBtn'
 import LogoutBtn from './LogoutBtn'
 import ThemeSelector from './ThemeSelector'
 import UserLanguageSelector from './UserLanguageSelector'
@@ -64,7 +65,10 @@ export default async function AccountPage() {
         <div className="h-px w-full bg-border" />
         <div className="flex w-full items-center justify-between">
           <Btn to="/account/change-password">{t('LabelChangePassword')}</Btn>
-          <LogoutBtn />
+          <div className="flex items-center gap-3">
+            <DeleteAccountBtn userId={user.id} />
+            <LogoutBtn />
+          </div>
         </div>
       </div>
     </div>
