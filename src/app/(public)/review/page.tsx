@@ -156,6 +156,7 @@ export default function AppReviewPage() {
           <div className="flex justify-center gap-6 text-slate-400">
             <a href="https://github.com/Audiobookphile/audiobookphile-app" className="hover:text-white transition-colors">GitHub Repository</a>
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
             <Link href="/support" className="hover:text-white transition-colors">Support</Link>
           </div>
         </footer>

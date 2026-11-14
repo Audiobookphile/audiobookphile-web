@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | Audiobookphile',
@@ -87,8 +88,13 @@ export default function PrivacyPolicyPage() {
           </div>
         </section>
 
-        <footer className="pt-8 border-t border-slate-900 text-xs text-slate-500 text-center">
-          &copy; {new Date().getFullYear()} Audiobookphile. All rights reserved.
+        <footer className="pt-8 border-t border-slate-900 text-xs text-slate-500 text-center space-y-2">
+          <p>&copy; {new Date().getFullYear()} Audiobookphile. All rights reserved.</p>
+          <div className="flex justify-center gap-6 text-slate-400">
+            <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link href="/support" className="hover:text-white transition-colors">Support</Link>
+            <Link href="/review" className="hover:text-white transition-colors">Review Hub</Link>
+          </div>
         </footer>
       </div>
     </main>
