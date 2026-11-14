@@ -84,7 +84,7 @@ export default function AppReviewPage() {
             </div>
             <h3 className="text-lg font-bold text-white">1-Click Demo &amp; Credentials</h3>
             <p className="text-sm text-slate-300">
-              Reviewers can tap the orange <strong className="text-amber-400">🚀 Try Live Demo (1-Click)</strong> button on the launch screen, or enter credentials manually:
+              Reviewers can tap the orange <strong className="text-amber-400">Try Live Demo (1-Click)</strong> button on the launch screen, or enter credentials manually:
             </p>
             <div className="text-xs font-mono bg-slate-950/80 p-3 rounded-lg border border-slate-800 space-y-1.5 text-slate-300">
               <div><span className="text-slate-500">Server:</span> https://audiobookphile.app</div>

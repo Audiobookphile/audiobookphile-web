@@ -491,7 +491,7 @@ export default function LoginForm() {
               disabled={loading}
               className="flex cursor-pointer items-center gap-1 rounded-lg border border-sky-500/30 bg-sky-500/20 px-2.5 py-1 font-semibold text-sky-300 transition-all hover:bg-sky-500/35 hover:text-white disabled:opacity-50"
             >
-              <span>🚀 Try Demo (1-Click)</span>
+              <span>Try Demo (1-Click)</span>
             </button>
           </div>
           <div className="flex items-center justify-between border-t border-sky-500/15 pt-2 text-[11px] text-foreground-muted">
