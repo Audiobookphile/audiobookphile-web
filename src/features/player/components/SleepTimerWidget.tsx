@@ -14,7 +14,7 @@ interface SleepTimerWidgetProps {
 const PRESET_DURATIONS = [5, 15, 30, 45, 60] as const
 
 export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProps) {
-  const { sleepTimerRemaining } = playerHandler.state
+  const { sleepTimerRemaining, currentChapter, currentTime } = playerHandler.state
   const { startSleepTimer, stopSleepTimer } = playerHandler.controls
 
   const widgetId = useId()
@@ -131,6 +131,8 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
     return `${m}:${s.toString().padStart(2, '0')}`
   }
 
+  const remainingInChapter = currentChapter ? Math.max(1, Math.round(currentChapter.end - currentTime)) : 0
+
   const popoverContent = isOpen ? (
     <div
       ref={popoverRef}
@@ -154,6 +156,19 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
           </button>
         ))}
       </div>
+      {currentChapter && remainingInChapter > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            startSleepTimer(remainingInChapter)
+            setIsOpen(false)
+          }}
+          className="mt-0.5 flex items-center justify-between rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-95"
+        >
+          <span>End of Chapter</span>
+          <span className="font-mono text-xs opacity-75">{formatRemainingTime(remainingInChapter)}</span>
+        </button>
+      )}
       {sleepTimerRemaining !== null && (
         <button
           type="button"

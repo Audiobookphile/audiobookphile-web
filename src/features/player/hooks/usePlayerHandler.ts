@@ -131,6 +131,7 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
   const audioTracksRef = useRef<AudioTrack[]>([])
   const libraryItemRef = useRef<LibraryItem | null>(null)
   const sessionIdRef = useRef<string | null>(null)
+  const lastPausedAtRef = useRef<number | null>(null)
 
   // Refs for values needed in callbacks (to avoid stale closures)
   const playbackRateRef = useRef(settings.playbackRate)
@@ -248,6 +249,9 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
           player.setVolume(volumeRef.current)
         } else {
           stopSyncInterval()
+          if (state === PlayerState.PAUSED) {
+            lastPausedAtRef.current = Date.now()
+          }
         }
 
         // Update current time on state changes
@@ -375,17 +379,44 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
     [closeSession, stopSyncInterval, setupPlayerListeners, startSession]
   )
 
-  const play = useCallback(() => {
-    playerRef.current?.play()
+  const applySmartRewindIfNeeded = useCallback(() => {
+    if (!lastPausedAtRef.current || !playerRef.current) return
+    const elapsedSeconds = (Date.now() - lastPausedAtRef.current) / 1000
+    let rewind = 0
+    if (elapsedSeconds >= 7200) {
+      rewind = 30
+    } else if (elapsedSeconds >= 1800) {
+      rewind = 20
+    } else if (elapsedSeconds >= 120) {
+      rewind = 10
+    }
+    if (rewind > 0) {
+      const current = playerRef.current.getCurrentTime()
+      const target = Math.max(0, current - rewind)
+      playerRef.current.seek(target, false)
+      setCurrentTime(target)
+    }
+    lastPausedAtRef.current = null
   }, [])
 
+  const play = useCallback(() => {
+    applySmartRewindIfNeeded()
+    playerRef.current?.play()
+  }, [applySmartRewindIfNeeded])
+
   const pause = useCallback(() => {
+    lastPausedAtRef.current = Date.now()
     playerRef.current?.pause()
   }, [])
 
   const playPause = useCallback(() => {
+    if (playerState !== PlayerState.PLAYING) {
+      applySmartRewindIfNeeded()
+    } else {
+      lastPausedAtRef.current = Date.now()
+    }
     playerRef.current?.playPause()
-  }, [])
+  }, [applySmartRewindIfNeeded, playerState])
 
   const seek = useCallback(
     (time: number) => {
