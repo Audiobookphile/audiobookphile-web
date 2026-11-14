@@ -334,7 +334,7 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
     return () => clearInterval(interval)
   }, [playerState])
 
-  // Sleep timer interval
+  // Sleep timer interval with smooth 15-second acoustic fade-out
   useEffect(() => {
     if (sleepTimerRemaining === null) return
 
@@ -343,7 +343,13 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
         if (prev === null) return null
         if (prev <= 1) {
           playerRef.current?.pause()
+          playerRef.current?.setVolume(volumeRef.current)
           return null
+        }
+        // Graceful fade-out during the final 15 seconds
+        if (prev <= 16) {
+          const fadeFactor = Math.max(0.05, (prev - 1) / 15)
+          playerRef.current?.setVolume(volumeRef.current * fadeFactor)
         }
         return prev - 1
       })
@@ -614,11 +620,13 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
   }, [closeSession, stopSyncInterval])
 
   const startSleepTimer = useCallback((duration: number) => {
+    playerRef.current?.setVolume(volumeRef.current)
     setSleepTimerRemaining(duration)
   }, [])
 
   const stopSleepTimer = useCallback(() => {
     setSleepTimerRemaining(null)
+    playerRef.current?.setVolume(volumeRef.current)
   }, [])
 
   return {
