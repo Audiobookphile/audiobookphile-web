@@ -3,7 +3,7 @@
 import { Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { deleteAccount } from '@/shared/lib/api/auth'
+import { deleteAccountAction } from '@/features/auth/actions/accountActions'
 import Modal from '@/shared/modals/Modal'
 import Btn from '@/shared/ui/Btn'
 import { createClient } from '@/shared/utils/supabase/client'
@@ -23,7 +23,10 @@ export default function DeleteAccountBtn({ userId }: DeleteAccountBtnProps) {
     setLoading(true)
     setError(null)
     try {
-      await deleteAccount(userId)
+      const result = await deleteAccountAction(userId)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete account')
+      }
       await supabase.auth.signOut()
       await fetch('/internal-api/logout', { method: 'POST' }).catch(() => {})
       router.replace('/login')
