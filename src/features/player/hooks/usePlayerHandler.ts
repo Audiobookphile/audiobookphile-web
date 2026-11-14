@@ -200,11 +200,26 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
 
       // Start playback
       const item = libraryItemRef.current
+      if (item && typeof window !== 'undefined') {
+        try {
+          const perBookRateStr = localStorage.getItem(`perBookPlaybackRate_${item.id}`)
+          if (perBookRateStr) {
+            const perBookRate = parseFloat(perBookRateStr)
+            if (!isNaN(perBookRate) && perBookRate >= 0.25 && perBookRate <= 4) {
+              playbackRateRef.current = perBookRate
+              playerSettings.setPlaybackRate(perBookRate)
+            }
+          }
+        } catch {
+          // Ignore localStorage availability issues
+        }
+      }
+
       if (playerRef.current && item) {
         playerRef.current.set(item, audioTracks, hlsTranscode, session.currentTime, true)
       }
     },
-    []
+    [playerSettings]
   )
 
   const handleSessionError = useCallback(
@@ -455,20 +470,44 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
 
   const setPlaybackRate = useCallback(
     (rate: number) => {
+      playbackRateRef.current = rate
       playerSettings.setPlaybackRate(rate)
       playerRef.current?.setPlaybackRate(rate)
+      if (libraryItemRef.current?.id && typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(`perBookPlaybackRate_${libraryItemRef.current.id}`, rate.toString())
+        } catch {
+          // Ignore localStorage quota or private browsing errors
+        }
+      }
     },
     [playerSettings]
   )
 
   const incrementPlaybackRate = useCallback(() => {
     const newRate = playerSettings.incrementPlaybackRate()
+    playbackRateRef.current = newRate
     playerRef.current?.setPlaybackRate(newRate)
+    if (libraryItemRef.current?.id && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`perBookPlaybackRate_${libraryItemRef.current.id}`, newRate.toString())
+      } catch {
+        // Ignore localStorage quota or private browsing errors
+      }
+    }
   }, [playerSettings])
 
   const decrementPlaybackRate = useCallback(() => {
     const newRate = playerSettings.decrementPlaybackRate()
+    playbackRateRef.current = newRate
     playerRef.current?.setPlaybackRate(newRate)
+    if (libraryItemRef.current?.id && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`perBookPlaybackRate_${libraryItemRef.current.id}`, newRate.toString())
+      } catch {
+        // Ignore localStorage quota or private browsing errors
+      }
+    }
   }, [playerSettings])
 
   // Synchronize MediaSession API for OS-level background playback resilience
