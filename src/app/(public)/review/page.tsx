@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'App Review Demonstration | Audiobookphile',
@@ -38,6 +39,7 @@ export default function AppReviewPage() {
               className="w-full max-h-[540px] bg-black object-contain mx-auto"
             >
               <source src="/demo.mp4" type="video/mp4" />
+              <track kind="captions" />
               Your browser does not support the video tag.
             </video>
             <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 flex items-center justify-between text-xs text-slate-400">
@@ -153,8 +155,8 @@ export default function AppReviewPage() {
           <p>© 2026 FOODSHARE CLUB LIMITED • Audiobookphile Open Source Project</p>
           <div className="flex justify-center gap-6 text-slate-400">
             <a href="https://github.com/Audiobookphile/audiobookphile-app" className="hover:text-white transition-colors">GitHub Repository</a>
-            <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="/support" className="hover:text-white transition-colors">Support</a>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href="/support" className="hover:text-white transition-colors">Support</Link>
           </div>
         </footer>
       </div>
