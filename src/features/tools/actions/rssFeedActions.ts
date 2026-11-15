@@ -1,20 +1,30 @@
 'use server'
 
+import {
+  closeRssFeed as apiCloseRssFeed,
+  openEntityRssFeed as apiOpenEntityRssFeed,
+} from '@/shared/lib/api/items-modules/system'
+import type { OpenRssFeedPayload, OpenRssFeedResponse } from '@/types/api'
+
 /**
- * ABS-specific — not available in the Supabase-backed version.
+ * Closes and deactivates an active RSS feed.
  */
-export async function closeRssFeed(_feedId: string): Promise<void> {
-  console.warn('[rssFeedActions] closeRssFeed is not available in the Supabase-backed version')
+export async function closeRssFeed(feedId: string): Promise<void> {
+  await apiCloseRssFeed(feedId)
 }
 
 /**
- * ABS-specific — not available in the Supabase-backed version.
+ * Opens or regenerates a private RSS podcast feed for an item, series, or collection.
  */
 export async function openEntityRssFeed(
-  _entityType: 'item' | 'collection' | 'series',
-  _entityId: string,
-  _payload: unknown
-) {
-  console.warn('[rssFeedActions] openEntityRssFeed is not available in the Supabase-backed version')
-  return null
+  entityType: 'item' | 'collection' | 'series',
+  entityId: string,
+  payload: OpenRssFeedPayload
+): Promise<OpenRssFeedResponse | null> {
+  try {
+    return await apiOpenEntityRssFeed(entityType, entityId, payload)
+  } catch (error) {
+    console.error('[rssFeedActions] Failed to open entity RSS feed:', error)
+    throw error
+  }
 }

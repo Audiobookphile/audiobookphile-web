@@ -24,7 +24,7 @@ import { apiRequest } from '../client'
  * Open RSS feed for an entity (series, collection, etc.)
  */
 export async function openEntityRssFeed(
-  entityType: 'series' | 'collection',
+  entityType: 'item' | 'items' | 'series' | 'collection',
   entityId: string,
   payload: OpenRssFeedPayload
 ): Promise<OpenRssFeedResponse> {
