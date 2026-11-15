@@ -608,8 +608,10 @@ export interface MediaProgress {
 }
 
 export interface AudioBookmark {
+  id?: string
   libraryItemId: string
   title: string
+  note?: string | null
   /** in seconds */
   time: number
   createdAt: number

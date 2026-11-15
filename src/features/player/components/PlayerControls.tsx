@@ -1,10 +1,12 @@
-import { List, Pause, Play, RotateCcw, RotateCw, Settings2, SkipBack, SkipForward } from 'lucide-react'
+import { Bookmark, List, Pause, Play, RotateCcw, RotateCw, Settings2, SkipBack, SkipForward } from 'lucide-react'
 import { useState } from 'react'
+import { useMediaContext } from '@/features/player/contexts/MediaContext'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import { PlayerState } from '@/types/api'
 import IconBtn from '../../../shared/ui/IconBtn'
 import Tooltip from '../../../shared/ui/Tooltip'
+import BookmarksModal from './BookmarksModal'
 import ChaptersModal from './ChaptersModal'
 import PlaybackRateWidget from './PlaybackRateWidget'
 import PlayerSettingsModal from './PlayerSettingsModal'
@@ -17,8 +19,10 @@ interface PlayerControlsProps {
 
 export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
   const t = useTypeSafeTranslations()
+  const { streamLibraryItem } = useMediaContext()
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [isChaptersModalOpen, setIsChaptersModalOpen] = useState(false)
+  const [isBookmarksModalOpen, setIsBookmarksModalOpen] = useState(false)
   const { jumpBackward, jumpForward, playPause, seek } = playerHandler.controls
   const { nextChapter, previousChapter, currentChapter, playerState, currentTime, settings, chapters } =
     playerHandler.state
@@ -176,6 +180,19 @@ export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
             </Tooltip>
           )}
 
+          {/* bookmarks button */}
+          <Tooltip text={t('LabelViewBookmarks') || 'View bookmarks'} position="top">
+            <IconBtn
+              size="custom"
+              borderless
+              className="p-2 text-foreground/60 hover:text-foreground"
+              onClick={() => setIsBookmarksModalOpen(true)}
+              ariaLabel={t('LabelViewBookmarks') || 'View bookmarks'}
+              icon={Bookmark}
+              whileHover={{ scale: 1.1 }}
+            />
+          </Tooltip>
+
           {/* player settings button */}
           <Tooltip text={t('LabelViewPlayerSettings')} position="top">
             <IconBtn
@@ -201,6 +218,12 @@ export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
         isOpen={isChaptersModalOpen}
         playerHandler={playerHandler}
         onClose={() => setIsChaptersModalOpen(false)}
+      />
+      <BookmarksModal
+        isOpen={isBookmarksModalOpen}
+        libraryItemId={streamLibraryItem?.id ?? null}
+        playerHandler={playerHandler}
+        onClose={() => setIsBookmarksModalOpen(false)}
       />
     </>
   )
