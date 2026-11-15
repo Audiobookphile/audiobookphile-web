@@ -229,11 +229,9 @@ jobs:
           vercel --version
           # Preview-first flow: build for preview, run E2E against it, then
           # promote to production — so broken builds never reach prod.
-          brew install vercel-cli
-          vercel --version
-          vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
-          vercel build --token=$VERCEL_TOKEN
-          DEPLOYMENT_URL=$(vercel deploy --prebuilt --token=$VERCEL_TOKEN | grep -Eo 'https://[^ ]+' | tail -1)
+          vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          vercel build --token="$VERCEL_TOKEN"
+          DEPLOYMENT_URL=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN" | grep -Eo 'https://[^ ]+' | tail -1)
           if [ -z "$DEPLOYMENT_URL" ]; then
             echo "##[error]Failed to capture deployment URL"
             exit 1
@@ -282,7 +280,7 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          vercel env pull .env.local --yes --environment=preview --token=$VERCEL_TOKEN
+          vercel env pull .env.local --yes --environment=preview --token="$VERCEL_TOKEN"
           # Suite reads SUPABASE_SERVICE_KEY as the service-role alias
           if ! grep -q "^SUPABASE_SERVICE_KEY=" .env.local; then
             VAL=$(grep -E "^SUPABASE_SERVICE_ROLE_KEY=" .env.local | head -1 | cut -d= -f2- | tr -d '"' )
@@ -328,7 +326,7 @@ jobs:
 
   promote:
     name: Promote Preview to Production
-    needs: e2e
+    needs: [deploy, e2e]
     if: needs.deploy.outputs.deployment_url != ''
     runs-on: [self-hosted, macOS]
     timeout-minutes: 15
@@ -350,7 +348,7 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          vercel promote ${{ needs.deploy.outputs.deployment_url }} --yes --token=$VERCEL_TOKEN
+          vercel promote "${{ needs.deploy.outputs.deployment_url }}" --yes --token="$VERCEL_TOKEN"
 
   e2e-pr:
     name: E2E Smoke (Playwright Local)
