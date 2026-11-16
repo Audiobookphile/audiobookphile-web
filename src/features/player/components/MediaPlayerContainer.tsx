@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Clock, X } from 'lucide-react'
+import { Clock } from 'lucide-react'
 import Link from 'next/link'
 import { Fragment, useEffect } from 'react'
 import { getExpandedLibraryItemAction } from '@/features/player/actions/mediaActions'
@@ -12,9 +12,8 @@ import { getLibraryItemCoverUrl } from '@/shared/lib/coverUtils'
 import { secondsToTimestamp } from '@/shared/lib/datefns'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 import { BookMedia, PlayerState } from '@/types/api'
-import IconBtn from '../../../shared/ui/IconBtn'
 import PreviewCover from '../../metadata/components/PreviewCover'
-import PlayerControls from './PlayerControls'
+import { PlayerRightControls, PlayerTransportControls } from './PlayerControls'
 import PlayerTrackBar from './PlayerTrackBar'
 
 export default function MediaPlayerContainer() {
@@ -27,13 +26,6 @@ export default function MediaPlayerContainer() {
   const dominantColor = useImageColor(coverUrl)
 
   // ── Terminal states: advance the queue, or tear the bar down ───────────────
-  //
-  // This component owns the end of playback, because tearing down is half
-  // `closePlayer()` (which usePlayerHandler does not and must not do) and half
-  // `clearStreamMedia()` (which only lives here). Doing only one half is what
-  // left the bar stranded: the state was reset to IDLE while `streamLibraryItem`
-  // stayed set, so the UI showed a finished book whose Play button called
-  // playPause() on a destroyed player — no sound, no toast, no error.
   useEffect(() => {
     if (playerHandler.state.playerState !== PlayerState.FINISHED) return
     if (!streamLibraryItem) return
@@ -42,27 +34,18 @@ export default function MediaPlayerContainer() {
     const next = playerQueueItems[currentIndex + 1]
 
     if (!next) {
-      // End of the queue: close the server session AND clear the stream state,
-      // so the bar animates out instead of becoming an inert control.
       clearStreamMedia()
       return
     }
 
-    // We only have the queue metadata here; fetch the full LibraryItem via the
-    // existing server action which re-uses the already-loaded item cache.
     getExpandedLibraryItemAction(next.libraryItemId)
       .then((item) => playItem({ libraryItem: item, episodeId: next.episodeId }))
       .catch((err) => {
         console.error('[MediaPlayerContainer] Auto-advance failed:', err)
-        // The next item could not be loaded, so the queue cannot continue.
-        // Clear rather than strand the bar on a book that has already finished.
         clearStreamMedia()
       })
   }, [playerHandler.state.playerState, streamLibraryItem, playerQueueItems, playItem, clearStreamMedia])
 
-  // A fatal playback error is terminal too: the toast explains what happened, and
-  // the bar must not survive it. Same reason as above — IDLE alone is not enough
-  // to unmount, because IDLE is also the pre-load and post-close state.
   useEffect(() => {
     if (playerHandler.state.playerState !== PlayerState.ERROR) return
     clearStreamMedia()
@@ -85,77 +68,79 @@ export default function MediaPlayerContainer() {
           initial={{ y: '100%' }}
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          transition={{ type: 'spring', damping: 26, stiffness: 220 }}
           style={{
             willChange: 'transform, opacity',
             background: dominantColor
-              ? `linear-gradient(to top, var(--background) 40%, ${dominantColor}22 100%)`
+              ? `linear-gradient(to top, var(--background) 55%, ${dominantColor}1c 100%)`
               : undefined,
           }}
-          className="glassmorphism fixed right-0 bottom-0 left-0 z-50 h-48 w-full border-t border-primary/20 px-2 pt-2 pb-1 shadow-[0_-8px_30px_rgb(0,0,0,0.3)] transition-colors duration-1000 lg:h-40 lg:px-4 lg:pb-4"
+          className="glassmorphism fixed right-0 bottom-0 left-0 z-50 w-full border-t border-white/10 bg-background/92 px-3 py-2 shadow-[0_-10px_35px_rgba(0,0,0,0.35)] backdrop-blur-2xl transition-colors duration-700 sm:px-4 lg:px-6 lg:py-2.5"
         >
-          <div className="absolute top-4 left-4 flex gap-4 lg:left-6">
-            <div className="overflow-hidden rounded-md shadow-lg ring-1 ring-white/10 transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-              <PreviewCover
-                src={coverUrl || ''}
-                bookCoverAspectRatio={coverAspectRatio}
-                showResolution={false}
-                width={72}
-                priority={true}
-              />
-            </div>
-            <div className="flex max-w-[200px] flex-col gap-0.5 sm:max-w-[400px]">
-              <Link
-                href={`/library/${streamLibraryItem.libraryId}/item/${streamLibraryItem.id}`}
-                className="hover:text-primary-foreground truncate text-lg font-semibold text-foreground transition-colors"
-              >
-                {displayTitle}
-              </Link>
-              {bookAuthors.length > 0 && (
-                <div className="truncate text-sm text-foreground-muted">
-                  {bookAuthors.map((author, index) => (
-                    <Fragment key={author.id}>
-                      <Link
-                        href={`/library/${streamLibraryItem.libraryId}/authors/${author.id}`}
-                        className="transition-colors hover:text-foreground"
-                      >
-                        {author.name}
-                      </Link>
-                      {index < bookAuthors.length - 1 && <span>, </span>}
-                    </Fragment>
-                  ))}
+          {/* Main 3-Column Studio Audio Layout */}
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 sm:gap-4 lg:gap-6">
+            {/* Left Column: Cover & Book Metadata */}
+            <div className="flex min-w-0 max-w-[200px] items-center gap-2.5 sm:max-w-[260px] lg:max-w-[320px] shrink-0">
+              <div className="relative shrink-0 overflow-hidden rounded-xl shadow-md ring-1 ring-white/15 transition-transform duration-300 hover:scale-105">
+                <PreviewCover
+                  src={coverUrl || ''}
+                  bookCoverAspectRatio={coverAspectRatio}
+                  showResolution={false}
+                  width={50}
+                  priority={true}
+                />
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col justify-center">
+                <Link
+                  href={`/library/${streamLibraryItem.libraryId}/item/${streamLibraryItem.id}`}
+                  className="truncate text-sm font-semibold text-foreground transition-colors hover:text-primary"
+                  title={displayTitle}
+                >
+                  {displayTitle}
+                </Link>
+                {bookAuthors.length > 0 && (
+                  <div className="truncate text-xs text-foreground-muted">
+                    {bookAuthors.map((author, index) => (
+                      <Fragment key={author.id}>
+                        <Link
+                          href={`/library/${streamLibraryItem.libraryId}/authors/${author.id}`}
+                          className="transition-colors hover:text-foreground"
+                        >
+                          {author.name}
+                        </Link>
+                        {index < bookAuthors.length - 1 && <span>, </span>}
+                      </Fragment>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-0.5 flex items-center gap-2 text-[11px] text-foreground-muted/60">
+                  {bookDuration && (
+                    <span className="flex items-center gap-1 font-mono">
+                      <Clock size={11} className="opacity-70" />
+                      {secondsToTimestamp(bookDuration)}
+                    </span>
+                  )}
+                  {playerQueueItems.length > 1 && (
+                    <span className="text-[10px] opacity-75">
+                      ({playerQueueItems.findIndex((q) => q.libraryItemId === streamLibraryItem.id) + 1}/{playerQueueItems.length})
+                    </span>
+                  )}
                 </div>
-              )}
-              {bookDuration && (
-                <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-foreground-muted/60">
-                  <Clock size={12} className="opacity-70" />
-                  {secondsToTimestamp(bookDuration)}
-                </div>
-              )}
-              {/* Queue indicator */}
-              {playerQueueItems.length > 1 && (
-                <p className={mergeClasses('mt-1 text-[10px]', 'text-foreground-muted/50')}>
-                  {playerQueueItems.findIndex((q) => q.libraryItemId === streamLibraryItem.id) + 1} /{' '}
-                  {playerQueueItems.length} in queue
-                </p>
-              )}
+              </div>
             </div>
-          </div>
 
-          <div className="mt-1 flex flex-col gap-4">
-            <PlayerControls playerHandler={playerHandler} />
-            <PlayerTrackBar playerHandler={playerHandler} />
-          </div>
+            {/* Center Column: Transport Controls & Scrubber */}
+            <div className="flex min-w-0 flex-1 max-w-2xl flex-col items-center justify-center gap-0.5 px-1 sm:px-2">
+              <PlayerTransportControls playerHandler={playerHandler} />
+              <div className="w-full">
+                <PlayerTrackBar playerHandler={playerHandler} />
+              </div>
+            </div>
 
-          <div className="absolute top-4 right-4 flex items-center gap-2 lg:right-6">
-            <IconBtn
-              size="small"
-              borderless
-              onClick={clearStreamMedia}
-              whileHover={{ rotate: 90, scale: 1.1 }}
-              transition={{ type: 'spring', stiffness: 300 }}
-              icon={X}
-            />
+            {/* Right Column: Audio Utilities & Dismiss */}
+            <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0">
+              <PlayerRightControls playerHandler={playerHandler} onClose={clearStreamMedia} />
+            </div>
           </div>
         </motion.div>
       )}

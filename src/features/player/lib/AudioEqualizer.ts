@@ -1,0 +1,200 @@
+export type EqualizerPreset = 'off' | 'voice-boost' | 'warm' | 'bass-reducer' | 'spoken-word'
+
+export interface EqualizerPresetInfo {
+  id: EqualizerPreset
+  label: string
+  shortLabel: string
+  description: string
+}
+
+export const EQUALIZER_PRESETS: EqualizerPresetInfo[] = [
+  {
+    id: 'off',
+    label: 'Flat (Bypass)',
+    shortLabel: 'Flat',
+    description: 'Natural uncolored narrator voice',
+  },
+  {
+    id: 'voice-boost',
+    label: 'Voice Boost',
+    shortLabel: 'Voice',
+    description: 'Crisp vocal presence & speech intelligibility in noisy environments',
+  },
+  {
+    id: 'warm',
+    label: 'Warm & Relaxed',
+    shortLabel: 'Warm',
+    description: 'Smooths harsh sibilants and reduces ear fatigue for long sessions',
+  },
+  {
+    id: 'bass-reducer',
+    label: 'Bass Reducer',
+    shortLabel: 'Less Bass',
+    description: 'Tames boomy low-end resonance in car speakers and bassy headphones',
+  },
+  {
+    id: 'spoken-word',
+    label: 'Spoken Word',
+    shortLabel: 'Spoken',
+    description: 'Optimized vocal bandpass for audiobooks and podcasts',
+  },
+]
+
+export class AudioEqualizer {
+  private audioCtx: AudioContext | null = null
+  private sourceNode: MediaElementAudioSourceNode | null = null
+  private lowFilter: BiquadFilterNode | null = null
+  private midFilter: BiquadFilterNode | null = null
+  private highFilter: BiquadFilterNode | null = null
+  private currentPreset: EqualizerPreset = 'off'
+  private isConnected = false
+
+  constructor(private audioElement: HTMLAudioElement) {}
+
+  public getPreset(): EqualizerPreset {
+    return this.currentPreset
+  }
+
+  public setPreset(preset: EqualizerPreset): void {
+    this.currentPreset = preset
+    if (preset === 'off' && !this.isConnected) {
+      // Do not instantiate AudioContext until user actually activates an EQ preset
+      return
+    }
+
+    this.ensureGraph()
+    this.applyPreset(preset)
+  }
+
+  private ensureGraph(): void {
+    if (this.isConnected) return
+    if (typeof window === 'undefined') return
+
+    try {
+      const AudioCtxClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+      if (!AudioCtxClass) return
+
+      this.audioCtx = new AudioCtxClass()
+
+      // Create filter chain: low -> mid -> high -> destination
+      this.lowFilter = this.audioCtx.createBiquadFilter()
+      this.midFilter = this.audioCtx.createBiquadFilter()
+      this.highFilter = this.audioCtx.createBiquadFilter()
+
+      this.sourceNode = this.audioCtx.createMediaElementSource(this.audioElement)
+
+      this.sourceNode.connect(this.lowFilter)
+      this.lowFilter.connect(this.midFilter)
+      this.midFilter.connect(this.highFilter)
+      this.highFilter.connect(this.audioCtx.destination)
+
+      this.isConnected = true
+    } catch (err) {
+      console.warn('[AudioEqualizer] Web Audio connection failed (falling back to direct playback):', err)
+      this.isConnected = false
+    }
+  }
+
+  private applyPreset(preset: EqualizerPreset): void {
+    if (!this.isConnected || !this.lowFilter || !this.midFilter || !this.highFilter || !this.audioCtx) return
+
+    if (this.audioCtx.state === 'suspended') {
+      void this.audioCtx.resume()
+    }
+
+    const t = this.audioCtx.currentTime
+
+    switch (preset) {
+      case 'voice-boost':
+        this.lowFilter.type = 'highpass'
+        this.lowFilter.frequency.setValueAtTime(85, t)
+        this.lowFilter.Q.setValueAtTime(0.7, t)
+
+        this.midFilter.type = 'peaking'
+        this.midFilter.frequency.setValueAtTime(2600, t)
+        this.midFilter.Q.setValueAtTime(1.2, t)
+        this.midFilter.gain.setValueAtTime(4.5, t)
+
+        this.highFilter.type = 'highshelf'
+        this.highFilter.frequency.setValueAtTime(6000, t)
+        this.highFilter.gain.setValueAtTime(2.0, t)
+        break
+
+      case 'warm':
+        this.lowFilter.type = 'peaking'
+        this.lowFilter.frequency.setValueAtTime(320, t)
+        this.lowFilter.Q.setValueAtTime(0.9, t)
+        this.lowFilter.gain.setValueAtTime(2.5, t)
+
+        this.midFilter.type = 'peaking'
+        this.midFilter.frequency.setValueAtTime(1200, t)
+        this.midFilter.Q.setValueAtTime(0.8, t)
+        this.midFilter.gain.setValueAtTime(0.0, t)
+
+        this.highFilter.type = 'highshelf'
+        this.highFilter.frequency.setValueAtTime(4500, t)
+        this.highFilter.gain.setValueAtTime(-3.5, t)
+        break
+
+      case 'bass-reducer':
+        this.lowFilter.type = 'lowshelf'
+        this.lowFilter.frequency.setValueAtTime(220, t)
+        this.lowFilter.gain.setValueAtTime(-6.5, t)
+
+        this.midFilter.type = 'peaking'
+        this.midFilter.frequency.setValueAtTime(1500, t)
+        this.midFilter.Q.setValueAtTime(0.7, t)
+        this.midFilter.gain.setValueAtTime(0.0, t)
+
+        this.highFilter.type = 'highshelf'
+        this.highFilter.frequency.setValueAtTime(5000, t)
+        this.highFilter.gain.setValueAtTime(0.0, t)
+        break
+
+      case 'spoken-word':
+        this.lowFilter.type = 'highpass'
+        this.lowFilter.frequency.setValueAtTime(100, t)
+        this.lowFilter.Q.setValueAtTime(0.7, t)
+
+        this.midFilter.type = 'peaking'
+        this.midFilter.frequency.setValueAtTime(1800, t)
+        this.midFilter.Q.setValueAtTime(1.0, t)
+        this.midFilter.gain.setValueAtTime(3.0, t)
+
+        this.highFilter.type = 'highshelf'
+        this.highFilter.frequency.setValueAtTime(4000, t)
+        this.highFilter.gain.setValueAtTime(1.5, t)
+        break
+
+      case 'off':
+      default:
+        this.lowFilter.type = 'peaking'
+        this.lowFilter.frequency.setValueAtTime(100, t)
+        this.lowFilter.gain.setValueAtTime(0, t)
+
+        this.midFilter.type = 'peaking'
+        this.midFilter.frequency.setValueAtTime(1000, t)
+        this.midFilter.gain.setValueAtTime(0, t)
+
+        this.highFilter.type = 'peaking'
+        this.highFilter.frequency.setValueAtTime(5000, t)
+        this.highFilter.gain.setValueAtTime(0, t)
+        break
+    }
+  }
+
+  public destroy(): void {
+    try {
+      this.sourceNode?.disconnect()
+      this.lowFilter?.disconnect()
+      this.midFilter?.disconnect()
+      this.highFilter?.disconnect()
+      void this.audioCtx?.close()
+    } catch (_e) {
+      // Ignore teardown errors
+    }
+    this.isConnected = false
+  }
+}

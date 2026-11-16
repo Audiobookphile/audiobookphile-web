@@ -355,21 +355,22 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="font-mono text-sm text-foreground-muted">
-          {currentTimeFormatted} / {Math.round(playedPercent)}%
+      <div className="mt-1 flex items-center justify-between gap-2 text-xs text-foreground-muted">
+        <p className="shrink-0 font-mono">
+          {currentTimeFormatted}
+          <span className="opacity-60 pl-1">({Math.round(playedPercent)}%)</span>
         </p>
         {currentChapter && (
-          <p className="text-sm text-foreground-muted">
+          <p className="truncate min-w-0 max-w-[240px] text-center text-xs opacity-80" title={currentChapter.title}>
             {currentChapter.title}{' '}
             {useChapterTrack && (
-              <span className="pl-1 text-xs text-foreground-subdued">
+              <span className="pl-1 text-[11px] text-foreground-subdued">
                 ({currentChapterNumber} of {chapters.length})
               </span>
             )}
           </p>
         )}
-        <p className="font-mono text-sm text-foreground-muted">{timeRemainingFormatted}</p>
+        <p className="shrink-0 font-mono">{timeRemainingFormatted}</p>
       </div>
     </div>
   )

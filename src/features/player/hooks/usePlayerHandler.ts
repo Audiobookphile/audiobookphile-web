@@ -217,6 +217,7 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
 
       if (playerRef.current && item) {
         playerRef.current.set(item, audioTracks, hlsTranscode, session.currentTime, true)
+        playerRef.current.setEqualizerPreset(settings.equalizerPreset)
       }
     },
     [playerSettings]
@@ -515,6 +516,11 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
       }
     }
   }, [playerSettings])
+
+  // Synchronize audio equalizer preset
+  useEffect(() => {
+    playerRef.current?.setEqualizerPreset(settings.equalizerPreset)
+  }, [settings.equalizerPreset])
 
   // Synchronize MediaSession API for OS-level background playback resilience
   useEffect(() => {

@@ -1,13 +1,15 @@
 'use client'
 
-import { Bookmark, Clock, MessageSquare, Plus, Trash2 } from 'lucide-react'
+import { Bookmark, ChevronDown, Clock, Download, FileJson, FileSpreadsheet, FileText, Loader2, MessageSquare, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
+import { getServerBaseUrl } from '@/shared/lib/api/base'
 import { apiFetch } from '@/shared/lib/api/browser'
 import { secondsToTimestamp } from '@/shared/lib/datefns'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 import Modal from '@/shared/modals/Modal'
+import { getSupabaseAnonKey } from '@/shared/utils/supabase/env'
 
 interface BookmarksModalProps {
   isOpen: boolean
@@ -41,6 +43,8 @@ export default function BookmarksModal({
   const [newTitle, setNewTitle] = useState('')
   const [newNote, setNewNote] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(false)
 
   const fetchBookmarks = useCallback(async () => {
     if (!libraryItemId) return
@@ -124,6 +128,50 @@ export default function BookmarksModal({
     onClose()
   }
 
+  const handleExport = async (format: 'markdown' | 'csv' | 'json') => {
+    if (!libraryItemId || isExporting) return
+    setIsExporting(true)
+    setExportDropdownOpen(false)
+    try {
+      const { createClient } = await import('@/shared/utils/supabase/client')
+      const supabase = createClient()
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      const anonKey = getSupabaseAnonKey()
+      const headers: Record<string, string> = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      if (anonKey) headers['apikey'] = anonKey
+
+      const baseUrl = getServerBaseUrl()
+      const res = await fetch(
+        `${baseUrl}/api/me/bookmarks/export?libraryItemId=${encodeURIComponent(libraryItemId)}&format=${format}`,
+        { headers }
+      )
+      if (!res.ok) throw new Error(`Export failed with status ${res.status}`)
+
+      let filename = `bookmarks.${format === 'markdown' ? 'md' : format}`
+      const disposition = res.headers.get('content-disposition')
+      if (disposition) {
+        const match = disposition.match(/filename="?([^";]+)"?/i)
+        if (match?.[1]) filename = match[1]
+      }
+
+      const blob = await res.blob()
+      const downloadUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = downloadUrl
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(downloadUrl)
+    } catch (err) {
+      console.error('[BookmarksModal] Failed to export bookmarks:', err)
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="sm:max-w-lg md:max-w-lg lg:max-w-lg">
       <div className="flex max-h-[80vh] flex-col p-4">
@@ -134,17 +182,72 @@ export default function BookmarksModal({
             <h2 className="text-lg font-semibold text-foreground">
               {t('LabelViewBookmarks') || 'Bookmarks'}
             </h2>
+            {bookmarks.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                {bookmarks.length}
+              </span>
+            )}
           </div>
-          {!isAdding && (
-            <button
-              type="button"
-              onClick={handleStartAdd}
-              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Add at {secondsToTimestamp(currentTime)}</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {bookmarks.length > 0 && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setExportDropdownOpen((prev) => !prev)}
+                  disabled={isExporting}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-foreground transition-all hover:bg-white/10 hover:border-white/20 active:scale-95 disabled:opacity-50"
+                  title="Export bookmarks"
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5 text-primary" />
+                  )}
+                  <span>Export</span>
+                  <ChevronDown className="h-3 w-3 opacity-60" />
+                </button>
+
+                {exportDropdownOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-1.5 w-44 rounded-xl border border-white/15 bg-background/95 p-1 shadow-xl backdrop-blur-xl">
+                    <button
+                      type="button"
+                      onClick={() => void handleExport('markdown')}
+                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-primary" />
+                      <span>Markdown (.md)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleExport('csv')}
+                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                    >
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
+                      <span>Spreadsheet (.csv)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleExport('json')}
+                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                    >
+                      <FileJson className="h-3.5 w-3.5 text-primary" />
+                      <span>Structured (.json)</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {!isAdding && (
+              <button
+                type="button"
+                onClick={handleStartAdd}
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/30 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/25 active:scale-95"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add at {secondsToTimestamp(currentTime)}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Add Form */}

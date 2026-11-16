@@ -139,18 +139,52 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
       id={`${widgetId}-popover`}
       role="dialog"
       style={floatingStyles}
-      className="z-70 flex flex-col gap-2 rounded-2xl border border-white/15 bg-background/90 p-3.5 shadow-2xl backdrop-blur-xl"
+      className="z-70 flex w-64 flex-col gap-2 rounded-2xl border border-white/15 bg-background/95 p-3.5 shadow-2xl backdrop-blur-xl"
     >
       <div className="mb-1 text-center text-xs font-bold tracking-wider text-foreground uppercase opacity-70">
         Sleep Timer
       </div>
+
+      {sleepTimerRemaining !== null && (
+        <div className="mb-1 flex items-center justify-between rounded-xl border border-primary/25 bg-primary/10 px-2 py-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              const newTime = Math.max(60, sleepTimerRemaining - 300)
+              startSleepTimer(newTime)
+            }}
+            className="flex h-7 w-9 items-center justify-center rounded-lg border border-primary/30 bg-background/60 text-xs font-bold text-primary transition-all hover:bg-primary/20 active:scale-95"
+            title="Subtract 5 minutes"
+          >
+            -5m
+          </button>
+          <div className="text-center">
+            <span className="font-mono text-sm font-bold text-primary tabular-nums">
+              {formatRemainingTime(sleepTimerRemaining)}
+            </span>
+            <span className="block text-[9px] uppercase tracking-wider text-primary/70">remaining</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const newTime = sleepTimerRemaining + 300
+              startSleepTimer(newTime)
+            }}
+            className="flex h-7 w-9 items-center justify-center rounded-lg border border-primary/30 bg-background/60 text-xs font-bold text-primary transition-all hover:bg-primary/20 active:scale-95"
+            title="Add 5 minutes"
+          >
+            +5m
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-5 gap-1.5">
         {PRESET_DURATIONS.map((minutes) => (
           <button
             key={minutes}
             type="button"
             onClick={() => handleStartTimer(minutes)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-foreground/80 transition-all hover:border-primary hover:bg-primary hover:text-white hover:shadow-md hover:shadow-primary/30 active:scale-95"
+            className="rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-center text-xs font-bold text-foreground/80 transition-all hover:border-primary hover:bg-primary hover:text-white hover:shadow-md hover:shadow-primary/30 active:scale-95"
           >
             {minutes}m
           </button>
@@ -173,7 +207,7 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
         <button
           type="button"
           onClick={handleStopTimer}
-          className="mt-2 w-full rounded-xl border border-error/30 bg-error/15 py-1.5 text-xs font-bold text-error transition-all hover:bg-error/25 active:scale-95"
+          className="mt-1 w-full rounded-xl border border-error/30 bg-error/15 py-1.5 text-xs font-bold text-error transition-all hover:bg-error/25 active:scale-95"
         >
           Cancel Timer
         </button>

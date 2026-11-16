@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { EqualizerPreset } from '@/features/player/lib/AudioEqualizer'
 
 export interface PlayerSettings {
   /** Track shows chapter instead of full duration */
@@ -13,6 +14,8 @@ export interface PlayerSettings {
   playbackRateIncrementDecrement: 0.1 | 0.05
   /** Current volume level (0-1) */
   volume: number
+  /** Audio equalizer preset for vocal clarity */
+  equalizerPreset: EqualizerPreset
 }
 
 export interface UsePlayerSettingsReturn {
@@ -22,6 +25,7 @@ export interface UsePlayerSettingsReturn {
   setJumpBackwardAmount: (value: number) => void
   setPlaybackRate: (value: number) => void
   setPlaybackRateIncrementDecrement: (value: 0.1 | 0.05) => void
+  setEqualizerPreset: (value: EqualizerPreset) => void
   /** Update multiple settings at once */
   updateSettings: (updates: Partial<PlayerSettings>) => void
   /** Increment playback rate by the configured increment amount */
@@ -47,6 +51,7 @@ const DEFAULT_SETTINGS: PlayerSettings = {
   playbackRate: 1.0,
   playbackRateIncrementDecrement: 0.1,
   volume: 0.5,
+  equalizerPreset: 'off',
 }
 
 // Playback rate bounds
@@ -186,6 +191,10 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setSettings((prev) => ({ ...prev, volume: clampedVolume }))
   }, [])
 
+  const setEqualizerPreset = useCallback((value: EqualizerPreset) => {
+    setSettings((prev) => ({ ...prev, equalizerPreset: value }))
+  }, [])
+
   const toggleMute = useCallback((): number => {
     const currentVolume = settings.volume
     if (currentVolume > 0) {
@@ -209,6 +218,7 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setJumpBackwardAmount,
     setPlaybackRate,
     setPlaybackRateIncrementDecrement,
+    setEqualizerPreset,
     updateSettings,
     incrementPlaybackRate,
     decrementPlaybackRate,

@@ -1,5 +1,6 @@
 import type { LibraryItem } from '@/types/api'
 import { PlayerState } from '@/types/api'
+import { AudioEqualizer, type EqualizerPreset } from './AudioEqualizer'
 import type { AudioTrack } from './AudioTrack'
 import { AUDIO_MIME_TYPES } from './constants'
 import { PlayerEventEmitter } from './PlayerEventEmitter'
@@ -9,6 +10,7 @@ import type { IAudioProvider } from './types'
 export class LocalAudioPlayer extends PlayerEventEmitter {
   private player: HTMLAudioElement | null = null
   private provider: IAudioProvider | null = null
+  private equalizer: AudioEqualizer | null = null
 
   // Track state
   private libraryItem: LibraryItem | null = null
@@ -322,6 +324,14 @@ export class LocalAudioPlayer extends PlayerEventEmitter {
     if (this.player) {
       this.player.volume = volume
     }
+  }
+
+  setEqualizerPreset(preset: EqualizerPreset): void {
+    if (!this.player) return
+    if (!this.equalizer) {
+      this.equalizer = new AudioEqualizer(this.player)
+    }
+    this.equalizer.setPreset(preset)
   }
 
   seek(time: number, playWhenReady: boolean): void {

@@ -1,5 +1,6 @@
 'use client'
 
+import { EQUALIZER_PRESETS, type EqualizerPreset } from '@/features/player/lib/AudioEqualizer'
 import type { PlayerSettings } from '@/features/player/hooks/usePlayerSettings'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import Modal from '@/shared/modals/Modal'
@@ -12,6 +13,11 @@ interface PlayerSettingsModalProps {
   onClose: () => void
   onUpdateSettings: (updates: Partial<PlayerSettings>) => void
 }
+
+const EQUALIZER_DROPDOWN_ITEMS: DropdownItem[] = EQUALIZER_PRESETS.map((preset) => ({
+  text: `${preset.label} (${preset.description})`,
+  value: preset.id,
+}))
 
 // Playback rate increment/decrement values
 const PLAYBACK_RATE_INCREMENT_VALUES: DropdownItem[] = [
@@ -85,6 +91,15 @@ export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdat
             value={settings.playbackRateIncrementDecrement}
             items={PLAYBACK_RATE_INCREMENT_VALUES}
             onChange={handlePlaybackRateIncrementChange}
+            usePortal
+          />
+
+          {/* Audio Equalizer & Voice Boost dropdown */}
+          <Dropdown
+            label="Audio Equalizer (Speech Clarity)"
+            value={settings.equalizerPreset || 'off'}
+            items={EQUALIZER_DROPDOWN_ITEMS}
+            onChange={(value) => onUpdateSettings({ equalizerPreset: value as EqualizerPreset })}
             usePortal
           />
         </div>

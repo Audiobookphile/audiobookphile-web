@@ -1,4 +1,6 @@
-import { Bookmark, List, Pause, Play, RotateCcw, RotateCw, Settings2, SkipBack, SkipForward } from 'lucide-react'
+'use client'
+
+import { Bookmark, List, Pause, Play, RotateCcw, RotateCw, Settings2, SkipBack, SkipForward, X } from 'lucide-react'
 import { useState } from 'react'
 import { useMediaContext } from '@/features/player/contexts/MediaContext'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
@@ -8,24 +10,20 @@ import IconBtn from '../../../shared/ui/IconBtn'
 import Tooltip from '../../../shared/ui/Tooltip'
 import BookmarksModal from './BookmarksModal'
 import ChaptersModal from './ChaptersModal'
+import EqualizerWidget from './EqualizerWidget'
 import PlaybackRateWidget from './PlaybackRateWidget'
 import PlayerSettingsModal from './PlayerSettingsModal'
 import SleepTimerWidget from './SleepTimerWidget'
 import VolumeControl from './VolumeControl'
 
-interface PlayerControlsProps {
+export interface PlayerTransportControlsProps {
   playerHandler: UsePlayerHandlerReturn
 }
 
-export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
+export function PlayerTransportControls({ playerHandler }: PlayerTransportControlsProps) {
   const t = useTypeSafeTranslations()
-  const { streamLibraryItem } = useMediaContext()
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
-  const [isChaptersModalOpen, setIsChaptersModalOpen] = useState(false)
-  const [isBookmarksModalOpen, setIsBookmarksModalOpen] = useState(false)
   const { jumpBackward, jumpForward, playPause, seek } = playerHandler.controls
-  const { nextChapter, previousChapter, currentChapter, playerState, currentTime, settings, chapters } =
-    playerHandler.state
+  const { nextChapter, previousChapter, currentChapter, playerState, currentTime, settings } = playerHandler.state
 
   const isPlaying = playerState === PlayerState.PLAYING
   const isLoading = playerState === PlayerState.LOADING
@@ -62,150 +60,177 @@ export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
   }
 
   return (
+    <div className="flex items-center justify-center gap-1.5 sm:gap-4">
+      {/* Previous chapter */}
+      <Tooltip text={t('ButtonPreviousChapter')} position="top">
+        <IconBtn
+          borderless
+          size="custom"
+          className="hidden p-1.5 text-foreground/60 transition-colors hover:text-foreground sm:inline-flex"
+          onClick={handlePreviousChapter}
+          ariaLabel={t('ButtonPreviousChapter')}
+          icon={SkipBack}
+          whileHover={{ x: -2 }}
+          whileTap={{ scale: 0.9 }}
+        />
+      </Tooltip>
+
+      {/* Jump backward */}
+      <Tooltip text={jumpBackwardTooltipText} position="top">
+        <div className="group relative">
+          <IconBtn
+            borderless
+            size="custom"
+            className="p-1.5 text-foreground/80 transition-colors hover:text-foreground"
+            onClick={jumpBackward}
+            ariaLabel={jumpBackwardTooltipText}
+            icon={RotateCcw}
+            whileHover={{ rotate: -15 }}
+            whileTap={{ scale: 0.9 }}
+          />
+          <span className="pointer-events-none absolute inset-0 mt-0.5 flex items-center justify-center text-[8px] font-bold opacity-60 group-hover:opacity-100">
+            {settings.jumpBackwardAmount}
+          </span>
+        </div>
+      </Tooltip>
+
+      {/* Play/Pause Hero Button */}
+      <div className="relative">
+        <IconBtn
+          borderless
+          size="custom"
+          loading={isLoading}
+          outlined={false}
+          className="h-11 w-11 rounded-full bg-primary text-white shadow-md shadow-primary/30 ring-2 ring-white/25 transition-all hover:bg-primary/90 hover:scale-105 active:scale-95 sm:h-12 sm:w-12"
+          onClick={playPause}
+          ariaLabel={isPlaying ? t('ButtonPause') : t('ButtonPlay')}
+          icon={isPlaying ? Pause : Play}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          iconClass={isPlaying ? '' : 'ml-0.5'}
+        />
+      </div>
+
+      {/* Jump forward */}
+      <Tooltip text={jumpForwardTooltipText} position="top">
+        <div className="group relative">
+          <IconBtn
+            borderless
+            size="custom"
+            className="p-1.5 text-foreground/80 transition-colors hover:text-foreground"
+            onClick={jumpForward}
+            ariaLabel={jumpForwardTooltipText}
+            icon={RotateCw}
+            whileHover={{ rotate: 15 }}
+            whileTap={{ scale: 0.9 }}
+          />
+          <span className="pointer-events-none absolute inset-0 mt-0.5 flex items-center justify-center text-[8px] font-bold opacity-60 group-hover:opacity-100">
+            {settings.jumpForwardAmount}
+          </span>
+        </div>
+      </Tooltip>
+
+      {/* Next chapter */}
+      <Tooltip text={t('ButtonNextChapter')} position="top">
+        <IconBtn
+          borderless
+          size="custom"
+          className="hidden p-1.5 text-foreground/60 transition-colors hover:text-foreground sm:inline-flex"
+          onClick={handleNextChapter}
+          ariaLabel={t('ButtonNextChapter')}
+          icon={SkipForward}
+          whileHover={{ x: 2 }}
+          whileTap={{ scale: 0.9 }}
+        />
+      </Tooltip>
+    </div>
+  )
+}
+
+export interface PlayerRightControlsProps {
+  playerHandler: UsePlayerHandlerReturn
+  onClose?: () => void
+}
+
+export function PlayerRightControls({ playerHandler, onClose }: PlayerRightControlsProps) {
+  const t = useTypeSafeTranslations()
+  const { streamLibraryItem } = useMediaContext()
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+  const [isChaptersModalOpen, setIsChaptersModalOpen] = useState(false)
+  const [isBookmarksModalOpen, setIsBookmarksModalOpen] = useState(false)
+  const { chapters } = playerHandler.state
+
+  return (
     <>
-      <div className="mx-auto mt-0 flex w-full max-w-4xl items-center px-4">
-        {/* Left section: Optional info/spacer */}
-        <div className="hidden flex-1 lg:flex" />
-
-        {/* Center - playback controls */}
-        <div className="flex flex-1 items-center justify-center gap-2 sm:gap-6">
-          {/* previous chapter */}
-          <Tooltip text={t('ButtonPreviousChapter')} position="top">
-            <IconBtn
-              borderless
-              size="custom"
-              className="p-2 text-foreground/60 hover:text-foreground"
-              onClick={handlePreviousChapter}
-              ariaLabel={t('ButtonPreviousChapter')}
-              icon={SkipBack}
-              whileHover={{ x: -2 }}
-              whileTap={{ scale: 0.9 }}
-            />
-          </Tooltip>
-
-          {/* jump backward */}
-          <Tooltip text={jumpBackwardTooltipText} position="top">
-            <div className="group relative">
-              <IconBtn
-                borderless
-                size="custom"
-                className="p-2 text-foreground/80 hover:text-foreground"
-                onClick={jumpBackward}
-                ariaLabel={jumpBackwardTooltipText}
-                icon={RotateCcw}
-                whileHover={{ rotate: -15 }}
-                whileTap={{ scale: 0.9 }}
-              />
-              <span className="pointer-events-none absolute inset-0 mt-0.5 flex items-center justify-center text-[8px] font-bold opacity-60 group-hover:opacity-100">
-                {settings.jumpBackwardAmount}
-              </span>
-            </div>
-          </Tooltip>
-
-          {/* play/pause */}
-          <div className="relative">
-            <IconBtn
-              borderless
-              size="custom"
-              loading={isLoading}
-              outlined={false}
-              className="h-14 w-14 rounded-full bg-primary text-white shadow-lg ring-2 shadow-primary/30 ring-white/25 transition-all hover:bg-primary/90 sm:h-16 sm:w-16"
-              onClick={playPause}
-              ariaLabel={isPlaying ? t('ButtonPause') : t('ButtonPlay')}
-              icon={isPlaying ? Pause : Play}
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.94 }}
-              iconClass={isPlaying ? '' : 'ml-1'}
-            />
-          </div>
-
-          {/* jump forward */}
-          <Tooltip text={jumpForwardTooltipText} position="top">
-            <div className="group relative">
-              <IconBtn
-                borderless
-                size="custom"
-                className="p-2 text-foreground/80 hover:text-foreground"
-                onClick={jumpForward}
-                ariaLabel={jumpForwardTooltipText}
-                icon={RotateCw}
-                whileHover={{ rotate: 15 }}
-                whileTap={{ scale: 0.9 }}
-              />
-              <span className="pointer-events-none absolute inset-0 mt-0.5 flex items-center justify-center text-[8px] font-bold opacity-60 group-hover:opacity-100">
-                {settings.jumpForwardAmount}
-              </span>
-            </div>
-          </Tooltip>
-
-          {/* next chapter */}
-          <Tooltip text={t('ButtonNextChapter')} position="top">
-            <IconBtn
-              borderless
-              size="custom"
-              className="p-2 text-foreground/60 hover:text-foreground"
-              onClick={handleNextChapter}
-              ariaLabel={t('ButtonNextChapter')}
-              icon={SkipForward}
-              whileHover={{ x: 2 }}
-              whileTap={{ scale: 0.9 }}
-            />
-          </Tooltip>
+      <div className="flex items-center justify-end gap-1 sm:gap-2">
+        {/* Volume control */}
+        <div className="hidden md:block">
+          <VolumeControl playerHandler={playerHandler} />
         </div>
 
-        {/* Right section: Widgets & Settings */}
-        <div className="flex flex-1 items-center justify-end gap-1 sm:gap-4">
-          {/* volume control */}
-          <div className="hidden sm:block">
-            <VolumeControl playerHandler={playerHandler} />
-          </div>
+        {/* Playback rate widget */}
+        <PlaybackRateWidget playerHandler={playerHandler} />
 
-          {/* playback rate widget */}
-          <PlaybackRateWidget playerHandler={playerHandler} />
+        {/* Sleep timer widget */}
+        <SleepTimerWidget playerHandler={playerHandler} />
 
-          {/* sleep timer widget */}
-          <SleepTimerWidget playerHandler={playerHandler} />
+        {/* Speech clarity & voice boost equalizer widget */}
+        <EqualizerWidget playerHandler={playerHandler} />
 
-          {/* chapters button */}
-          {chapters.length > 0 && (
-            <Tooltip text={t('LabelViewChapters')} position="top">
-              <IconBtn
-                size="custom"
-                borderless
-                className="p-2 text-foreground/60 hover:text-foreground"
-                onClick={() => setIsChaptersModalOpen(true)}
-                ariaLabel={t('LabelViewChapters')}
-                icon={List}
-              />
-            </Tooltip>
-          )}
-
-          {/* bookmarks button */}
-          <Tooltip text={t('LabelViewBookmarks') || 'View bookmarks'} position="top">
+        {/* Chapters modal trigger */}
+        {chapters.length > 0 && (
+          <Tooltip text={t('LabelViewChapters')} position="top">
             <IconBtn
               size="custom"
               borderless
-              className="p-2 text-foreground/60 hover:text-foreground"
-              onClick={() => setIsBookmarksModalOpen(true)}
-              ariaLabel={t('LabelViewBookmarks') || 'View bookmarks'}
-              icon={Bookmark}
-              whileHover={{ scale: 1.1 }}
+              className="p-1.5 text-foreground/60 transition-colors hover:text-foreground"
+              onClick={() => setIsChaptersModalOpen(true)}
+              ariaLabel={t('LabelViewChapters')}
+              icon={List}
             />
           </Tooltip>
+        )}
 
-          {/* player settings button */}
-          <Tooltip text={t('LabelViewPlayerSettings')} position="top">
+        {/* Bookmarks modal trigger */}
+        <Tooltip text={t('LabelViewBookmarks') || 'View bookmarks'} position="top">
+          <IconBtn
+            size="custom"
+            borderless
+            className="p-1.5 text-foreground/60 transition-colors hover:text-foreground"
+            onClick={() => setIsBookmarksModalOpen(true)}
+            ariaLabel={t('LabelViewBookmarks') || 'View bookmarks'}
+            icon={Bookmark}
+            whileHover={{ scale: 1.1 }}
+          />
+        </Tooltip>
+
+        {/* Player settings modal trigger */}
+        <Tooltip text={t('LabelViewPlayerSettings')} position="top">
+          <IconBtn
+            size="custom"
+            borderless
+            className="p-1.5 text-foreground/60 transition-colors hover:text-foreground"
+            onClick={() => setIsSettingsModalOpen(true)}
+            ariaLabel={t('LabelViewPlayerSettings')}
+            icon={Settings2}
+            whileHover={{ rotate: 30 }}
+          />
+        </Tooltip>
+
+        {/* Close player button */}
+        {onClose && (
+          <Tooltip text="Close player" position="top">
             <IconBtn
               size="custom"
               borderless
-              className="p-2 text-foreground/60 hover:text-foreground"
-              onClick={() => setIsSettingsModalOpen(true)}
-              ariaLabel={t('LabelViewPlayerSettings')}
-              icon={Settings2}
-              whileHover={{ rotate: 30 }}
+              className="p-1.5 text-foreground/60 transition-colors hover:text-foreground"
+              onClick={onClose}
+              ariaLabel="Close player"
+              icon={X}
+              whileHover={{ rotate: 90, scale: 1.1 }}
             />
           </Tooltip>
-        </div>
+        )}
       </div>
 
       <PlayerSettingsModal
@@ -226,5 +251,24 @@ export default function PlayerControls({ playerHandler }: PlayerControlsProps) {
         onClose={() => setIsBookmarksModalOpen(false)}
       />
     </>
+  )
+}
+
+export interface PlayerControlsProps {
+  playerHandler: UsePlayerHandlerReturn
+  onClose?: () => void
+}
+
+export default function PlayerControls({ playerHandler, onClose }: PlayerControlsProps) {
+  return (
+    <div className="mx-auto flex w-full max-w-4xl items-center justify-between px-2">
+      <div className="hidden flex-1 lg:flex" />
+      <div className="flex flex-1 items-center justify-center">
+        <PlayerTransportControls playerHandler={playerHandler} />
+      </div>
+      <div className="flex flex-1 items-center justify-end">
+        <PlayerRightControls playerHandler={playerHandler} onClose={onClose} />
+      </div>
+    </div>
   )
 }
