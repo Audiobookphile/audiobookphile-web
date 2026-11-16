@@ -56,7 +56,7 @@ export default function AppBar({ libraries, currentLibraryId }: AppBarProps) {
     <div className="sticky top-0 z-50 h-16 w-full">
       <header
         cy-id="appbar"
-        className="absolute inset-0 flex items-center justify-between gap-4 border-b border-white/5 bg-primary/95 px-4 py-2 shadow-2xl backdrop-blur-xl md:px-8"
+        className="absolute inset-0 flex items-center justify-between gap-4 border-b border-white/10 bg-background/85 px-4 py-2 shadow-sm backdrop-blur-2xl md:px-8"
       >
         <div className="flex min-w-0 flex-shrink-0 items-center gap-4">
           {redirectLibraryId ? (

@@ -109,7 +109,7 @@ export default function SideRail({ serverVersion, installSource }: { serverVersi
   )
 
   return (
-    <aside className="z-10 hidden h-full max-h-[calc(100vh-4rem)] w-20 min-w-20 flex-col overflow-hidden border-e border-white/10 bg-primary/95 shadow-2xl backdrop-blur-xl md:flex">
+    <aside className="z-10 hidden h-full max-h-[calc(100vh-4rem)] w-20 min-w-20 flex-col overflow-hidden border-e border-white/10 bg-background/85 shadow-lg backdrop-blur-2xl md:flex">
       <div className="scrollbar-hide w-full flex-1 overflow-x-hidden overflow-y-auto py-2">
         {filteredButtons.map((button, index) => {
           const Icon = button.icon

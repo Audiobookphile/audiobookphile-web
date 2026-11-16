@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Fragment } from 'react'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import { filterEncode } from '@/shared/lib/filterUtils'
@@ -23,27 +24,28 @@ function DetailRow({ label, value, filterKey, libraryId }: DetailRowProps) {
 
   let displayValue: React.ReactNode
   if (filterKey) {
-    // Create library filter links
     if (Array.isArray(value)) {
-      displayValue = value.map((v, index) => (
-        <Fragment key={v}>
-          <a
-            href={`/library/${libraryId}/items?filter=${filterKey}.${filterEncode(v)}`}
-            className="text-foreground hover:underline"
-          >
-            {v}
-          </a>
-          {index < value.length - 1 && <span className="text-foreground">, </span>}
-        </Fragment>
-      ))
+      displayValue = (
+        <div className="flex flex-wrap gap-1.5">
+          {value.map((v) => (
+            <Link
+              key={v}
+              href={`/library/${libraryId}/items?filter=${filterKey}.${filterEncode(v)}`}
+              className="inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-xs font-medium text-foreground transition-all hover:border-primary/40 hover:bg-primary/10 hover:text-primary active:scale-95"
+            >
+              {v}
+            </Link>
+          ))}
+        </div>
+      )
     } else {
       displayValue = (
-        <a
+        <Link
           href={`/library/${libraryId}/items?filter=${filterKey}.${filterEncode(value)}`}
-          className="text-foreground hover:underline"
+          className="text-foreground transition-colors hover:text-primary hover:underline"
         >
           {value}
-        </a>
+        </Link>
       )
     }
   } else {
@@ -51,9 +53,9 @@ function DetailRow({ label, value, filterKey, libraryId }: DetailRowProps) {
   }
 
   return (
-    <div className="flex">
-      <div className="w-32 text-sm font-medium text-foreground-subdued uppercase">{label}</div>
-      <div className="flex-1 text-base">{displayValue}</div>
+    <div className="flex items-start py-1">
+      <div className="w-28 sm:w-32 text-xs font-bold tracking-wider text-foreground-subdued uppercase pt-0.5">{label}</div>
+      <div className="flex-1 text-sm font-medium text-foreground">{displayValue}</div>
     </div>
   )
 }
@@ -81,7 +83,7 @@ export default function LibraryItemDetails({ libraryItem }: LibraryItemDetailsPr
   const size = libraryItem.media?.size || 0
 
   return (
-    <div className="mt-6 flex flex-col gap-1">
+    <div className="mt-6 flex flex-col gap-1 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
       {/* Book-specific fields */}
       {isBook && bookMetadata && (
         <>
@@ -98,6 +100,16 @@ export default function LibraryItemDetails({ libraryItem }: LibraryItemDetailsPr
             filterKey="publishers"
             libraryId={libraryItem.libraryId}
           />
+          {bookMetadata.abridged !== undefined && (
+            <div className="flex items-start py-1">
+              <div className="w-28 sm:w-32 text-xs font-bold tracking-wider text-foreground-subdued uppercase pt-0.5">Format</div>
+              <div className="flex-1">
+                <span className="inline-flex items-center rounded-md border border-white/10 bg-white/10 px-2 py-0.5 text-xs font-semibold text-foreground">
+                  {bookMetadata.abridged ? 'Abridged' : 'Unabridged'}
+                </span>
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -128,3 +140,4 @@ export default function LibraryItemDetails({ libraryItem }: LibraryItemDetailsPr
     </div>
   )
 }
+

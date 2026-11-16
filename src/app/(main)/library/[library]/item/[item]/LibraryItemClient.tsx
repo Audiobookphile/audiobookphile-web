@@ -1,6 +1,7 @@
 'use client'
 
 import { Folder, X } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Fragment, useCallback, useEffect, useState } from 'react'
 import LibraryFilesTable from '@/features/library/components/LibraryFilesTable'
@@ -117,15 +118,15 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
                   {bookSeries.map((series, index) => {
                     return (
                       <Fragment key={series.id}>
-                        <a
+                        <Link
                           href={`/library/${library.id}/series/${series.id}`}
-                          className="text-lg text-foreground-muted hover:underline"
+                          className="text-lg text-foreground-muted transition-colors hover:text-primary hover:underline"
                         >
                           {series.name}
                           {series.sequence && (
                             <span className="text-lg text-foreground-muted"> #{series.sequence}</span>
                           )}
-                        </a>
+                        </Link>
                         {index < bookSeries.length - 1 && <span className="text-lg text-foreground-muted">, </span>}
                       </Fragment>
                     )
@@ -139,12 +140,12 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
                   {bookAuthors.map((author, index) => {
                     return (
                       <Fragment key={author.id}>
-                        <a
+                        <Link
                           href={`/library/${library.id}/authors/${author.id}`}
-                          className="text-lg text-foreground hover:underline md:text-xl"
+                          className="text-lg text-foreground transition-colors hover:text-primary hover:underline md:text-xl"
                         >
                           {author.name}
-                        </a>
+                        </Link>
                         {index < bookAuthors.length - 1 && (
                           <span className="text-lg text-foreground md:text-xl">, </span>
                         )}
