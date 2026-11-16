@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Book, Headphones, Search, Settings, X } from 'lucide-react'
+import { BarChart3, Book, Headphones, Library, Radio, Rss, Search, Settings, User, Users, X } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
@@ -58,22 +58,55 @@ export default function CommandPalette() {
 
   const books = searchResults?.book || []
   const podcasts = searchResults?.podcast || []
+  const authors = searchResults?.authors || []
+  const series = searchResults?.series || []
+
+  const quickNavActions = [
+    { type: 'action' as const, id: 'act-listening-sessions', title: 'Listening Sessions', subtitle: 'Real-time & history tracking', icon: Radio, href: '/settings/listening-sessions' },
+    { type: 'action' as const, id: 'act-rss-feeds', title: 'Podcasts & OPDS Feeds', subtitle: 'Private feeds & syndication catalog', icon: Rss, href: '/settings/rss-feeds' },
+    { type: 'action' as const, id: 'act-stats', title: 'Listening Statistics', subtitle: 'Habits & playback overview', icon: BarChart3, href: '/account/stats' },
+    { type: 'action' as const, id: 'act-users', title: 'User Management', subtitle: 'Manage accounts & permissions', icon: Users, href: '/settings/users' },
+    { type: 'action' as const, id: 'act-settings', title: t('HeaderSettings'), subtitle: 'Global server configuration', icon: Settings, href: '/settings' },
+  ]
+
+  const filteredActions = searchQuery.trim()
+    ? quickNavActions.filter((a) =>
+        a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : quickNavActions
 
   // Aggregate items for keyboard navigation
   const items = [
     ...books.map((b) => ({
       type: 'book' as const,
       id: b.libraryItem.id,
-      title: b.libraryItem.media?.metadata?.title,
+      title: b.libraryItem.media?.metadata?.title || 'Untitled',
+      subtitle: b.libraryItem.media?.metadata?.authorName || '',
       item: b.libraryItem,
+    })),
+    ...authors.map((a) => ({
+      type: 'author' as const,
+      id: a.id,
+      title: a.name,
+      subtitle: `${a.numBooks ?? 0} books`,
+      icon: User,
+    })),
+    ...series.map((s) => ({
+      type: 'series' as const,
+      id: s.series.id,
+      title: s.series.name,
+      subtitle: `${s.books?.length ?? 0} books`,
+      icon: Library,
     })),
     ...podcasts.map((p) => ({
       type: 'podcast' as const,
       id: p.libraryItem.id,
-      title: p.libraryItem.media?.metadata?.title,
+      title: p.libraryItem.media?.metadata?.title || 'Untitled',
+      subtitle: p.libraryItem.media?.metadata?.author || 'Podcast',
       item: p.libraryItem,
     })),
-    { type: 'action' as const, id: 'settings', title: t('HeaderSettings'), icon: Settings, href: '/settings' },
+    ...filteredActions,
   ]
 
   // Keyboard navigation
@@ -116,8 +149,12 @@ export default function CommandPalette() {
 
   const executeAction = (selected: (typeof items)[number]) => {
     setIsOpen(false)
-    if (selected.type === 'action' && selected.href) {
+    if (selected.type === 'action' && 'href' in selected && selected.href) {
       router.push(selected.href)
+    } else if (selected.type === 'author' && activeLibraryId) {
+      router.push(`/library/${activeLibraryId}/authors/${selected.id}`)
+    } else if (selected.type === 'series' && activeLibraryId) {
+      router.push(`/library/${activeLibraryId}/series/${selected.id}`)
     } else if ((selected.type === 'book' || selected.type === 'podcast') && activeLibraryId) {
       router.push(`/library/${activeLibraryId}/item/${selected.id}`)
     }
@@ -222,9 +259,9 @@ export default function CommandPalette() {
                 >
                   {/* Icon or Cover */}
                   <div className="mr-3 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-white/5 shadow-xs">
-                    {item.type === 'action' && item.icon ? (
-                      <item.icon className="h-5 w-5" />
-                    ) : item.type === 'book' || item.type === 'podcast' ? (
+                    {(item.type === 'action' || item.type === 'author' || item.type === 'series') && 'icon' in item && item.icon ? (
+                      <item.icon className={mergeClasses('h-5 w-5', item.type === 'action' ? 'text-primary' : 'text-accent')} />
+                    ) : (item.type === 'book' || item.type === 'podcast') && 'item' in item ? (
                       <Image
                         src={getLibraryItemCoverUrl(item.id, item.item.updatedAt)}
                         alt={item.title || ''}
@@ -236,16 +273,18 @@ export default function CommandPalette() {
                     ) : null}
                   </div>
 
-                  {/* Title & Type */}
-                  <div className="flex flex-col overflow-hidden">
+                  {/* Title & Subtitle */}
+                  <div className="flex flex-1 flex-col overflow-hidden">
                     <span className="truncate font-medium">{item.title}</span>
-                    <span className="mt-0.5 flex items-center gap-1 text-xs opacity-70">
-                      {item.type === 'book' && <Book size={10} />}
-                      {item.type === 'podcast' && <Headphones size={10} />}
-                      {item.type === 'action' && 'Action'}
-                      {item.type !== 'action' && item.type}
-                    </span>
+                    {item.subtitle && (
+                      <span className="truncate text-xs text-foreground-muted">{item.subtitle}</span>
+                    )}
                   </div>
+
+                  {/* Category Pill */}
+                  <span className="ml-2 shrink-0 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-foreground-muted uppercase">
+                    {item.type}
+                  </span>
                 </button>
               )
             })}
