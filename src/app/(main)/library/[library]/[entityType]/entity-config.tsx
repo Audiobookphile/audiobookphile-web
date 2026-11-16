@@ -53,6 +53,9 @@ export interface CardComponentProps {
   mediaItemProgressMap: Map<string, MediaProgress>
   shelfEntities?: (BookshelfEntity | null)[]
   entityIndex?: number
+  isSelectionMode?: boolean
+  selected?: boolean
+  onSelect?: (e: MouseEvent) => void
 }
 
 export interface EntityConfig {
@@ -94,6 +97,10 @@ export const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
           action: settings.collapseSeries ? 'expand-series' : 'collapse-series',
         })
       }
+      menuItems.push({
+        textKey: 'ButtonSelect',
+        action: 'batch-select',
+      })
       return menuItems
     },
     handleContextMenuAction: (action, { updateSetting }) => {
@@ -127,6 +134,9 @@ export const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
       mediaItemProgressMap,
       shelfEntities,
       entityIndex,
+      isSelectionMode,
+      selected,
+      onSelect,
     }) => {
       const { user, serverSettings, ereaderDevices } = useUser()
       const item = entity as LibraryItem
@@ -145,9 +155,9 @@ export const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
               libraryItem={item}
               bookshelfView={bookshelfView}
               mediaProgress={entityProgress}
-              isSelectionMode={false}
-              selected={false}
-              onSelect={bookshelfCardNoopSelect}
+              isSelectionMode={isSelectionMode ?? false}
+              selected={selected ?? false}
+              onSelect={onSelect ?? bookshelfCardNoopSelect}
               dateFormat={serverSettings?.dateFormat ?? 'MM/dd/yyyy'}
               timeFormat={serverSettings?.timeFormat ?? 'HH:mm'}
               showSubtitles={showSubtitles ?? false}
@@ -163,9 +173,9 @@ export const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
             libraryItem={item}
             bookshelfView={bookshelfView}
             mediaProgress={entityProgress}
-            isSelectionMode={false}
-            selected={false}
-            onSelect={bookshelfCardNoopSelect}
+            isSelectionMode={isSelectionMode ?? false}
+            selected={selected ?? false}
+            onSelect={onSelect ?? bookshelfCardNoopSelect}
             dateFormat={serverSettings?.dateFormat ?? 'MM/dd/yyyy'}
             timeFormat={serverSettings?.timeFormat ?? 'HH:mm'}
             userPermissions={user.permissions}

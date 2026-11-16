@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import BatchActionBar from '@/features/library/components/BatchActionBar'
 import { useCardSize } from '@/features/library/contexts/CardSizeContext'
 import { useLibrary } from '@/features/library/contexts/LibraryContext'
 import { useBookshelfData } from '@/features/library/hooks/useBookshelfData'
@@ -77,6 +78,31 @@ export default function BookshelfClient({ entityType }: BookshelfClientProps) {
   // Measured Card Size State
   const [cardSize, setCardSize] = useState({ width: 0, height: 0 })
   const dummyCardRef = useRef<HTMLDivElement>(null)
+
+  // Selection mode & batch actions state
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set())
+
+  const handleToggleSelect = useCallback((id: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+    setSelectedItemIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }, [])
+
+  const handleClearSelection = useCallback(() => {
+    setIsSelectionMode(false)
+    setSelectedItemIds(new Set())
+  }, [])
 
   // Measure Dummy Card
   useEffect(() => {
@@ -237,6 +263,41 @@ export default function BookshelfClient({ entityType }: BookshelfClientProps) {
     }
   }, [bookshelfLayoutReady, getVisiblePageRange, totalEntities, itemsPerPage, loadPage])
 
+  const handleToggleSelectAll = useCallback(() => {
+    setSelectedItemIds((prev) => {
+      const loadedIds = items.filter((i): i is BookshelfEntity => i !== null && i !== undefined).map((i) => i.id)
+      if (prev.size >= loadedIds.length && loadedIds.length > 0) {
+        return new Set()
+      }
+      return new Set(loadedIds)
+    })
+  }, [items])
+
+  // Keyboard shortcut: 'KeyS' toggles selection mode, 'Escape' exits
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      const activeTag = target?.tagName?.toLowerCase()
+      if (activeTag === 'input' || activeTag === 'textarea' || target?.isContentEditable) {
+        return
+      }
+      if (e.key === 's' || e.key === 'S') {
+        if (!e.metaKey && !e.ctrlKey && !e.altKey) {
+          e.preventDefault()
+          setIsSelectionMode((prev) => {
+            if (prev) setSelectedItemIds(new Set())
+            return !prev
+          })
+        }
+      } else if (e.key === 'Escape' && isSelectionMode) {
+        e.preventDefault()
+        handleClearSelection()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isSelectionMode, handleClearSelection])
+
   const mediaItemProgressMap = useMemo(() => buildMediaItemProgressMap(user.mediaProgress), [user.mediaProgress])
 
   // Inject Toolbar Controls and Menu Items
@@ -259,8 +320,15 @@ export default function BookshelfClient({ entityType }: BookshelfClientProps) {
 
     setContextMenuItems(menuItems)
 
-    // Set up action handler (delegated to entity config)
+    // Set up action handler (delegated to entity config, with batch-select intercept)
     setContextMenuActionHandler((action: string) => {
+      if (action === 'batch-select') {
+        setIsSelectionMode((prev) => {
+          if (prev) setSelectedItemIds(new Set())
+          return !prev
+        })
+        return
+      }
       config.handleContextMenuAction(action, { updateSetting })
     })
 
@@ -402,6 +470,9 @@ export default function BookshelfClient({ entityType }: BookshelfClientProps) {
                       mediaItemProgressMap={mediaItemProgressMap}
                       shelfEntities={entityType === 'items' ? items : undefined}
                       entityIndex={entityType === 'items' ? entityIndex : undefined}
+                      isSelectionMode={isSelectionMode}
+                      selected={selectedItemIds.has(item.id)}
+                      onSelect={(e) => handleToggleSelect(item.id, e)}
                     />
                   )
                 })}
@@ -426,6 +497,18 @@ export default function BookshelfClient({ entityType }: BookshelfClientProps) {
           )}
         </div>
       )}
+
+      {/* Floating Liquid Glass Batch Action Bar */}
+      <BatchActionBar
+        isVisible={isSelectionMode}
+        selectedIds={selectedItemIds}
+        totalCount={items.filter((i): i is BookshelfEntity => i !== null && i !== undefined).length}
+        onToggleSelectAll={handleToggleSelectAll}
+        onClearSelection={handleClearSelection}
+        onUpdateSuccess={() => {
+          reconcilePagesAfterUpdate()
+        }}
+      />
     </div>
   )
 }
