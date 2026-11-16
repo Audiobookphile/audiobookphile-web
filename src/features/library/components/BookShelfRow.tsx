@@ -62,16 +62,16 @@ export default function BookShelfRow({ title, children, className }: BookShelfRo
     <div className={mergeClasses('content-visibility-auto relative w-full', className)}>
       <div
         ref={shelfRef}
-        className="bookshelf-row categorizedBookshelfRow no-scroll relative w-full max-w-full overflow-x-auto overflow-y-hidden pl-4e md:pl-8e"
+        className="bookshelf-row categorizedBookshelfRow no-scroll relative w-full max-w-full overflow-x-auto overflow-y-hidden pl-4 md:pl-8"
         onScroll={handleScroll}
       >
-        <div className="flex h-full w-full items-center pt-6e pr-4e">{children}</div>
+        <div className="flex h-full w-full items-center pt-6 pr-4">{children}</div>
       </div>
 
       <div className="relative">
-        <div className="categoryPlacard relative top-0 left-4e z-30 w-44e transform md:left-8e">
-          <div className="flex h-full w-full items-center justify-center rounded-lg border border-white/10 bg-primary/95 px-4 py-1.5 shadow-lg backdrop-blur-xl">
-            <h2 className="text-[10px] font-black tracking-[0.2em] text-white/90 uppercase">{title}</h2>
+        <div className="categoryPlacard relative top-0 left-4 z-30 inline-flex max-w-sm transform md:left-8">
+          <div className="flex h-full w-full items-center justify-center rounded-full border border-white/10 bg-background/80 px-4 py-1 shadow-md backdrop-blur-xl">
+            <h2 className="text-[10px] font-black tracking-[0.2em] text-foreground/90 uppercase">{title}</h2>
           </div>
         </div>
 
@@ -81,14 +81,14 @@ export default function BookShelfRow({ title, children, className }: BookShelfRo
       <AnimatePresence>
         {canScrollLeft && !isScrolling && (
           <motion.button
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="absolute top-0 left-0 z-40 hidden h-[calc(100%-24px)] w-24 cursor-pointer items-center justify-start bg-gradient-to-r from-black/80 to-transparent pl-4 transition-all hover:pl-6 sm:flex"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute top-1/2 left-3 z-40 hidden -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-background/85 p-2.5 text-foreground shadow-2xl backdrop-blur-xl transition-all hover:scale-110 hover:border-primary/50 hover:bg-background/95 hover:text-primary active:scale-95 sm:flex"
             onClick={scrollLeft}
             aria-label={t('ButtonScrollLeft')}
           >
-            <ChevronLeft size={48} strokeWidth={2.5} className="text-white drop-shadow-lg" />
+            <ChevronLeft size={20} strokeWidth={2.5} />
           </motion.button>
         )}
       </AnimatePresence>
@@ -96,14 +96,14 @@ export default function BookShelfRow({ title, children, className }: BookShelfRo
       <AnimatePresence>
         {canScrollRight && !isScrolling && (
           <motion.button
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="absolute top-0 right-0 z-40 hidden h-[calc(100%-24px)] w-24 cursor-pointer items-center justify-end bg-gradient-to-l from-black/80 to-transparent pr-4 transition-all hover:pr-6 sm:flex"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute top-1/2 right-3 z-40 hidden -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-background/85 p-2.5 text-foreground shadow-2xl backdrop-blur-xl transition-all hover:scale-110 hover:border-primary/50 hover:bg-background/95 hover:text-primary active:scale-95 sm:flex"
             onClick={scrollRight}
             aria-label={t('ButtonScrollRight')}
           >
-            <ChevronRight size={48} strokeWidth={2.5} className="text-white drop-shadow-lg" />
+            <ChevronRight size={20} strokeWidth={2.5} />
           </motion.button>
         )}
       </AnimatePresence>

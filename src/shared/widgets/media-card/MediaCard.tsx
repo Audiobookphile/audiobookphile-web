@@ -349,9 +349,17 @@ function MediaCard(props: MediaCardProps) {
               handleCardClick()
             }
           }}
-          onMouseEnter={() => setIsHovering(true)}
+          onMouseEnter={() => {
+            setIsHovering(true)
+            const libParam = typeof params?.library === 'string' && params.library ? params.library : libraryItem.libraryId
+            router.prefetch(`/library/${libParam}/item/${libraryItem.id}`)
+          }}
           onMouseLeave={() => setIsHovering(false)}
-          onFocus={() => setIsHovering(true)}
+          onFocus={() => {
+            setIsHovering(true)
+            const libParam = typeof params?.library === 'string' && params.library ? params.library : libraryItem.libraryId
+            router.prefetch(`/library/${libParam}/item/${libraryItem.id}`)
+          }}
           cardId={cardId}
           ariaLabel={!processing ? displayTitle : undefined}
           cy-id="MediaCard"

@@ -113,7 +113,7 @@ export default function GlobalSearchMenu({
         cy-id="global-search-menu"
         role="listbox"
         tabIndex={-1}
-        className="globalSearchMenu absolute z-50 mt-2 max-h-[min(600px,calc(100vh-100px))] w-full overflow-y-auto rounded-2xl border border-white/10 bg-primary/95 p-1.5 shadow-2xl backdrop-blur-xl"
+        className="globalSearchMenu absolute z-50 mt-2 max-h-[min(600px,calc(100vh-100px))] w-full overflow-y-auto rounded-2xl border border-white/15 bg-background/90 p-2 shadow-2xl backdrop-blur-2xl"
         style={
           usePortal
             ? {

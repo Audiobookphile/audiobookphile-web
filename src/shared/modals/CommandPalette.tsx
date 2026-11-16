@@ -143,10 +143,10 @@ export default function CommandPalette() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -20 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="relative mx-4 w-full max-w-2xl overflow-hidden rounded-xl border border-white/10 bg-primary shadow-2xl"
+          className="relative mx-4 w-full max-w-2xl overflow-hidden rounded-2xl border border-white/15 bg-background/90 shadow-2xl backdrop-blur-2xl"
         >
           {/* Search Input */}
-          <div className="relative flex items-center border-b border-white/10 px-4 py-4">
+          <div className="relative flex items-center border-b border-white/10 bg-white/[0.02] px-4 py-4">
             <Search className="mr-3 h-5 w-5 text-foreground-muted" />
             <input
               ref={inputRef}
@@ -191,7 +191,7 @@ export default function CommandPalette() {
             </button>
             <button
               onClick={() => setIsOpen(false)}
-              className="ml-3 rounded-md p-1 text-foreground-muted transition-colors hover:bg-white/10 hover:text-foreground"
+              className="ml-3 rounded-lg p-1 text-foreground-muted transition-colors hover:bg-white/10 hover:text-foreground"
             >
               <X className="h-5 w-5" />
             </button>
@@ -216,12 +216,12 @@ export default function CommandPalette() {
                   onClick={() => executeAction(item)}
                   onMouseEnter={() => setActiveIndex(index)}
                   className={mergeClasses(
-                    'flex w-full cursor-pointer items-center rounded-lg px-3 py-2 text-start transition-colors',
-                    isActive ? 'text-foreground bg-white/10' : 'text-foreground-muted hover:bg-white/5'
+                    'flex w-full cursor-pointer items-center rounded-xl px-3 py-2 text-start transition-all duration-150',
+                    isActive ? 'text-foreground bg-white/10 shadow-xs' : 'text-foreground-muted hover:bg-white/5'
                   )}
                 >
                   {/* Icon or Cover */}
-                  <div className="mr-3 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-white/5">
+                  <div className="mr-3 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-white/5 shadow-xs">
                     {item.type === 'action' && item.icon ? (
                       <item.icon className="h-5 w-5" />
                     ) : item.type === 'book' || item.type === 'podcast' ? (
@@ -252,18 +252,18 @@ export default function CommandPalette() {
           </div>
 
           {/* Footer */}
-          <div className="flex justify-between border-t border-white/10 bg-black/20 px-4 py-2 text-xs text-foreground-muted">
+          <div className="flex justify-between border-t border-white/10 bg-black/30 px-4 py-2.5 text-xs text-foreground-muted backdrop-blur-md">
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1">
-                <kbd className="rounded bg-white/10 px-1.5 font-sans font-semibold">↑</kbd>{' '}
-                <kbd className="rounded bg-white/10 px-1.5 font-sans font-semibold">↓</kbd> to navigate
+              <span className="flex items-center gap-1.5">
+                <kbd className="rounded-md border border-white/10 bg-white/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold">↑</kbd>{' '}
+                <kbd className="rounded-md border border-white/10 bg-white/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold">↓</kbd> to navigate
               </span>
-              <span className="flex items-center gap-1">
-                <kbd className="rounded bg-white/10 px-1.5 font-sans font-semibold">Enter</kbd> to select
+              <span className="flex items-center gap-1.5">
+                <kbd className="rounded-md border border-white/10 bg-white/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold">Enter</kbd> to select
               </span>
             </div>
-            <span className="flex items-center gap-1">
-              <kbd className="rounded bg-white/10 px-1.5 font-sans font-semibold">esc</kbd> to close
+            <span className="flex items-center gap-1.5">
+              <kbd className="rounded-md border border-white/10 bg-white/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold">esc</kbd> to close
             </span>
           </div>
         </motion.div>

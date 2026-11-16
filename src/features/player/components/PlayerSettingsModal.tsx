@@ -1,5 +1,6 @@
 'use client'
 
+import { Sliders } from 'lucide-react'
 import { EQUALIZER_PRESETS, type EqualizerPreset } from '@/features/player/lib/AudioEqualizer'
 import type { PlayerSettings } from '@/features/player/hooks/usePlayerSettings'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
@@ -57,7 +58,10 @@ export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdat
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="sm:max-w-md md:max-w-md lg:max-w-md">
       <div className="flex flex-col gap-6 p-6">
-        <h2 className="text-xl font-semibold text-foreground">{t('HeaderPlayerSettings')}</h2>
+        <div className="flex items-center gap-2.5 border-b border-white/10 pb-3">
+          <Sliders className="h-5 w-5 text-accent" />
+          <h2 className="text-lg font-semibold text-foreground">{t('HeaderPlayerSettings')}</h2>
+        </div>
 
         <div className="flex flex-col gap-5">
           {/* Use chapter track toggle */}

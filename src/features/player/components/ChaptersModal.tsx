@@ -1,5 +1,6 @@
 'use client'
 
+import { ListMusic } from 'lucide-react'
 import { memo, useCallback, useEffect, useRef } from 'react'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
@@ -46,9 +47,9 @@ const ChapterRow = memo(function ChapterRow({ chapter, isCurrentChapter, isListe
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={mergeClasses(
-        'flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors',
-        'hover:bg-foreground-muted/5 focus:bg-foreground-muted/5 focus:outline-none',
-        isCurrentChapter && 'bg-accent/15 border-accent border-l-3',
+        'flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left transition-all duration-150',
+        'hover:bg-white/5 focus:bg-white/5 focus:outline-none',
+        isCurrentChapter && 'bg-accent/15 border-accent border-l-4 shadow-xs',
         isListened && !isCurrentChapter && 'bg-success/5'
       )}
       data-current={isCurrentChapter}
@@ -56,12 +57,12 @@ const ChapterRow = memo(function ChapterRow({ chapter, isCurrentChapter, isListe
       {/* Chapter number indicator */}
       <div
         className={mergeClasses(
-          'grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm leading-none font-medium',
+          'grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs leading-none font-semibold shadow-xs',
           isCurrentChapter
             ? 'bg-accent text-primary'
             : isListened
               ? 'bg-success/20 text-success'
-              : 'bg-foreground-muted/10 text-foreground-muted'
+              : 'border border-white/10 bg-white/5 text-foreground-muted'
         )}
       >
         {chapter.id + 1}
@@ -72,8 +73,8 @@ const ChapterRow = memo(function ChapterRow({ chapter, isCurrentChapter, isListe
         <p
           dir="auto"
           className={mergeClasses(
-            'truncate text-sm font-medium',
-            isCurrentChapter ? 'text-accent' : isListened ? 'text-foreground/80' : 'text-foreground'
+            'truncate text-sm font-semibold tracking-tight',
+            isCurrentChapter ? 'text-accent' : isListened ? 'text-foreground/85' : 'text-foreground'
           )}
         >
           {chapter.title}
@@ -118,8 +119,23 @@ export default function ChaptersModal({ isOpen, playerHandler, onClose }: Chapte
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="sm:max-w-lg md:max-w-lg lg:max-w-lg">
-      <div className="flex max-h-[80vh] flex-col">
-        <div ref={listRef} className="flex-1 overflow-y-auto p-2">
+      <div className="flex max-h-[80vh] flex-col p-4">
+        {/* Header */}
+        <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
+          <div className="flex items-center gap-2">
+            <ListMusic className="h-5 w-5 text-accent" />
+            <h2 className="text-lg font-semibold text-foreground">
+              {t('LabelChapters') || 'Chapters'}
+            </h2>
+            {chapters.length > 0 && (
+              <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">
+                {chapters.length}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div ref={listRef} className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10">
           {chapters.length === 0 ? (
             <div className="flex items-center justify-center py-12 text-foreground-muted">
               <p>{t('MessageNoChapters')}</p>

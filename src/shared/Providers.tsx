@@ -41,17 +41,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
       {children}
       <Toaster
         richColors
-        position="bottom-right"
+        position="top-right"
+        offset="72px"
         closeButton
         expand={true}
         toastOptions={{
           style: {
-            background: 'rgba(23, 23, 23, 0.8)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: '#fff',
-            borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            background: 'rgba(30, 30, 30, 0.85)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            color: 'var(--tc-foreground, #ededed)',
+            borderRadius: '16px',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.45)',
           },
         }}
       />

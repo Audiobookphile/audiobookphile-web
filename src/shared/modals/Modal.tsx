@@ -149,12 +149,12 @@ export default function Modal({
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute end-4 top-4 z-20 inline-flex items-center justify-center rounded-full bg-black/20 p-2 text-foreground-muted backdrop-blur-md transition-colors hover:bg-black/40 hover:text-foreground"
+            className="absolute end-4 top-4 z-20 inline-flex items-center justify-center rounded-full border border-white/10 bg-background/80 p-2 text-foreground-muted shadow-lg backdrop-blur-xl transition-all hover:scale-105 hover:border-white/25 hover:bg-background/95 hover:text-foreground active:scale-95"
             aria-label={t('ButtonCloseModal')}
             onClick={clickClose}
             cy-id="modal-close-button"
           >
-            <X size={24} />
+            <X size={20} />
           </motion.button>
 
           {/* Outer content slot */}
@@ -177,7 +177,7 @@ export default function Modal({
             <div
               style={style}
               className={mergeClasses(
-                'text-foreground bg-bg/95 relative rounded-xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)] backdrop-blur-md',
+                'text-foreground relative rounded-2xl border border-white/15 bg-background/90 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] backdrop-blur-2xl ring-1 ring-white/10',
                 'w-[calc(100vw-2rem)] max-w-[95vw] overflow-hidden sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px]',
                 className
               )}
