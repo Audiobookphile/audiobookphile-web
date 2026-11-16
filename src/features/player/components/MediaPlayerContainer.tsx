@@ -77,11 +77,30 @@ export default function MediaPlayerContainer() {
           }}
           className="glassmorphism fixed right-0 bottom-0 left-0 z-50 w-full border-t border-white/10 bg-background/92 px-3 py-2 shadow-[0_-10px_35px_rgba(0,0,0,0.35)] backdrop-blur-2xl transition-colors duration-700 sm:px-4 lg:px-6 lg:py-2.5"
         >
+          {/* Dynamic Top Aura Highlight */}
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-[1.5px]"
+            style={{
+              background: dominantColor
+                ? `linear-gradient(90deg, transparent 0%, ${dominantColor}80 30%, ${dominantColor}cc 50%, ${dominantColor}80 70%, transparent 100%)`
+                : 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
+            }}
+          />
+
           {/* Main 3-Column Studio Audio Layout */}
           <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 sm:gap-4 lg:gap-6">
             {/* Left Column: Cover & Book Metadata */}
             <div className="flex min-w-0 max-w-[200px] items-center gap-2.5 sm:max-w-[260px] lg:max-w-[320px] shrink-0">
-              <div className="relative shrink-0 overflow-hidden rounded-xl shadow-md ring-1 ring-white/15 transition-transform duration-300 hover:scale-105">
+              <Link
+                href={`/library/${streamLibraryItem.libraryId}/item/${streamLibraryItem.id}`}
+                className="group relative shrink-0 overflow-hidden rounded-xl ring-1 ring-white/15 transition-all duration-300 hover:scale-105 hover:ring-white/30"
+                style={{
+                  boxShadow: dominantColor
+                    ? `0 6px 20px -2px ${dominantColor}45`
+                    : '0 6px 16px -2px rgba(0,0,0,0.35)',
+                }}
+                title={displayTitle}
+              >
                 <PreviewCover
                   src={coverUrl || ''}
                   bookCoverAspectRatio={coverAspectRatio}
@@ -89,7 +108,7 @@ export default function MediaPlayerContainer() {
                   width={50}
                   priority={true}
                 />
-              </div>
+              </Link>
               <div className="flex min-w-0 flex-1 flex-col justify-center">
                 <Link
                   href={`/library/${streamLibraryItem.libraryId}/item/${streamLibraryItem.id}`}
