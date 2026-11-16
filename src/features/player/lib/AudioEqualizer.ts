@@ -1,4 +1,4 @@
-export type EqualizerPreset = 'off' | 'voice-boost' | 'warm' | 'bass-reducer' | 'spoken-word'
+export type EqualizerPreset = 'off' | 'voice-boost' | 'warm' | 'bass-reducer' | 'spoken-word' | 'night-mode'
 
 export interface EqualizerPresetInfo {
   id: EqualizerPreset
@@ -19,6 +19,12 @@ export const EQUALIZER_PRESETS: EqualizerPresetInfo[] = [
     label: 'Voice Boost',
     shortLabel: 'Voice',
     description: 'Crisp vocal presence & speech intelligibility in noisy environments',
+  },
+  {
+    id: 'night-mode',
+    label: 'Night Mode (Loudness Normalizer)',
+    shortLabel: 'Night',
+    description: 'Compresses dynamic range to lift soft whispers and soften sudden loud bursts',
   },
   {
     id: 'warm',
@@ -46,6 +52,7 @@ export class AudioEqualizer {
   private lowFilter: BiquadFilterNode | null = null
   private midFilter: BiquadFilterNode | null = null
   private highFilter: BiquadFilterNode | null = null
+  private compressor: DynamicsCompressorNode | null = null
   private currentPreset: EqualizerPreset = 'off'
   private isConnected = false
 
@@ -78,17 +85,19 @@ export class AudioEqualizer {
 
       this.audioCtx = new AudioCtxClass()
 
-      // Create filter chain: low -> mid -> high -> destination
+      // Create filter chain: low -> mid -> high -> compressor -> destination
       this.lowFilter = this.audioCtx.createBiquadFilter()
       this.midFilter = this.audioCtx.createBiquadFilter()
       this.highFilter = this.audioCtx.createBiquadFilter()
+      this.compressor = this.audioCtx.createDynamicsCompressor()
 
       this.sourceNode = this.audioCtx.createMediaElementSource(this.audioElement)
 
       this.sourceNode.connect(this.lowFilter)
       this.lowFilter.connect(this.midFilter)
       this.midFilter.connect(this.highFilter)
-      this.highFilter.connect(this.audioCtx.destination)
+      this.highFilter.connect(this.compressor)
+      this.compressor.connect(this.audioCtx.destination)
 
       this.isConnected = true
     } catch (err) {
@@ -98,7 +107,7 @@ export class AudioEqualizer {
   }
 
   private applyPreset(preset: EqualizerPreset): void {
-    if (!this.isConnected || !this.lowFilter || !this.midFilter || !this.highFilter || !this.audioCtx) return
+    if (!this.isConnected || !this.lowFilter || !this.midFilter || !this.highFilter || !this.compressor || !this.audioCtx) return
 
     if (this.audioCtx.state === 'suspended') {
       void this.audioCtx.resume()
@@ -107,7 +116,32 @@ export class AudioEqualizer {
     const t = this.audioCtx.currentTime
 
     switch (preset) {
+      case 'night-mode':
+        // Dynamic Range Compression: Tame sudden loud audio spikes and elevate soft whispering
+        this.compressor.threshold.setValueAtTime(-24, t)
+        this.compressor.knee.setValueAtTime(10, t)
+        this.compressor.ratio.setValueAtTime(5, t)
+        this.compressor.attack.setValueAtTime(0.003, t)
+        this.compressor.release.setValueAtTime(0.25, t)
+
+        this.lowFilter.type = 'highpass'
+        this.lowFilter.frequency.setValueAtTime(90, t)
+        this.lowFilter.Q.setValueAtTime(0.7, t)
+
+        this.midFilter.type = 'peaking'
+        this.midFilter.frequency.setValueAtTime(2200, t)
+        this.midFilter.Q.setValueAtTime(1.0, t)
+        this.midFilter.gain.setValueAtTime(2.0, t)
+
+        this.highFilter.type = 'highshelf'
+        this.highFilter.frequency.setValueAtTime(5000, t)
+        this.highFilter.gain.setValueAtTime(0.0, t)
+        break
+
       case 'voice-boost':
+        this.compressor.threshold.setValueAtTime(0, t)
+        this.compressor.ratio.setValueAtTime(1, t)
+
         this.lowFilter.type = 'highpass'
         this.lowFilter.frequency.setValueAtTime(85, t)
         this.lowFilter.Q.setValueAtTime(0.7, t)
@@ -123,6 +157,9 @@ export class AudioEqualizer {
         break
 
       case 'warm':
+        this.compressor.threshold.setValueAtTime(0, t)
+        this.compressor.ratio.setValueAtTime(1, t)
+
         this.lowFilter.type = 'peaking'
         this.lowFilter.frequency.setValueAtTime(320, t)
         this.lowFilter.Q.setValueAtTime(0.9, t)
@@ -139,6 +176,9 @@ export class AudioEqualizer {
         break
 
       case 'bass-reducer':
+        this.compressor.threshold.setValueAtTime(0, t)
+        this.compressor.ratio.setValueAtTime(1, t)
+
         this.lowFilter.type = 'lowshelf'
         this.lowFilter.frequency.setValueAtTime(220, t)
         this.lowFilter.gain.setValueAtTime(-6.5, t)
@@ -154,6 +194,9 @@ export class AudioEqualizer {
         break
 
       case 'spoken-word':
+        this.compressor.threshold.setValueAtTime(0, t)
+        this.compressor.ratio.setValueAtTime(1, t)
+
         this.lowFilter.type = 'highpass'
         this.lowFilter.frequency.setValueAtTime(100, t)
         this.lowFilter.Q.setValueAtTime(0.7, t)
@@ -170,6 +213,9 @@ export class AudioEqualizer {
 
       case 'off':
       default:
+        this.compressor.threshold.setValueAtTime(0, t)
+        this.compressor.ratio.setValueAtTime(1, t)
+
         this.lowFilter.type = 'peaking'
         this.lowFilter.frequency.setValueAtTime(100, t)
         this.lowFilter.gain.setValueAtTime(0, t)
@@ -191,6 +237,7 @@ export class AudioEqualizer {
       this.lowFilter?.disconnect()
       this.midFilter?.disconnect()
       this.highFilter?.disconnect()
+      this.compressor?.disconnect()
       void this.audioCtx?.close()
     } catch (_e) {
       // Ignore teardown errors
