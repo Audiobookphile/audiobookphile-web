@@ -11,7 +11,7 @@ interface SleepTimerWidgetProps {
   playerHandler: UsePlayerHandlerReturn
 }
 
-const PRESET_DURATIONS = [5, 15, 30, 45, 60] as const
+const PRESET_DURATIONS = [5, 15, 30, 45, 60, 90] as const
 
 export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProps) {
   const { sleepTimerRemaining, currentChapter, currentTime, duration } = playerHandler.state
@@ -20,6 +20,7 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
   const widgetId = useId()
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [customMinutes, setCustomMinutes] = useState('')
 
   const triggerRef = useRef<HTMLButtonElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -179,18 +180,47 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
         </div>
       )}
 
-      <div className="grid grid-cols-5 gap-1.5">
+      <div className="grid grid-cols-6 gap-1">
         {PRESET_DURATIONS.map((minutes) => (
           <button
             key={minutes}
             type="button"
             onClick={() => handleStartTimer(minutes)}
-            className="rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-center text-xs font-bold text-foreground/80 transition-all hover:border-primary hover:bg-primary hover:text-white hover:shadow-md hover:shadow-primary/30 active:scale-95"
+            className="rounded-xl border border-white/10 bg-white/5 px-1.5 py-1.5 text-center text-xs font-bold text-foreground/80 transition-all hover:border-primary hover:bg-primary hover:text-white hover:shadow-md hover:shadow-primary/30 active:scale-95"
           >
             {minutes}m
           </button>
         ))}
       </div>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          const mins = parseInt(customMinutes, 10)
+          if (!isNaN(mins) && mins > 0 && mins <= 360) {
+            handleStartTimer(mins)
+            setCustomMinutes('')
+          }
+        }}
+        className="mt-0.5 flex items-center gap-1.5"
+      >
+        <input
+          type="number"
+          min="1"
+          max="360"
+          placeholder="Custom min (e.g. 20)"
+          value={customMinutes}
+          onChange={(e) => setCustomMinutes(e.target.value)}
+          className="flex-1 rounded-xl border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-foreground placeholder:text-foreground/40 focus:border-primary focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={!customMinutes || isNaN(parseInt(customMinutes, 10)) || parseInt(customMinutes, 10) <= 0}
+          className="cursor-pointer rounded-xl border border-primary/30 bg-primary/20 px-3 py-1 text-xs font-bold text-primary transition-all hover:bg-primary/30 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Set
+        </button>
+      </form>
       {currentChapter && remainingInChapter > 0 && (
         <button
           type="button"

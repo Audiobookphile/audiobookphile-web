@@ -64,6 +64,10 @@ export interface PlayerHandlerControls {
   jumpForward: () => void
   /** Jump backward by configured amount */
   jumpBackward: () => void
+  /** Jump to the beginning of next chapter */
+  jumpToNextChapter: () => void
+  /** Jump to the beginning of previous chapter or start of current */
+  jumpToPreviousChapter: () => void
   /** Set volume (0-1) */
   setVolume: (volume: number) => void
   /** Toggle mute on/off */
@@ -465,6 +469,20 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
     seek(newTime)
   }, [currentTime, seek, settings.jumpBackwardAmount])
 
+  const jumpToNextChapter = useCallback(() => {
+    if (nextChapter) {
+      seek(nextChapter.start)
+    }
+  }, [nextChapter, seek])
+
+  const jumpToPreviousChapter = useCallback(() => {
+    if (currentChapter && currentTime - currentChapter.start > 3) {
+      seek(currentChapter.start)
+    } else if (previousChapter) {
+      seek(previousChapter.start)
+    }
+  }, [currentChapter, currentTime, previousChapter, seek])
+
   const setVolume = useCallback(
     (vol: number) => {
       playerSettings.setVolume(vol)
@@ -557,6 +575,8 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
     navigator.mediaSession.setActionHandler('stop', () => playerRef.current?.pause())
     navigator.mediaSession.setActionHandler('seekbackward', () => jumpBackward())
     navigator.mediaSession.setActionHandler('seekforward', () => jumpForward())
+    navigator.mediaSession.setActionHandler('previoustrack', () => jumpToPreviousChapter())
+    navigator.mediaSession.setActionHandler('nexttrack', () => jumpToNextChapter())
     navigator.mediaSession.setActionHandler('seekto', (details) => {
       if (typeof details.seekTime === 'number') {
         seek(details.seekTime)
@@ -579,7 +599,16 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
     }
 
     return () => {
-      const actions: MediaSessionAction[] = ['play', 'pause', 'stop', 'seekbackward', 'seekforward', 'seekto']
+      const actions: MediaSessionAction[] = [
+        'play',
+        'pause',
+        'stop',
+        'seekbackward',
+        'seekforward',
+        'previoustrack',
+        'nexttrack',
+        'seekto',
+      ]
       actions.forEach((action) => {
         try {
           navigator.mediaSession.setActionHandler(action, null)
@@ -598,6 +627,8 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
     settings.playbackRate,
     jumpBackward,
     jumpForward,
+    jumpToPreviousChapter,
+    jumpToNextChapter,
     seek,
   ])
 
@@ -668,6 +699,8 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
       seek,
       jumpForward,
       jumpBackward,
+      jumpToNextChapter,
+      jumpToPreviousChapter,
       setVolume,
       toggleMute,
       setPlaybackRate,

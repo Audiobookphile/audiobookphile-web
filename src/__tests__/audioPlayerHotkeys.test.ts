@@ -21,6 +21,9 @@ describe('Player Hotkeys Scope for B, C and Shortcuts', () => {
     expect(shouldDeferToFocusedElement(body, 'KeyC')).toBe(false)
     expect(shouldDeferToFocusedElement(body, 'KeyQ')).toBe(false)
     expect(shouldDeferToFocusedElement(body, 'Slash', true)).toBe(false)
+    expect(shouldDeferToFocusedElement(body, 'ArrowRight')).toBe(false)
+    expect(shouldDeferToFocusedElement(body, 'Shift-ArrowRight', true)).toBe(false)
+    expect(shouldDeferToFocusedElement(body, 'Shift-ArrowLeft', true)).toBe(false)
     expect(shouldDeferToFocusedElement(null, 'KeyB')).toBe(false)
   })
 

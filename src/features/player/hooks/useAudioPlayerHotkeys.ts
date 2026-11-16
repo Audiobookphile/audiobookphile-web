@@ -53,6 +53,12 @@ export function useAudioPlayerHotkeys(
         case 'KeyM':
           controls.toggleMute()
           break
+        case 'Shift-ArrowRight':
+          controls.jumpToNextChapter()
+          break
+        case 'Shift-ArrowLeft':
+          controls.jumpToPreviousChapter()
+          break
         case 'Shift-ArrowUp':
           controls.incrementPlaybackRate()
           break
