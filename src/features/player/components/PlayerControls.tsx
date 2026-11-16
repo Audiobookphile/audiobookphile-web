@@ -1,7 +1,7 @@
 'use client'
 
-import { Bookmark, List, Pause, Play, RotateCcw, RotateCw, Settings2, SkipBack, SkipForward, X } from 'lucide-react'
-import { useState } from 'react'
+import { Bookmark, Keyboard, List, Pause, Play, RotateCcw, RotateCw, Settings2, SkipBack, SkipForward, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useMediaContext } from '@/features/player/contexts/MediaContext'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
@@ -11,6 +11,7 @@ import Tooltip from '../../../shared/ui/Tooltip'
 import BookmarksModal from './BookmarksModal'
 import ChaptersModal from './ChaptersModal'
 import EqualizerWidget from './EqualizerWidget'
+import KeyboardShortcutsModal from './KeyboardShortcutsModal'
 import PlaybackRateWidget from './PlaybackRateWidget'
 import PlayerSettingsModal from './PlayerSettingsModal'
 import SleepTimerWidget from './SleepTimerWidget'
@@ -158,7 +159,25 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [isChaptersModalOpen, setIsChaptersModalOpen] = useState(false)
   const [isBookmarksModalOpen, setIsBookmarksModalOpen] = useState(false)
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false)
   const { chapters } = playerHandler.state
+
+  // Synchronize global hotkey events with modals
+  useEffect(() => {
+    const onToggleBookmarks = () => setIsBookmarksModalOpen((prev) => !prev)
+    const onToggleChapters = () => setIsChaptersModalOpen((prev) => !prev)
+    const onToggleShortcuts = () => setIsShortcutsModalOpen((prev) => !prev)
+
+    window.addEventListener('audiobookphile:toggle-bookmarks', onToggleBookmarks)
+    window.addEventListener('audiobookphile:toggle-chapters', onToggleChapters)
+    window.addEventListener('audiobookphile:toggle-shortcuts', onToggleShortcuts)
+
+    return () => {
+      window.removeEventListener('audiobookphile:toggle-bookmarks', onToggleBookmarks)
+      window.removeEventListener('audiobookphile:toggle-chapters', onToggleChapters)
+      window.removeEventListener('audiobookphile:toggle-shortcuts', onToggleShortcuts)
+    }
+  }, [])
 
   return (
     <>
@@ -179,7 +198,7 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
 
         {/* Chapters modal trigger */}
         {chapters.length > 0 && (
-          <Tooltip text={t('LabelViewChapters')} position="top">
+          <Tooltip text={t('LabelViewChapters') || 'View chapters (C)'} position="top">
             <IconBtn
               size="custom"
               borderless
@@ -192,7 +211,7 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
         )}
 
         {/* Bookmarks modal trigger */}
-        <Tooltip text={t('LabelViewBookmarks') || 'View bookmarks'} position="top">
+        <Tooltip text={t('LabelViewBookmarks') || 'View bookmarks (B)'} position="top">
           <IconBtn
             size="custom"
             borderless
@@ -200,6 +219,19 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
             onClick={() => setIsBookmarksModalOpen(true)}
             ariaLabel={t('LabelViewBookmarks') || 'View bookmarks'}
             icon={Bookmark}
+            whileHover={{ scale: 1.1 }}
+          />
+        </Tooltip>
+
+        {/* Keyboard shortcuts trigger */}
+        <Tooltip text="Keyboard shortcuts (?)" position="top">
+          <IconBtn
+            size="custom"
+            borderless
+            className="hidden p-1.5 text-foreground/60 transition-colors hover:text-foreground sm:inline-flex"
+            onClick={() => setIsShortcutsModalOpen(true)}
+            ariaLabel="Keyboard shortcuts"
+            icon={Keyboard}
             whileHover={{ scale: 1.1 }}
           />
         </Tooltip>
@@ -219,7 +251,7 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
 
         {/* Close player button */}
         {onClose && (
-          <Tooltip text="Close player" position="top">
+          <Tooltip text="Close player (Esc)" position="top">
             <IconBtn
               size="custom"
               borderless
@@ -249,6 +281,10 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
         libraryItemId={streamLibraryItem?.id ?? null}
         playerHandler={playerHandler}
         onClose={() => setIsBookmarksModalOpen(false)}
+      />
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
       />
     </>
   )

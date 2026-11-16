@@ -3,6 +3,12 @@ import type { PlayerHandlerControls, PlayerHandlerState } from '@/features/playe
 import { VOLUME_HOTKEY_STEP } from '@/features/player/lib/constants'
 import { shouldDeferToFocusedElement } from '@/features/player/lib/hotkeyScope'
 
+export interface AudioPlayerHotkeyActions {
+  onToggleBookmarks?: () => void
+  onToggleChapters?: () => void
+  onToggleShortcuts?: () => void
+}
+
 /**
  * Registers keyboard hotkeys for the audio player.
  *
@@ -16,7 +22,8 @@ export function useAudioPlayerHotkeys(
   state: PlayerHandlerState,
   controls: PlayerHandlerControls,
   enabled: boolean,
-  onClose: () => void
+  onClose: () => void,
+  actions?: AudioPlayerHotkeyActions
 ) {
   useEffect(() => {
     if (!enabled) return
@@ -51,6 +58,31 @@ export function useAudioPlayerHotkeys(
         case 'Shift-ArrowDown':
           controls.decrementPlaybackRate()
           break
+        case 'KeyB':
+          if (actions?.onToggleBookmarks) {
+            actions.onToggleBookmarks()
+          } else if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('audiobookphile:toggle-bookmarks'))
+          }
+          break
+        case 'KeyC':
+          if (actions?.onToggleChapters) {
+            actions.onToggleChapters()
+          } else if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('audiobookphile:toggle-chapters'))
+          }
+          break
+        case 'Shift-Slash':
+        case 'Slash':
+          if (e.key === '?' || (e.shiftKey && e.code === 'Slash')) {
+            if (actions?.onToggleShortcuts) {
+              actions.onToggleShortcuts()
+            } else if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('audiobookphile:toggle-shortcuts'))
+            }
+            break
+          }
+          return
         case 'Escape':
           onClose()
           break
@@ -63,5 +95,5 @@ export function useAudioPlayerHotkeys(
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [enabled, state.volume, controls, onClose])
+  }, [enabled, state.volume, controls, onClose, actions])
 }
