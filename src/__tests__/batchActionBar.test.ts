@@ -80,3 +80,4 @@ describe('BatchActionBar Selection and Actions', () => {
     expect(empty.size).toBe(0)
   })
 })
+

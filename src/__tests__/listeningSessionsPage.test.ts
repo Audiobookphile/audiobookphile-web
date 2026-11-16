@@ -51,3 +51,4 @@ describe('ListeningSessionsQueryParams', () => {
     expect(queryParams.get('user')).toBe('u-12345')
   })
 })
+

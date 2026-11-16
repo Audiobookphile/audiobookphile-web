@@ -16,6 +16,8 @@ export interface PlayerSettings {
   volume: number
   /** Audio equalizer preset for vocal clarity */
   equalizerPreset: EqualizerPreset
+  /** Volume boost multiplier (1.0 = 100% normal, up to 2.0 = 200% / +6dB boost) */
+  volumeBoost?: number
 }
 
 export interface UsePlayerSettingsReturn {
@@ -26,6 +28,7 @@ export interface UsePlayerSettingsReturn {
   setPlaybackRate: (value: number) => void
   setPlaybackRateIncrementDecrement: (value: 0.1 | 0.05) => void
   setEqualizerPreset: (value: EqualizerPreset) => void
+  setVolumeBoost: (value: number) => void
   /** Update multiple settings at once */
   updateSettings: (updates: Partial<PlayerSettings>) => void
   /** Increment playback rate by the configured increment amount */
@@ -52,6 +55,7 @@ const DEFAULT_SETTINGS: PlayerSettings = {
   playbackRateIncrementDecrement: 0.1,
   volume: 0.5,
   equalizerPreset: 'off',
+  volumeBoost: 1.0,
 }
 
 // Playback rate bounds
@@ -195,6 +199,10 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setSettings((prev) => ({ ...prev, equalizerPreset: value }))
   }, [])
 
+  const setVolumeBoost = useCallback((value: number) => {
+    setSettings((prev) => ({ ...prev, volumeBoost: value }))
+  }, [])
+
   const toggleMute = useCallback((): number => {
     const currentVolume = settings.volume
     if (currentVolume > 0) {
@@ -219,6 +227,7 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setPlaybackRate,
     setPlaybackRateIncrementDecrement,
     setEqualizerPreset,
+    setVolumeBoost,
     updateSettings,
     incrementPlaybackRate,
     decrementPlaybackRate,

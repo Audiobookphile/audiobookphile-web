@@ -36,5 +36,26 @@ describe('AudioEqualizer', () => {
 
     eq.destroy()
   })
+
+  it('manages volume boost pre-amp gain state within limits', () => {
+    const mockAudio = {} as HTMLAudioElement
+    const eq = new AudioEqualizer(mockAudio)
+    expect(eq.getVolumeBoost()).toBe(1.0)
+
+    eq.setVolumeBoost(1.5)
+    expect(eq.getVolumeBoost()).toBe(1.5)
+
+    eq.setVolumeBoost(2.0)
+    expect(eq.getVolumeBoost()).toBe(2.0)
+
+    // Clamps below 1.0 and above 3.0
+    eq.setVolumeBoost(0.5)
+    expect(eq.getVolumeBoost()).toBe(1.0)
+
+    eq.setVolumeBoost(5.0)
+    expect(eq.getVolumeBoost()).toBe(3.0)
+
+    eq.destroy()
+  })
 })
 

@@ -218,6 +218,9 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
       if (playerRef.current && item) {
         playerRef.current.set(item, audioTracks, hlsTranscode, session.currentTime, true)
         playerRef.current.setEqualizerPreset(settings.equalizerPreset)
+        if (settings.volumeBoost) {
+          playerRef.current.setVolumeBoost(settings.volumeBoost)
+        }
       }
     },
     [playerSettings]
@@ -517,10 +520,13 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
     }
   }, [playerSettings])
 
-  // Synchronize audio equalizer preset
+  // Synchronize audio equalizer preset & volume boost
   useEffect(() => {
     playerRef.current?.setEqualizerPreset(settings.equalizerPreset)
-  }, [settings.equalizerPreset])
+    if (settings.volumeBoost) {
+      playerRef.current?.setVolumeBoost(settings.volumeBoost)
+    }
+  }, [settings.equalizerPreset, settings.volumeBoost])
 
   // Synchronize MediaSession API for OS-level background playback resilience
   useEffect(() => {

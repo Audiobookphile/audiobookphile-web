@@ -53,6 +53,8 @@ export class AudioEqualizer {
   private midFilter: BiquadFilterNode | null = null
   private highFilter: BiquadFilterNode | null = null
   private compressor: DynamicsCompressorNode | null = null
+  private gainNode: GainNode | null = null
+  private boostMultiplier = 1.0
   private currentPreset: EqualizerPreset = 'off'
   private isConnected = false
 
@@ -64,13 +66,31 @@ export class AudioEqualizer {
 
   public setPreset(preset: EqualizerPreset): void {
     this.currentPreset = preset
-    if (preset === 'off' && !this.isConnected) {
-      // Do not instantiate AudioContext until user actually activates an EQ preset
+    if (preset === 'off' && this.boostMultiplier <= 1.0 && !this.isConnected) {
+      // Do not instantiate AudioContext until user actually activates an EQ preset or volume boost
       return
     }
 
     this.ensureGraph()
     this.applyPreset(preset)
+  }
+
+  public getVolumeBoost(): number {
+    return this.boostMultiplier
+  }
+
+  public setVolumeBoost(multiplier: number): void {
+    const clamped = Math.max(1.0, Math.min(3.0, multiplier))
+    this.boostMultiplier = clamped
+    if (clamped > 1.0 && !this.isConnected) {
+      this.ensureGraph()
+    }
+    if (this.isConnected && this.gainNode && this.audioCtx) {
+      if (this.audioCtx.state === 'suspended') {
+        void this.audioCtx.resume()
+      }
+      this.gainNode.gain.setValueAtTime(clamped, this.audioCtx.currentTime)
+    }
   }
 
   private ensureGraph(): void {
@@ -85,11 +105,13 @@ export class AudioEqualizer {
 
       this.audioCtx = new AudioCtxClass()
 
-      // Create filter chain: low -> mid -> high -> compressor -> destination
+      // Create filter chain: low -> mid -> high -> compressor -> gainNode -> destination
       this.lowFilter = this.audioCtx.createBiquadFilter()
       this.midFilter = this.audioCtx.createBiquadFilter()
       this.highFilter = this.audioCtx.createBiquadFilter()
       this.compressor = this.audioCtx.createDynamicsCompressor()
+      this.gainNode = this.audioCtx.createGain()
+      this.gainNode.gain.setValueAtTime(this.boostMultiplier, this.audioCtx.currentTime)
 
       this.sourceNode = this.audioCtx.createMediaElementSource(this.audioElement)
 
@@ -97,7 +119,8 @@ export class AudioEqualizer {
       this.lowFilter.connect(this.midFilter)
       this.midFilter.connect(this.highFilter)
       this.highFilter.connect(this.compressor)
-      this.compressor.connect(this.audioCtx.destination)
+      this.compressor.connect(this.gainNode)
+      this.gainNode.connect(this.audioCtx.destination)
 
       this.isConnected = true
     } catch (err) {

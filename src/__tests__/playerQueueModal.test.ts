@@ -87,3 +87,4 @@ describe('Player Up Next Queue Logic', () => {
     expect(cleared[0].libraryItemId).toBe('item-1')
   })
 })
+

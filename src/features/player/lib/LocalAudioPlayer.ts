@@ -334,6 +334,14 @@ export class LocalAudioPlayer extends PlayerEventEmitter {
     this.equalizer.setPreset(preset)
   }
 
+  setVolumeBoost(boost: number): void {
+    if (!this.player) return
+    if (!this.equalizer) {
+      this.equalizer = new AudioEqualizer(this.player)
+    }
+    this.equalizer.setVolumeBoost(boost)
+  }
+
   seek(time: number, playWhenReady: boolean): void {
     if (!this.player) return
 

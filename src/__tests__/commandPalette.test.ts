@@ -45,3 +45,4 @@ describe('CommandPalette Aggregation & Quick Nav', () => {
     expect(items[3].type).toBe('action')
   })
 })
+

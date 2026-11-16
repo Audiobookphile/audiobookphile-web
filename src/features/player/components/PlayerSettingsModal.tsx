@@ -26,6 +26,15 @@ const PLAYBACK_RATE_INCREMENT_VALUES: DropdownItem[] = [
   { text: '0.05', value: 0.05 },
 ]
 
+// Volume boost / preamp gain values
+const VOLUME_BOOST_VALUES: DropdownItem[] = [
+  { text: '100% (Normal volume)', value: 1.0 },
+  { text: '125% (+2 dB boost)', value: 1.25 },
+  { text: '150% (+3.5 dB boost)', value: 1.5 },
+  { text: '175% (+5 dB boost)', value: 1.75 },
+  { text: '200% (+6 dB boost - Quiet Books)', value: 2.0 },
+]
+
 export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdateSettings }: PlayerSettingsModalProps) {
   const t = useTypeSafeTranslations()
 
@@ -104,6 +113,15 @@ export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdat
             value={settings.equalizerPreset || 'off'}
             items={EQUALIZER_DROPDOWN_ITEMS}
             onChange={(value) => onUpdateSettings({ equalizerPreset: value as EqualizerPreset })}
+            usePortal
+          />
+
+          {/* Volume Boost / Pre-amp Gain dropdown */}
+          <Dropdown
+            label="Volume Boost Pre-amp (Quiet Audiobooks)"
+            value={settings.volumeBoost || 1.0}
+            items={VOLUME_BOOST_VALUES}
+            onChange={(value) => onUpdateSettings({ volumeBoost: Number(value) })}
             usePortal
           />
         </div>
