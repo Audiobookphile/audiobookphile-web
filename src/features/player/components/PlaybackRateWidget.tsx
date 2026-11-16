@@ -13,7 +13,7 @@ interface PlaybackRateWidgetProps {
   playerHandler: UsePlayerHandlerReturn
 }
 
-const PRESET_RATES = [0.5, 1, 1.2, 1.5, 2] as const
+const PRESET_RATES = [0.75, 1, 1.25, 1.5, 1.75, 2, 2.5] as const
 
 export default function PlaybackRateWidget({ playerHandler }: PlaybackRateWidgetProps) {
   const t = useTypeSafeTranslations()
