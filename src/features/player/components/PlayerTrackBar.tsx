@@ -299,6 +299,24 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
               isHovering && !isDragging ? 'opacity-100' : 'opacity-0'
             )}
           />
+          {/* Embedded Chapter Notch Dividers on the slider track */}
+          {!useChapterTrack && duration > 0 && chapters.length > 1 && (
+            <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-full">
+              {chapters.slice(1).map((ch, idx) => {
+                const perc = (ch.start / duration) * 100
+                if (perc <= 0 || perc >= 100) return null
+                return (
+                  <div
+                    key={ch.id ?? idx}
+                    className="absolute top-0 bottom-0 w-[1.5px] bg-white/25 shadow-[0_0_2px_rgba(0,0,0,0.4)] z-[2]"
+                    style={{ left: `${perc}%` }}
+                    title={ch.title}
+                  />
+                )
+              })}
+            </div>
+          )}
+
           {/* Loading shimmer */}
           {isLoading && (
             <div className="loading-track-slide pointer-events-none absolute top-0 h-full w-1/4 bg-gradient-to-r from-transparent via-track-progress/30 to-transparent" />
@@ -361,14 +379,19 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
           <span className="opacity-60 pl-1">({Math.round(playedPercent)}%)</span>
         </p>
         {currentChapter && (
-          <p className="truncate min-w-0 max-w-[240px] text-center text-xs opacity-80" title={currentChapter.title}>
-            {currentChapter.title}{' '}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('audiobookphile:toggle-chapters'))}
+            className="group flex min-w-0 max-w-[260px] cursor-pointer items-center justify-center gap-1 truncate text-center text-xs opacity-80 transition-all hover:opacity-100 hover:text-accent"
+            title={`${currentChapter.title} - Click to view chapters (C)`}
+          >
+            <span className="truncate">{currentChapter.title}</span>
             {useChapterTrack && (
-              <span className="pl-1 text-[11px] text-foreground-subdued">
+              <span className="shrink-0 text-[11px] text-foreground-subdued group-hover:text-accent/80">
                 ({currentChapterNumber} of {chapters.length})
               </span>
             )}
-          </p>
+          </button>
         )}
         <p className="shrink-0 font-mono">{timeRemainingFormatted}</p>
       </div>
