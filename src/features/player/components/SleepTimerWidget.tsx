@@ -14,7 +14,7 @@ interface SleepTimerWidgetProps {
 const PRESET_DURATIONS = [5, 15, 30, 45, 60] as const
 
 export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProps) {
-  const { sleepTimerRemaining, currentChapter, currentTime } = playerHandler.state
+  const { sleepTimerRemaining, currentChapter, currentTime, duration } = playerHandler.state
   const { startSleepTimer, stopSleepTimer } = playerHandler.controls
 
   const widgetId = useId()
@@ -132,6 +132,7 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
   }
 
   const remainingInChapter = currentChapter ? Math.max(1, Math.round(currentChapter.end - currentTime)) : 0
+  const remainingInTrack = duration > 0 ? Math.max(1, Math.round(duration - currentTime)) : 0
 
   const popoverContent = isOpen ? (
     <div
@@ -197,10 +198,23 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
             startSleepTimer(remainingInChapter)
             setIsOpen(false)
           }}
-          className="mt-0.5 flex items-center justify-between rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-95"
+          className="mt-0.5 flex items-center justify-between rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-95 cursor-pointer"
         >
           <span>End of Chapter</span>
           <span className="font-mono text-xs opacity-75">{formatRemainingTime(remainingInChapter)}</span>
+        </button>
+      )}
+      {remainingInTrack > 0 && (!currentChapter || Math.abs(remainingInTrack - remainingInChapter) > 5) && (
+        <button
+          type="button"
+          onClick={() => {
+            startSleepTimer(remainingInTrack)
+            setIsOpen(false)
+          }}
+          className="mt-0.5 flex items-center justify-between rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-95 cursor-pointer"
+        >
+          <span>End of Track</span>
+          <span className="font-mono text-xs opacity-75">{formatRemainingTime(remainingInTrack)}</span>
         </button>
       )}
       {sleepTimerRemaining !== null && (
