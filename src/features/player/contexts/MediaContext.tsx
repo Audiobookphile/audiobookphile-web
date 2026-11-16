@@ -43,6 +43,8 @@ interface MediaContextValue {
   clearStreamMedia: () => void
   addItemToQueue: (item: PlayerQueueItem) => void
   removeItemFromQueue: (params: { libraryItemId: string; episodeId?: string | null }) => void
+  clearQueue: () => void
+  setQueueItems: (items: PlayerQueueItem[]) => void
 
   // Main play function
   playItem: (params: {
@@ -156,6 +158,18 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     []
   )
 
+  const clearQueue = useCallback(() => {
+    setPlayerQueueItems((prev) => {
+      if (!streamLibraryItem) return []
+      const current = prev.find((i) => i.libraryItemId === streamLibraryItem.id)
+      return current ? [current] : []
+    })
+  }, [streamLibraryItem])
+
+  const setQueueItems = useCallback((items: PlayerQueueItem[]) => {
+    setPlayerQueueItems(items)
+  }, [])
+
   // ============================================================================
   // Main Play Function
   // ============================================================================
@@ -220,6 +234,8 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
       clearStreamMedia,
       addItemToQueue,
       removeItemFromQueue,
+      clearQueue,
+      setQueueItems,
 
       // Main play function
       playItem,
@@ -245,6 +261,8 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
       clearStreamMedia,
       addItemToQueue,
       removeItemFromQueue,
+      clearQueue,
+      setQueueItems,
       playItem,
       playerState,
       playerControls,

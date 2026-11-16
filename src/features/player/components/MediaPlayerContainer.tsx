@@ -121,9 +121,14 @@ export default function MediaPlayerContainer() {
                     </span>
                   )}
                   {playerQueueItems.length > 1 && (
-                    <span className="text-[10px] opacity-75">
-                      ({playerQueueItems.findIndex((q) => q.libraryItemId === streamLibraryItem.id) + 1}/{playerQueueItems.length})
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => window.dispatchEvent(new CustomEvent('audiobookphile:toggle-queue'))}
+                      className="cursor-pointer rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent transition-all hover:scale-105 hover:bg-accent hover:text-black"
+                      title="Open Up Next queue (Q)"
+                    >
+                      Queue {playerQueueItems.findIndex((q) => q.libraryItemId === streamLibraryItem.id) + 1}/{playerQueueItems.length}
+                    </button>
                   )}
                 </div>
               </div>

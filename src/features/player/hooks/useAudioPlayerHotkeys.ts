@@ -7,6 +7,7 @@ export interface AudioPlayerHotkeyActions {
   onToggleBookmarks?: () => void
   onToggleChapters?: () => void
   onToggleShortcuts?: () => void
+  onToggleQueue?: () => void
 }
 
 /**
@@ -70,6 +71,13 @@ export function useAudioPlayerHotkeys(
             actions.onToggleChapters()
           } else if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('audiobookphile:toggle-chapters'))
+          }
+          break
+        case 'KeyQ':
+          if (actions?.onToggleQueue) {
+            actions.onToggleQueue()
+          } else if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('audiobookphile:toggle-queue'))
           }
           break
         case 'Shift-Slash':

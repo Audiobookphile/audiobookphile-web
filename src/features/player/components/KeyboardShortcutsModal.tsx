@@ -40,6 +40,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     category: 'Panels & Navigation',
     shortcuts: [
+      { keys: ['Q'], description: 'Toggle Up Next queue' },
       { keys: ['C'], description: 'Toggle chapters list' },
       { keys: ['B'], description: 'Toggle bookmarks & notes' },
       { keys: ['?'], description: 'Toggle keyboard shortcuts' },

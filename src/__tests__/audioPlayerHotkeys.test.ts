@@ -16,23 +16,27 @@ const textarea = el('textarea')
 const contentEditable = el('div', {}, true)
 
 describe('Player Hotkeys Scope for B, C and Shortcuts', () => {
-  it('gives hotkeys KeyB, KeyC, and Slash to the player when body is focused', () => {
+  it('gives hotkeys KeyB, KeyC, KeyQ, and Slash to the player when body is focused', () => {
     expect(shouldDeferToFocusedElement(body, 'KeyB')).toBe(false)
     expect(shouldDeferToFocusedElement(body, 'KeyC')).toBe(false)
+    expect(shouldDeferToFocusedElement(body, 'KeyQ')).toBe(false)
     expect(shouldDeferToFocusedElement(body, 'Slash', true)).toBe(false)
     expect(shouldDeferToFocusedElement(null, 'KeyB')).toBe(false)
   })
 
-  it('defers KeyB, KeyC, and Slash when typing inside text inputs, textareas, or contentEditable', () => {
-    // When typing in chapter search or bookmark notes, 'b', 'c', or '?' must type normally
+  it('defers KeyB, KeyC, KeyQ, and Slash when typing inside text inputs, textareas, or contentEditable', () => {
+    // When typing in chapter search or bookmark notes, 'b', 'c', 'q', or '?' must type normally
     expect(shouldDeferToFocusedElement(textInput, 'KeyB')).toBe(true)
     expect(shouldDeferToFocusedElement(textInput, 'KeyC')).toBe(true)
+    expect(shouldDeferToFocusedElement(textInput, 'KeyQ')).toBe(true)
     expect(shouldDeferToFocusedElement(textInput, 'Slash', true)).toBe(true)
 
     expect(shouldDeferToFocusedElement(textarea, 'KeyB')).toBe(true)
     expect(shouldDeferToFocusedElement(textarea, 'KeyC')).toBe(true)
+    expect(shouldDeferToFocusedElement(textarea, 'KeyQ')).toBe(true)
     expect(shouldDeferToFocusedElement(textarea, 'Slash', true)).toBe(true)
 
     expect(shouldDeferToFocusedElement(contentEditable, 'KeyB')).toBe(true)
+    expect(shouldDeferToFocusedElement(contentEditable, 'KeyQ')).toBe(true)
   })
 })

@@ -1,6 +1,6 @@
 'use client'
 
-import { Bookmark, Keyboard, List, Pause, Play, RotateCcw, RotateCw, Settings2, SkipBack, SkipForward, X } from 'lucide-react'
+import { Bookmark, Keyboard, List, ListMusic, Pause, Play, RotateCcw, RotateCw, Settings2, SkipBack, SkipForward, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useMediaContext } from '@/features/player/contexts/MediaContext'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
@@ -14,6 +14,7 @@ import EqualizerWidget from './EqualizerWidget'
 import KeyboardShortcutsModal from './KeyboardShortcutsModal'
 import PlaybackRateWidget from './PlaybackRateWidget'
 import PlayerSettingsModal from './PlayerSettingsModal'
+import QueueModal from './QueueModal'
 import SleepTimerWidget from './SleepTimerWidget'
 import VolumeControl from './VolumeControl'
 
@@ -155,11 +156,12 @@ export interface PlayerRightControlsProps {
 
 export function PlayerRightControls({ playerHandler, onClose }: PlayerRightControlsProps) {
   const t = useTypeSafeTranslations()
-  const { streamLibraryItem } = useMediaContext()
+  const { streamLibraryItem, playerQueueItems } = useMediaContext()
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [isChaptersModalOpen, setIsChaptersModalOpen] = useState(false)
   const [isBookmarksModalOpen, setIsBookmarksModalOpen] = useState(false)
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false)
+  const [isQueueModalOpen, setIsQueueModalOpen] = useState(false)
   const { chapters } = playerHandler.state
 
   // Synchronize global hotkey events with modals
@@ -167,15 +169,18 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
     const onToggleBookmarks = () => setIsBookmarksModalOpen((prev) => !prev)
     const onToggleChapters = () => setIsChaptersModalOpen((prev) => !prev)
     const onToggleShortcuts = () => setIsShortcutsModalOpen((prev) => !prev)
+    const onToggleQueue = () => setIsQueueModalOpen((prev) => !prev)
 
     window.addEventListener('audiobookphile:toggle-bookmarks', onToggleBookmarks)
     window.addEventListener('audiobookphile:toggle-chapters', onToggleChapters)
     window.addEventListener('audiobookphile:toggle-shortcuts', onToggleShortcuts)
+    window.addEventListener('audiobookphile:toggle-queue', onToggleQueue)
 
     return () => {
       window.removeEventListener('audiobookphile:toggle-bookmarks', onToggleBookmarks)
       window.removeEventListener('audiobookphile:toggle-chapters', onToggleChapters)
       window.removeEventListener('audiobookphile:toggle-shortcuts', onToggleShortcuts)
+      window.removeEventListener('audiobookphile:toggle-queue', onToggleQueue)
     }
   }, [])
 
@@ -221,6 +226,26 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
             icon={Bookmark}
             whileHover={{ scale: 1.1 }}
           />
+        </Tooltip>
+
+        {/* Up Next / Playback Queue trigger */}
+        <Tooltip text={t('LabelViewQueue') || 'Playback Queue (Q)'} position="top">
+          <div className="relative">
+            <IconBtn
+              size="custom"
+              borderless
+              className="p-1.5 text-foreground/60 transition-colors hover:text-foreground"
+              onClick={() => setIsQueueModalOpen(true)}
+              ariaLabel={t('LabelViewQueue') || 'Playback Queue'}
+              icon={ListMusic}
+              whileHover={{ scale: 1.1 }}
+            />
+            {playerQueueItems.length > 1 && (
+              <span className="pointer-events-none absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold text-black shadow-xs">
+                {playerQueueItems.length}
+              </span>
+            )}
+          </div>
         </Tooltip>
 
         {/* Keyboard shortcuts trigger */}
@@ -281,6 +306,10 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
         libraryItemId={streamLibraryItem?.id ?? null}
         playerHandler={playerHandler}
         onClose={() => setIsBookmarksModalOpen(false)}
+      />
+      <QueueModal
+        isOpen={isQueueModalOpen}
+        onClose={() => setIsQueueModalOpen(false)}
       />
       <KeyboardShortcutsModal
         isOpen={isShortcutsModalOpen}
