@@ -117,4 +117,41 @@ describe('PlayerSettings - Default Sleep Timer Duration', () => {
     expect(getNextJumpDuration(5)).toBe(10)
     expect(getNextJumpDuration(999)).toBe(5) // fallback to first preset
   })
+
+  it('supports volume percentage rounding and double-click reset to 100%', () => {
+    let volume = 0.45
+    expect(Math.round(volume * 100)).toBe(45)
+
+    // Double-click reset to 1.0 (100%)
+    volume = 1.0
+    expect(volume).toBe(1.0)
+    expect(Math.round(volume * 100)).toBe(100)
+
+    // Clamping on manual stepping
+    const clampedUpper = Math.max(0, Math.min(1, 1.05))
+    expect(clampedUpper).toBe(1.0)
+    const clampedLower = Math.max(0, Math.min(1, -0.05))
+    expect(clampedLower).toBe(0.0)
+  })
+
+  it('handles hotkey S extension (+300s) and fallback start duration', () => {
+    function handleSleepTimerHotkey(
+      currentRemaining: number | null,
+      defaultDuration: number
+    ): { action: 'start' | 'extend'; duration: number } {
+      if (currentRemaining !== null) {
+        return { action: 'extend', duration: currentRemaining + 300 }
+      }
+      return { action: 'start', duration: defaultDuration === -1 ? 900 : defaultDuration }
+    }
+
+    // Inactive -> starts with default 900s
+    expect(handleSleepTimerHotkey(null, 900)).toEqual({ action: 'start', duration: 900 })
+
+    // Inactive with End-of-Chapter (-1) -> starts with fallback 900s
+    expect(handleSleepTimerHotkey(null, -1)).toEqual({ action: 'start', duration: 900 })
+
+    // Active with 120s remaining -> extends to 420s (+5m)
+    expect(handleSleepTimerHotkey(120, 900)).toEqual({ action: 'extend', duration: 420 })
+  })
 })

@@ -42,6 +42,8 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     category: 'Panels & Navigation',
     shortcuts: [
+      { keys: ['S'], description: 'Start / extend sleep timer (+5m)' },
+      { keys: ['Shift', 'S'], description: 'Toggle sleep timer popover' },
       { keys: ['Q'], description: 'Toggle Up Next queue' },
       { keys: ['C'], description: 'Toggle chapters list' },
       { keys: ['B'], description: 'Toggle bookmarks & notes' },

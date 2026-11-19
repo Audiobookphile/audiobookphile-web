@@ -156,6 +156,16 @@ export default function VolumeControl({ playerHandler }: VolumeControlProps) {
   const trackHeight = 128
   const filledHeight = trackHeight * volume
 
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      setVolume(1.0)
+    },
+    [setVolume]
+  )
+
+  const volumeTooltip = `${t('LabelVolume')}: ${volumePercentage}% (Scroll to adjust ±5%, Double-click for 100%)`
+
   const popoverContent = (
     <AnimatePresence>
       {isOpen && (
@@ -226,10 +236,12 @@ export default function VolumeControl({ playerHandler }: VolumeControlProps) {
         ref={triggerRef}
         type="button"
         onClick={toggleMute}
+        onDoubleClick={handleDoubleClick}
         onWheel={handleWheel}
         onMouseEnter={openPopover}
         onMouseLeave={closePopoverSoon}
         aria-label={t('LabelVolume')}
+        title={volumeTooltip}
         aria-expanded={isOpen}
         aria-controls={`${widgetId}-popover`}
         className="flex h-10 w-10 cursor-pointer items-center justify-center text-foreground/60 transition-all duration-300 hover:scale-110 hover:text-white active:scale-95"

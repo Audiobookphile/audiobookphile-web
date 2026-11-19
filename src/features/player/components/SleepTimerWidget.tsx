@@ -66,6 +66,13 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
     setMounted(true)
   }, [])
 
+  // Listen for global shortcut toggle event (Shift-S)
+  useEffect(() => {
+    const handleToggle = () => setIsOpen((prev) => !prev)
+    window.addEventListener('audiobookphile:toggle-sleeptimer', handleToggle)
+    return () => window.removeEventListener('audiobookphile:toggle-sleeptimer', handleToggle)
+  }, [])
+
   // Floating UI positioning
   const middleware = useMemo(
     () => [

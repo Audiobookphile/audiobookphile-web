@@ -8,6 +8,7 @@ export interface AudioPlayerHotkeyActions {
   onToggleChapters?: () => void
   onToggleShortcuts?: () => void
   onToggleQueue?: () => void
+  onToggleSleepTimer?: () => void
 }
 
 /**
@@ -86,6 +87,21 @@ export function useAudioPlayerHotkeys(
             window.dispatchEvent(new CustomEvent('audiobookphile:toggle-queue'))
           }
           break
+        case 'Shift-KeyS':
+          if (actions?.onToggleSleepTimer) {
+            actions.onToggleSleepTimer()
+          } else if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('audiobookphile:toggle-sleeptimer'))
+          }
+          break
+        case 'KeyS':
+          if (state.sleepTimerRemaining !== null) {
+            controls.extendSleepTimer(300)
+          } else {
+            const duration = state.settings.defaultSleepTimerDuration || 900
+            controls.startSleepTimer(duration === -1 ? 900 : duration)
+          }
+          break
         case 'Shift-Slash':
         case 'Slash':
           if (e.key === '?' || (e.shiftKey && e.code === 'Slash')) {
@@ -109,5 +125,5 @@ export function useAudioPlayerHotkeys(
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [enabled, state.volume, controls, onClose, actions])
+  }, [enabled, state.volume, state.sleepTimerRemaining, state.settings.defaultSleepTimerDuration, controls, onClose, actions])
 }
