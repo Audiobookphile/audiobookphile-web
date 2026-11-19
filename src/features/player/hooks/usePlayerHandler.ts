@@ -412,14 +412,20 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
 
   const applySmartRewindIfNeeded = useCallback(() => {
     if (!lastPausedAtRef.current || !playerRef.current) return
+    const { smartRewindEnabled = true, smartRewindSeconds = 20 } = settings
+    if (!smartRewindEnabled) {
+      lastPausedAtRef.current = null
+      return
+    }
+
     const elapsedSeconds = (Date.now() - lastPausedAtRef.current) / 1000
     let rewind = 0
     if (elapsedSeconds >= 7200) {
-      rewind = 30
+      rewind = smartRewindSeconds
     } else if (elapsedSeconds >= 1800) {
-      rewind = 20
+      rewind = Math.min(smartRewindSeconds, 20)
     } else if (elapsedSeconds >= 120) {
-      rewind = 10
+      rewind = Math.min(smartRewindSeconds, 10)
     }
     if (rewind > 0) {
       const current = playerRef.current.getCurrentTime()
@@ -428,7 +434,7 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
       setCurrentTime(target)
     }
     lastPausedAtRef.current = null
-  }, [])
+  }, [settings])
 
   const play = useCallback(() => {
     applySmartRewindIfNeeded()

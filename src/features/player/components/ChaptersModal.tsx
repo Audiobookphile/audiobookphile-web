@@ -1,8 +1,9 @@
 'use client'
 
-import { ArrowUpDown, ListMusic, Search, X } from 'lucide-react'
+import { ArrowUpDown, ListMusic, Search, Share2, X } from 'lucide-react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
+import { useGlobalToast } from '@/shared/contexts/ToastContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import { secondsToTimestamp } from '@/shared/lib/datefns'
 import { mergeClasses } from '@/shared/lib/merge-classes'
@@ -22,6 +23,7 @@ interface ChapterRowProps {
   isFocused?: boolean
   currentTime?: number
   onSeek: (time: number) => void
+  onShareChapter?: (chapter: Chapter) => void
 }
 
 /**
@@ -52,6 +54,7 @@ const ChapterRow = memo(function ChapterRow({
   isFocused = false,
   currentTime,
   onSeek,
+  onShareChapter,
 }: ChapterRowProps) {
   const startTimestamp = secondsToTimestamp(chapter.start)
   const duration = Math.max(0, chapter.end - chapter.start)
@@ -136,12 +139,29 @@ const ChapterRow = memo(function ChapterRow({
           </div>
         )}
       </div>
+
+      {/* Chapter share link button */}
+      {onShareChapter && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onShareChapter(chapter)
+          }}
+          className="shrink-0 rounded-lg p-1.5 text-foreground-muted hover:bg-white/10 hover:text-accent focus:bg-white/10 focus:text-accent transition-colors cursor-pointer"
+          title={`Copy link for ${chapter.title}`}
+          aria-label={`Copy link for ${chapter.title}`}
+        >
+          <Share2 className="h-4 w-4" />
+        </button>
+      )}
     </button>
   )
 })
 
 export default function ChaptersModal({ isOpen, playerHandler, onClose }: ChaptersModalProps) {
   const t = useTypeSafeTranslations()
+  const { showToast } = useGlobalToast()
   const listRef = useRef<HTMLDivElement>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [isReversed, setIsReversed] = useState(false)
@@ -149,6 +169,21 @@ export default function ChaptersModal({ isOpen, playerHandler, onClose }: Chapte
 
   const { chapters, currentChapter } = playerHandler.state
   const { seek } = playerHandler.controls
+
+  const handleShareChapter = useCallback(
+    (chapter: Chapter) => {
+      if (typeof window === 'undefined') return
+      try {
+        const url = new URL(window.location.href)
+        url.searchParams.set('t', Math.round(chapter.start).toString())
+        navigator.clipboard?.writeText(url.toString())
+        showToast(`${t('ButtonCopiedToClipboard')} (${chapter.title})`, { type: 'success' })
+      } catch (err) {
+        console.error('Failed to copy chapter link', err)
+      }
+    },
+    [showToast, t]
+  )
 
   // Reset search filter and navigation state when modal is opened/closed
   useEffect(() => {
@@ -327,6 +362,7 @@ export default function ChaptersModal({ isOpen, playerHandler, onClose }: Chapte
                     isFocused={idx === focusedIndex}
                     currentTime={playerHandler.state.currentTime}
                     onSeek={handleSeek}
+                    onShareChapter={handleShareChapter}
                   />
                 )
               })}

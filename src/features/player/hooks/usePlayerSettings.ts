@@ -20,6 +20,10 @@ export interface PlayerSettings {
   volumeBoost?: number
   /** Default sleep timer duration in seconds (e.g. 900 for 15m, 1800 for 30m, -1 for end of chapter) */
   defaultSleepTimerDuration: number
+  /** Whether smart rewind is enabled on resume after a pause */
+  smartRewindEnabled: boolean
+  /** Maximum smart rewind duration in seconds (10, 20, 30) */
+  smartRewindSeconds: number
 }
 
 export interface UsePlayerSettingsReturn {
@@ -32,6 +36,8 @@ export interface UsePlayerSettingsReturn {
   setEqualizerPreset: (value: EqualizerPreset) => void
   setVolumeBoost: (value: number) => void
   setDefaultSleepTimerDuration: (value: number) => void
+  setSmartRewindEnabled: (value: boolean) => void
+  setSmartRewindSeconds: (value: number) => void
   /** Update multiple settings at once */
   updateSettings: (updates: Partial<PlayerSettings>) => void
   /** Increment playback rate by the configured increment amount */
@@ -60,6 +66,8 @@ const DEFAULT_SETTINGS: PlayerSettings = {
   equalizerPreset: 'off',
   volumeBoost: 1.0,
   defaultSleepTimerDuration: 900,
+  smartRewindEnabled: true,
+  smartRewindSeconds: 20,
 }
 
 // Playback rate bounds
@@ -211,6 +219,14 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setSettings((prev) => ({ ...prev, defaultSleepTimerDuration: value }))
   }, [])
 
+  const setSmartRewindEnabled = useCallback((value: boolean) => {
+    setSettings((prev) => ({ ...prev, smartRewindEnabled: value }))
+  }, [])
+
+  const setSmartRewindSeconds = useCallback((value: number) => {
+    setSettings((prev) => ({ ...prev, smartRewindSeconds: value }))
+  }, [])
+
   const toggleMute = useCallback((): number => {
     const currentVolume = settings.volume
     if (currentVolume > 0) {
@@ -237,6 +253,8 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setEqualizerPreset,
     setVolumeBoost,
     setDefaultSleepTimerDuration,
+    setSmartRewindEnabled,
+    setSmartRewindSeconds,
     updateSettings,
     incrementPlaybackRate,
     decrementPlaybackRate,

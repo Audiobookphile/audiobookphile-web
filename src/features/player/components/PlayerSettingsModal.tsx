@@ -45,6 +45,13 @@ const DEFAULT_SLEEP_TIMER_OPTIONS: DropdownItem[] = [
   { text: 'End of Chapter', value: -1 },
 ]
 
+// Smart rewind max duration values
+const SMART_REWIND_SECONDS_VALUES: DropdownItem[] = [
+  { text: '10 Seconds', value: 10 },
+  { text: '20 Seconds (Default)', value: 20 },
+  { text: '30 Seconds', value: 30 },
+]
+
 export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdateSettings }: PlayerSettingsModalProps) {
   const t = useTypeSafeTranslations()
 
@@ -143,6 +150,24 @@ export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdat
             onChange={(value) => onUpdateSettings({ defaultSleepTimerDuration: Number(value) })}
             usePortal
           />
+
+          {/* Smart Rewind on Resume toggle */}
+          <ToggleSwitch
+            value={settings.smartRewindEnabled ?? true}
+            label="Smart Rewind on Resume"
+            onChange={(value) => onUpdateSettings({ smartRewindEnabled: value })}
+          />
+
+          {/* Smart Rewind max duration dropdown */}
+          {settings.smartRewindEnabled !== false && (
+            <Dropdown
+              label="Maximum Smart Rewind Duration"
+              value={settings.smartRewindSeconds || 20}
+              items={SMART_REWIND_SECONDS_VALUES}
+              onChange={(value) => onUpdateSettings({ smartRewindSeconds: Number(value) })}
+              usePortal
+            />
+          )}
         </div>
       </div>
     </Modal>

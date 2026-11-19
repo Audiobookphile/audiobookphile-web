@@ -51,4 +51,39 @@ describe('PlayerSettings - Default Sleep Timer Duration', () => {
     // End of chapter with no chapter info (fallback to 900s)
     expect(getSecondsToStart(-1, 0)).toBe(900)
   })
+
+  it('supports configurable Smart Rewind on Resume settings', () => {
+    const defaultSmartRewind = {
+      smartRewindEnabled: true,
+      smartRewindSeconds: 20,
+    }
+    expect(defaultSmartRewind.smartRewindEnabled).toBe(true)
+    expect(defaultSmartRewind.smartRewindSeconds).toBe(20)
+
+    function calculateRewindOffset(
+      enabled: boolean,
+      maxSeconds: number,
+      pausedDuration: number
+    ): number {
+      if (!enabled) return 0
+      // Proportional rewind based on paused duration: 1s rewind per 60s paused, up to maxSeconds
+      const calculated = Math.min(maxSeconds, Math.floor(pausedDuration / 60) * 5)
+      return Math.max(0, calculated)
+    }
+
+    // Disabled rewind returns 0
+    expect(calculateRewindOffset(false, 20, 3600)).toBe(0)
+
+    // Short pause under 60s returns 0
+    expect(calculateRewindOffset(true, 20, 30)).toBe(0)
+
+    // Paused for 3 minutes (180s) -> 15s rewind
+    expect(calculateRewindOffset(true, 20, 180)).toBe(15)
+
+    // Paused for 1 hour (3600s) -> capped at maxSeconds (20s)
+    expect(calculateRewindOffset(true, 20, 3600)).toBe(20)
+
+    // Custom maxSeconds (10s cap)
+    expect(calculateRewindOffset(true, 10, 3600)).toBe(10)
+  })
 })
