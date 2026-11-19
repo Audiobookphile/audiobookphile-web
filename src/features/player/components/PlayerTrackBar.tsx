@@ -38,6 +38,8 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
   const [isDragging, setIsDragging] = useState(false)
   // While dragging show the drag position instead of real currentTime
   const [dragPercent, setDragPercent] = useState<number | null>(null)
+  // Toggle between Chapter remaining and Total remaining time
+  const [showChapterRemaining, setShowChapterRemaining] = useState(false)
 
   // Chapter duration and start for chapter-mode display
   const currentChapterDuration = currentChapter ? currentChapter.end - currentChapter.start : 0
@@ -45,13 +47,18 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
 
   const effectivePlaybackRate = playbackRate && !isNaN(playbackRate) ? playbackRate : 1
 
-  const timeRemainingToShow =
-    (useChapterTrack ? currentChapterDuration - (currentTime - currentChapterStart) : duration - currentTime) /
-    effectivePlaybackRate
+  const remainingTotal = (duration - currentTime) / effectivePlaybackRate
+  const remainingChapter = currentChapter && currentChapterDuration > 0
+    ? (currentChapter.end - currentTime) / effectivePlaybackRate
+    : remainingTotal
+
+  const isShowingChapter = (useChapterTrack || showChapterRemaining) && currentChapter != null
+  const timeRemainingToShow = isShowingChapter ? remainingChapter : remainingTotal
+
   const timeRemainingFormatted =
     timeRemainingToShow < 0
-      ? secondsToTimestamp(timeRemainingToShow * -1)
-      : `-${secondsToTimestamp(timeRemainingToShow)}`
+      ? `${secondsToTimestamp(timeRemainingToShow * -1)}${isShowingChapter ? ' (ch)' : ''}`
+      : `-${secondsToTimestamp(timeRemainingToShow)}${isShowingChapter ? ' (ch)' : ''}`
 
   const currentTimeToShow = useChapterTrack ? Math.max(0, currentTime - currentChapterStart) : currentTime
   const currentTimeFormatted = secondsToTimestamp(currentTimeToShow / effectivePlaybackRate)
@@ -393,7 +400,31 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
             )}
           </button>
         )}
-        <p className="shrink-0 font-mono">{timeRemainingFormatted}</p>
+        <button
+          type="button"
+          onClick={() => {
+            if (currentChapter) {
+              setShowChapterRemaining((prev) => !prev)
+            }
+          }}
+          disabled={!currentChapter}
+          className={mergeClasses(
+            'shrink-0 font-mono transition-colors text-xs select-none',
+            currentChapter
+              ? 'cursor-pointer hover:text-accent focus:outline-none'
+              : 'cursor-default'
+          )}
+          title={
+            currentChapter
+              ? isShowingChapter
+                ? 'Showing Chapter remaining time. Click to show Total remaining.'
+                : 'Showing Total remaining time. Click to show Chapter remaining.'
+              : 'Total remaining time'
+          }
+          aria-label="Toggle remaining time display"
+        >
+          {timeRemainingFormatted}
+        </button>
       </div>
     </div>
   )

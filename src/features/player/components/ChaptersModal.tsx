@@ -1,6 +1,6 @@
 'use client'
 
-import { ListMusic, Search, X } from 'lucide-react'
+import { ArrowUpDown, ListMusic, Search, X } from 'lucide-react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
@@ -19,6 +19,7 @@ interface ChapterRowProps {
   chapter: Chapter
   isCurrentChapter: boolean
   isListened: boolean
+  isFocused?: boolean
   currentTime?: number
   onSeek: (time: number) => void
 }
@@ -37,10 +38,18 @@ export function filterChapters(chapters: Chapter[], query: string): Chapter[] {
   )
 }
 
+/**
+ * Pure sort helper reversing chapter order when enabled.
+ */
+export function sortChapters(chapters: Chapter[], reversed: boolean): Chapter[] {
+  return reversed ? [...chapters].reverse() : chapters
+}
+
 const ChapterRow = memo(function ChapterRow({
   chapter,
   isCurrentChapter,
   isListened,
+  isFocused = false,
   currentTime,
   onSeek,
 }: ChapterRowProps) {
@@ -75,12 +84,14 @@ const ChapterRow = memo(function ChapterRow({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={mergeClasses(
-        'flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left transition-all duration-150',
+        'flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left transition-all duration-150 cursor-pointer',
         'hover:bg-white/5 focus:bg-white/5 focus:outline-none',
         isCurrentChapter && 'bg-accent/15 border-accent border-l-4 shadow-xs',
-        isListened && !isCurrentChapter && 'bg-success/5'
+        isListened && !isCurrentChapter && 'bg-success/5',
+        isFocused && 'ring-2 ring-accent/60 bg-white/10'
       )}
       data-current={isCurrentChapter}
+      data-focused={isFocused}
     >
       {/* Chapter number indicator */}
       <div
@@ -133,26 +144,66 @@ export default function ChaptersModal({ isOpen, playerHandler, onClose }: Chapte
   const t = useTypeSafeTranslations()
   const listRef = useRef<HTMLDivElement>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isReversed, setIsReversed] = useState(false)
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1)
 
   const { chapters, currentChapter } = playerHandler.state
   const { seek } = playerHandler.controls
 
-  // Reset search filter when modal is opened/closed
+  // Reset search filter and navigation state when modal is opened/closed
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery('')
+      setIsReversed(false)
+      setFocusedIndex(-1)
     }
   }, [isOpen])
 
-  // Filter chapters based on active search query
-  const filteredChapters = useMemo(() => {
-    return filterChapters(chapters, searchQuery)
-  }, [chapters, searchQuery])
+  // Filter and sort chapters based on search query and reverse order
+  const displayedChapters = useMemo(() => {
+    const filtered = filterChapters(chapters, searchQuery)
+    return sortChapters(filtered, isReversed)
+  }, [chapters, searchQuery, isReversed])
+
+  // Keyboard navigation through chapters (ArrowDown/ArrowUp and Enter to seek)
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (displayedChapters.length === 0) return
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setFocusedIndex((prev) => (prev + 1) % displayedChapters.length)
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setFocusedIndex((prev) => (prev - 1 + displayedChapters.length) % displayedChapters.length)
+      } else if (e.key === 'Enter' && focusedIndex >= 0 && focusedIndex < displayedChapters.length) {
+        e.preventDefault()
+        seek(displayedChapters[focusedIndex].start)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, displayedChapters, focusedIndex, seek])
+
+  // Scroll to focused chapter during keyboard navigation
+  useEffect(() => {
+    if (focusedIndex >= 0 && listRef.current) {
+      const focusedElement = listRef.current.querySelector('[data-focused="true"]')
+      if (focusedElement) {
+        focusedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        })
+      }
+    }
+  }, [focusedIndex])
 
   // Scroll to current chapter when modal opens
   useEffect(() => {
     if (isOpen && listRef.current && currentChapter && !searchQuery) {
-      // Use requestAnimationFrame to ensure the modal is rendered
       requestAnimationFrame(() => {
         const currentElement = listRef.current?.querySelector('[data-current="true"]')
         if (currentElement) {
@@ -183,42 +234,73 @@ export default function ChaptersModal({ isOpen, playerHandler, onClose }: Chapte
             </h2>
             {chapters.length > 0 && (
               <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">
-                {searchQuery ? `${filteredChapters.length} of ${chapters.length}` : chapters.length}
+                {searchQuery ? `${displayedChapters.length} of ${chapters.length}` : chapters.length}
               </span>
             )}
           </div>
         </div>
 
-        {/* Real-time Chapter Search Filter */}
-        {chapters.length > 3 && (
-          <div className="relative mb-3">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-muted/50" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search chapters by title or number..."
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-8 text-sm text-foreground outline-none transition-all placeholder:text-foreground-muted/50 focus:border-accent/50 focus:bg-white/10 focus:ring-1 focus:ring-accent/20"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-foreground-muted hover:bg-white/10 hover:text-foreground transition-colors"
-                aria-label="Clear chapter search"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-        )}
+        {/* Real-time Chapter Search Filter & Sort Toggle */}
+        <div className="mb-3 flex items-center gap-2">
+          {chapters.length > 3 ? (
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-muted/50" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setFocusedIndex(-1)
+                }}
+                placeholder="Search chapters by title or number..."
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-8 text-sm text-foreground outline-none transition-all placeholder:text-foreground-muted/50 focus:border-accent/50 focus:bg-white/10 focus:ring-1 focus:ring-accent/20"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('')
+                    setFocusedIndex(-1)
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-foreground-muted hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer"
+                  aria-label="Clear chapter search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex-1" />
+          )}
+
+          {chapters.length > 1 && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsReversed((prev) => !prev)
+                setFocusedIndex(-1)
+              }}
+              className={mergeClasses(
+                'flex h-9.5 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-all active:scale-95 cursor-pointer',
+                isReversed
+                  ? 'border-accent bg-accent/20 text-accent ring-1 ring-accent/30'
+                  : 'border-white/10 bg-white/5 text-foreground-muted hover:border-white/20 hover:text-foreground'
+              )}
+              title={isReversed ? 'Reverse order (Newest first)' : 'Standard order (Oldest first)'}
+              aria-label="Toggle chapter order"
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              <span className="hidden sm:inline">{isReversed ? 'Newest' : 'Oldest'}</span>
+            </button>
+          )}
+        </div>
 
         <div ref={listRef} className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10">
           {chapters.length === 0 ? (
             <div className="flex items-center justify-center py-12 text-foreground-muted">
               <p>{t('MessageNoChapters')}</p>
             </div>
-          ) : filteredChapters.length === 0 ? (
+          ) : displayedChapters.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-foreground-muted">
               <Search className="mb-2 h-7 w-7 text-foreground-muted/30" />
               <p className="text-sm font-medium">No chapters match &ldquo;{searchQuery}&rdquo;</p>
@@ -232,7 +314,7 @@ export default function ChaptersModal({ isOpen, playerHandler, onClose }: Chapte
             </div>
           ) : (
             <div className="flex flex-col gap-1">
-              {filteredChapters.map((chapter) => {
+              {displayedChapters.map((chapter, idx) => {
                 const isCurrentChapter = chapter.id === currentChapterId
                 const isListened = chapter.id < currentChapterId
 
@@ -242,6 +324,7 @@ export default function ChaptersModal({ isOpen, playerHandler, onClose }: Chapte
                     chapter={chapter}
                     isCurrentChapter={isCurrentChapter}
                     isListened={isListened}
+                    isFocused={idx === focusedIndex}
                     currentTime={playerHandler.state.currentTime}
                     onSeek={handleSeek}
                   />

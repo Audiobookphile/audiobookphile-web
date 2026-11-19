@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { filterChapters } from '@/features/player/components/ChaptersModal'
+import { filterChapters, sortChapters } from '@/features/player/components/ChaptersModal'
 import type { Chapter } from '@/types/api'
 
 describe('filterChapters', () => {
@@ -40,6 +40,36 @@ describe('filterChapters', () => {
   it('returns empty array when query has no matches', () => {
     const noMatch = filterChapters(sampleChapters, 'nonexistent chapter')
     expect(noMatch).toEqual([])
+  })
+
+  it('sorts chapters in standard ascending or reversed descending order', () => {
+    // Standard order (reversed: false)
+    const standard = sortChapters(sampleChapters, false)
+    expect(standard[0].id).toBe(0)
+    expect(standard[standard.length - 1].id).toBe(4)
+
+    // Reversed order (reversed: true)
+    const reversed = sortChapters(sampleChapters, true)
+    expect(reversed[0].id).toBe(4)
+    expect(reversed[0].title).toBe('Epilogue')
+    expect(reversed[reversed.length - 1].id).toBe(0)
+
+    // Does not mutate the original array
+    expect(sampleChapters[0].id).toBe(0)
+  })
+
+  it('correctly filters and reverses combined', () => {
+    const filtered = filterChapters(sampleChapters, 'Letters')
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0].title).toBe('Interlude: Letters Home')
+
+    const filteredTwo = filterChapters(sampleChapters, 'Mist')
+    expect(filteredTwo).toHaveLength(1)
+    expect(filteredTwo[0].title).toBe('Chapter 2: Shadows in the Mist')
+
+    const reversed = sortChapters(sampleChapters, true)
+    expect(reversed[0].title).toBe('Epilogue')
+    expect(reversed[reversed.length - 1].title).toBe('Prologue: The Awakening')
   })
 })
 
