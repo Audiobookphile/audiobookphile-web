@@ -271,13 +271,22 @@ export default function LoginForm() {
       setError('Please enter your email address above to receive a magic link.')
       return
     }
+    if (demoAccount && email.trim().toLowerCase() === demoAccount.username.toLowerCase()) {
+      setError('The demo account uses password authentication. Please click "Try Demo (1-Click)" or "Sign in" above.')
+      return
+    }
     setError('')
     setMagicSuccess('')
     setMagicLoading(true)
     try {
       const res = await signInWithMagicLink(email)
       if (res?.error) {
-        setError(res.error)
+        const errorLower = res.error.toLowerCase()
+        if (errorLower.includes('signups not allowed') || errorLower.includes('otp')) {
+          setError('No account was found with this email address. Registration is invitation-only — please contact an administrator for access.')
+        } else {
+          setError(res.error)
+        }
       } else if (res?.success) {
         setMagicSuccess('Magic link sent! Check your email.')
       } else {

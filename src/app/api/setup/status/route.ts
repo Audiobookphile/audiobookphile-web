@@ -155,6 +155,14 @@ export async function GET(request: Request) {
   // own instance it does not exist, so neither the credentials nor the deep
   // link are returned at all.
   const demoEnabled = isOfficialDemoHost(host)
+  if (demoEnabled && databaseConnected) {
+    try {
+      const { ensureOfficialDemoUser } = await import('@/features/auth/actions/setupActions')
+      await ensureOfficialDemoUser()
+    } catch (demoErr) {
+      console.warn('[Setup Status] ensureOfficialDemoUser error:', demoErr)
+    }
+  }
   const demoUsername = demoEnabled ? 'demo@audiobookphile.app' : null
   const demoPassword = demoEnabled ? 'AudiobookphileDemo2026!' : null
   const mobileDeepLink =

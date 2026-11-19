@@ -504,3 +504,60 @@ export async function autoProvisionAdminFromEnv(explicitOrigin?: string): Promis
     deepLink: emailResult.deepLink,
   }
 }
+
+/**
+ * Ensures the official demo account exists in Supabase Auth on official demo hosts.
+ * Idempotent: verifies both profiles and auth.users match.
+ */
+export async function ensureOfficialDemoUser(): Promise<boolean> {
+  let serviceClient: ReturnType<typeof createServiceRoleClient>
+  try {
+    serviceClient = createServiceRoleClient()
+  } catch {
+    return false
+  }
+
+  const demoEmail = 'demo@audiobookphile.app'
+  const demoPassword = 'AudiobookphileDemo2026!'
+
+  try {
+    const { data: profile } = await serviceClient
+      .from('profiles')
+      .select('id, username')
+      .eq('username', 'demo')
+      .maybeSingle()
+
+    const { data: usersData } = await serviceClient.auth.admin.listUsers()
+    const demoAuthUser = usersData?.users?.find((u) => u.email?.toLowerCase() === demoEmail)
+
+    if (demoAuthUser) {
+      return true
+    }
+
+    const userId = profile?.id || crypto.randomUUID()
+
+    const { data: created, error } = await serviceClient.auth.admin.createUser({
+      id: userId,
+      email: demoEmail,
+      password: demoPassword,
+      email_confirm: true,
+      user_metadata: { username: 'demo' },
+    })
+
+    if (error || !created?.user) {
+      console.warn('[ensureOfficialDemoUser] Failed to create demo auth user:', error?.message)
+      return false
+    }
+
+    await serviceClient.from('profiles').upsert({
+      id: created.user.id,
+      username: 'demo',
+      user_type: 'root',
+    })
+
+    return true
+  } catch (err) {
+    console.warn('[ensureOfficialDemoUser] Error:', err)
+    return false
+  }
+}

@@ -142,6 +142,17 @@ export async function signInWithMagicLink(email: string) {
     })
 
     if (error) {
+      const msg = error.message?.toLowerCase() || ''
+      if (
+        msg.includes('signups not allowed') ||
+        msg.includes('otp') ||
+        (error as { code?: string }).code === 'otp_disabled'
+      ) {
+        return {
+          error:
+            'No account was found for this email address. Registration is invitation-only. Please contact your administrator for access.',
+        }
+      }
       return { error: error.message || 'Failed to send magic link.' }
     }
 
