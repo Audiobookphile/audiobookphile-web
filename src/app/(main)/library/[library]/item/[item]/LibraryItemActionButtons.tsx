@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, BookOpen, CheckSquare, Edit, ListPlus, ListStart, Pause, Play } from 'lucide-react'
+import { AlertCircle, BookOpen, CheckCircle2, CheckSquare, Edit, ListPlus, ListStart, Pause, Play } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useMediaContext } from '@/features/player/contexts/MediaContext'
 import { useUser } from '@/shared/contexts/UserContext'
@@ -271,6 +271,29 @@ export default function LibraryItemActionButtons({
                   )}
                   size="small"
                   icon={isQueued ? CheckSquare : ListPlus}
+                />
+              </span>
+            </Tooltip>
+          )}
+
+          {isBook && (
+            <Tooltip
+              text={mediaProgress?.isFinished ? t('MessageMarkAsNotFinished') : t('MessageMarkAsFinished')}
+              position="top"
+            >
+              <span className="inline-flex">
+                <IconBtn
+                  ariaLabel={mediaProgress?.isFinished ? t('MessageMarkAsNotFinished') : t('MessageMarkAsFinished')}
+                  onClick={handleToggleFinished}
+                  borderless
+                  className={mergeClasses(
+                    'transition-all duration-300',
+                    mediaProgress?.isFinished
+                      ? 'text-success scale-110 drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]'
+                      : 'text-foreground/60 hover:text-white'
+                  )}
+                  size="small"
+                  icon={CheckCircle2}
                 />
               </span>
             </Tooltip>
