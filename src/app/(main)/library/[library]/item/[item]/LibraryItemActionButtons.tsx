@@ -1,10 +1,11 @@
 'use client'
 
-import { AlertCircle, BookOpen, CheckCircle2, CheckSquare, Edit, ListPlus, ListStart, Pause, Play } from 'lucide-react'
+import { AlertCircle, BookOpen, CheckCircle2, CheckSquare, Edit, FileText, ListPlus, ListStart, Pause, Play } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useMediaContext } from '@/features/player/contexts/MediaContext'
 import { useUser } from '@/shared/contexts/UserContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
+import { secondsToTimestamp } from '@/shared/lib/datefns'
 import { isLibraryItemPlayable } from '@/shared/lib/mediaPlayability'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 import AddToCollectionModal from '@/shared/modals/AddToCollectionModal'
@@ -16,6 +17,7 @@ import Btn from '@/shared/ui/Btn'
 import ContextMenuDropdown, { type ContextMenuDropdownItem } from '@/shared/ui/ContextMenuDropdown'
 import IconBtn from '@/shared/ui/IconBtn'
 import ReadIconBtn from '@/shared/ui/ReadIconBtn'
+import { formatBookMetadataMarkdown } from '@/shared/lib/metadataMarkdown'
 import Tooltip from '@/shared/ui/Tooltip'
 import ConfirmDialog from '@/shared/widgets/ConfirmDialog'
 import { useMediaCardActions } from '@/shared/widgets/media-card/useMediaCardActions'
@@ -33,6 +35,18 @@ export default function LibraryItemActionButtons({
   onEdit,
   rssFeed = null,
 }: LibraryItemActionButtonsProps) {
+  const [copiedMetadata, setCopiedMetadata] = useState(false)
+
+  const handleCopyMarkdownMetadata = useCallback(async () => {
+    try {
+      const markdown = formatBookMetadataMarkdown(libraryItem)
+      await navigator.clipboard.writeText(markdown)
+      setCopiedMetadata(true)
+      setTimeout(() => setCopiedMetadata(false), 2000)
+    } catch (err) {
+      console.error('[LibraryItemActionButtons] Failed to copy metadata:', err)
+    }
+  }, [libraryItem])
   const { userCanUpdate, getMediaItemProgress, ereaderDevices } = useUser()
   const {
     playItem,
@@ -327,6 +341,22 @@ export default function LibraryItemActionButtons({
               </span>
             </Tooltip>
           )}
+
+          <Tooltip text={copiedMetadata ? 'Copied Markdown!' : 'Copy Markdown Metadata'} position="top">
+            <span className="inline-flex">
+              <IconBtn
+                ariaLabel="Copy Markdown Metadata"
+                onClick={handleCopyMarkdownMetadata}
+                borderless
+                className={mergeClasses(
+                  'transition-all duration-300',
+                  copiedMetadata ? 'text-success scale-110' : 'text-foreground/60 hover:text-white'
+                )}
+                size="small"
+                icon={copiedMetadata ? CheckCircle2 : FileText}
+              />
+            </span>
+          </Tooltip>
 
           {hasContextMenu && (
             <ContextMenuDropdown

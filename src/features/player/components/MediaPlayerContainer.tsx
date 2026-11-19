@@ -1,9 +1,9 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Clock } from 'lucide-react'
+import { Clock, Moon } from 'lucide-react'
 import Link from 'next/link'
-import { Fragment, useEffect } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { getExpandedLibraryItemAction } from '@/features/player/actions/mediaActions'
 import { useMediaContext } from '@/features/player/contexts/MediaContext'
 import { useAudioPlayerHotkeys } from '@/features/player/hooks/useAudioPlayerHotkeys'
@@ -15,6 +15,7 @@ import { BookMedia, PlayerState } from '@/types/api'
 import PreviewCover from '../../metadata/components/PreviewCover'
 import { PlayerRightControls, PlayerTransportControls } from './PlayerControls'
 import PlayerTrackBar from './PlayerTrackBar'
+import { formatSleepTimerRemaining } from './SleepTimerWidget'
 
 export default function MediaPlayerContainer() {
   const { streamLibraryItem, clearStreamMedia, playerHandler, playerQueueItems, playItem } = useMediaContext()
@@ -60,8 +61,74 @@ export default function MediaPlayerContainer() {
     ? playerHandler.state.displayTitle || streamLibraryItem.media.metadata.title
     : ''
 
+  // Nightstand Dim Display for bedtime listening
+  const isSleepTimerActive = playerHandler.state.sleepTimerRemaining !== null
+  const isDimEnabled = Boolean(playerHandler.state.settings?.sleepTimerDimScreen)
+  const shouldDim = isSleepTimerActive && isDimEnabled
+  const [temporarilyAwake, setTemporarilyAwake] = useState(false)
+  const wakeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    if (!shouldDim) {
+      setTemporarilyAwake(false)
+      return
+    }
+
+    const handleUserActivity = () => {
+      setTemporarilyAwake(true)
+      if (wakeTimeoutRef.current) clearTimeout(wakeTimeoutRef.current)
+      wakeTimeoutRef.current = setTimeout(() => {
+        setTemporarilyAwake(false)
+      }, 5000)
+    }
+
+    window.addEventListener('mousemove', handleUserActivity, { passive: true })
+    window.addEventListener('keydown', handleUserActivity, { passive: true })
+    window.addEventListener('touchstart', handleUserActivity, { passive: true })
+
+    return () => {
+      window.removeEventListener('mousemove', handleUserActivity)
+      window.removeEventListener('keydown', handleUserActivity)
+      window.removeEventListener('touchstart', handleUserActivity)
+      if (wakeTimeoutRef.current) clearTimeout(wakeTimeoutRef.current)
+    }
+  }, [shouldDim])
+
   return (
     <AnimatePresence>
+      {/* Nightstand Dim Display Overlay (Bedtime Listening) */}
+      {shouldDim && !temporarilyAwake && (
+        <motion.div
+          key="nightstand-dim-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+          className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/92 backdrop-blur-sm cursor-pointer select-none"
+          onClick={() => setTemporarilyAwake(true)}
+        >
+          <div className="flex flex-col items-center gap-3 text-center px-6">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 border border-primary/25 shadow-lg shadow-primary/20">
+              <Moon size={28} className="text-primary animate-pulse" />
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <span className="font-mono text-4xl sm:text-5xl font-extrabold tabular-nums tracking-tight text-white/90">
+                {formatSleepTimerRemaining(playerHandler.state.sleepTimerRemaining || 0)}
+              </span>
+              <span className="text-[11px] uppercase tracking-widest text-primary/80 font-bold">
+                Sleep Timer Active
+              </span>
+            </div>
+            <p className="max-w-xs truncate text-xs font-medium text-white/60">
+              {displayTitle}
+            </p>
+            <div className="mt-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium text-white/40">
+              Move mouse or press any key to wake
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {streamLibraryItem && (
         <motion.div
           key="media-player"

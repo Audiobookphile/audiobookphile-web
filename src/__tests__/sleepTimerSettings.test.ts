@@ -188,4 +188,34 @@ describe('PlayerSettings - Default Sleep Timer Duration', () => {
     expect(stepRate(0.5, 100, 0.1)).toBe(0.5)
     expect(stepRate(0.55, 100, 0.1)).toBe(0.5)
   })
+
+  it('supports nightstand dim display setting and activity timeout logic', () => {
+    const settings = {
+      sleepTimerDimScreen: false,
+    }
+    expect(settings.sleepTimerDimScreen).toBe(false)
+
+    const updated = {
+      ...settings,
+      sleepTimerDimScreen: true,
+    }
+    expect(updated.sleepTimerDimScreen).toBe(true)
+
+    function shouldDimScreen(
+      timerRemaining: number | null,
+      dimSetting: boolean,
+      isTemporarilyAwake: boolean
+    ): boolean {
+      return timerRemaining !== null && dimSetting && !isTemporarilyAwake
+    }
+
+    // Timer inactive -> never dim
+    expect(shouldDimScreen(null, true, false)).toBe(false)
+    // Dim setting false -> never dim
+    expect(shouldDimScreen(300, false, false)).toBe(false)
+    // Timer active, dim true, not awake -> dim active
+    expect(shouldDimScreen(300, true, false)).toBe(true)
+    // Temporarily awake on user activity -> un-dim
+    expect(shouldDimScreen(300, true, true)).toBe(false)
+  })
 })

@@ -235,6 +235,20 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
                   </>
                 )}
               </button>
+              <button
+                type="button"
+                onClick={() => updateSettings({ sleepTimerDimScreen: !settings.sleepTimerDimScreen })}
+                className={mergeClasses(
+                  'ml-1 flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold transition-colors active:scale-95 cursor-pointer',
+                  settings.sleepTimerDimScreen
+                    ? 'border-primary/40 bg-primary/20 text-primary'
+                    : 'border-white/10 bg-white/5 text-foreground/40 hover:border-white/20'
+                )}
+                title={settings.sleepTimerDimScreen ? 'Nightstand Dim Display Enabled' : 'Enable Nightstand Dim Display'}
+              >
+                <Moon size={10} className={settings.sleepTimerDimScreen ? 'text-primary' : 'text-foreground/40'} />
+                <span>Dim</span>
+              </button>
             </div>
             <div className="flex flex-col items-end">
               <span className="font-mono text-base font-extrabold text-primary tabular-nums">

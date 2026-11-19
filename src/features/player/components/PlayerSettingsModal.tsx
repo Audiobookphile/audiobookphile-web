@@ -158,6 +158,13 @@ export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdat
             onChange={(value) => onUpdateSettings({ sleepTimerChime: value })}
           />
 
+          {/* Nightstand Dim Display toggle */}
+          <ToggleSwitch
+            value={settings.sleepTimerDimScreen ?? false}
+            label="Nightstand Dim Display (Bedtime Listening)"
+            onChange={(value) => onUpdateSettings({ sleepTimerDimScreen: value })}
+          />
+
           {/* Smart Rewind on Resume toggle */}
           <ToggleSwitch
             value={settings.smartRewindEnabled ?? true}

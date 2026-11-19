@@ -26,6 +26,8 @@ export interface PlayerSettings {
   smartRewindSeconds: number
   /** Whether to play a gentle chime sound when the sleep timer finishes */
   sleepTimerChime: boolean
+  /** Whether nightstand dim display mode is active during sleep timer */
+  sleepTimerDimScreen: boolean
 }
 
 export interface UsePlayerSettingsReturn {
@@ -41,6 +43,7 @@ export interface UsePlayerSettingsReturn {
   setSmartRewindEnabled: (value: boolean) => void
   setSmartRewindSeconds: (value: number) => void
   setSleepTimerChime: (value: boolean) => void
+  setSleepTimerDimScreen: (value: boolean) => void
   /** Update multiple settings at once */
   updateSettings: (updates: Partial<PlayerSettings>) => void
   /** Increment playback rate by the configured increment amount */
@@ -72,6 +75,7 @@ const DEFAULT_SETTINGS: PlayerSettings = {
   smartRewindEnabled: true,
   smartRewindSeconds: 20,
   sleepTimerChime: true,
+  sleepTimerDimScreen: false,
 }
 
 // Playback rate bounds
@@ -235,6 +239,10 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setSettings((prev) => ({ ...prev, sleepTimerChime: value }))
   }, [])
 
+  const setSleepTimerDimScreen = useCallback((value: boolean) => {
+    setSettings((prev) => ({ ...prev, sleepTimerDimScreen: value }))
+  }, [])
+
   const toggleMute = useCallback((): number => {
     const currentVolume = settings.volume
     if (currentVolume > 0) {
@@ -264,6 +272,7 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setSmartRewindEnabled,
     setSmartRewindSeconds,
     setSleepTimerChime,
+    setSleepTimerDimScreen,
     updateSettings,
     incrementPlaybackRate,
     decrementPlaybackRate,
