@@ -67,6 +67,27 @@ export default function GlobalSearchInput({
     return () => clearTimeout(timeoutId)
   }, [searchQuery, handleSearch])
 
+  // Global '/' keyboard shortcut to focus the search input
+  useEffect(() => {
+    function handleGlobalKeyDown(e: KeyboardEvent) {
+      if (e.key === '/' || e.code === 'Slash') {
+        const target = e.target as HTMLElement | null
+        if (!target) return
+        const tag = (target.tagName || '').toLowerCase()
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable) {
+          return
+        }
+        e.preventDefault()
+        inputRef.current?.focus()
+        inputRef.current?.select()
+        setShowMenu(true)
+      }
+    }
+
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
+
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -225,7 +246,13 @@ export default function GlobalSearchInput({
             <X size={16} strokeWidth={3} aria-hidden="true" />
           </button>
         ) : (
-          <div className="p-1.5">
+          <div className="flex items-center gap-1.5 p-1.5">
+            <kbd
+              className="hidden sm:inline-flex items-center justify-center px-1.5 py-0.5 rounded border border-white/10 bg-white/5 font-mono text-[10px] text-foreground-muted/60 select-none pointer-events-none"
+              title="Press / to search"
+            >
+              /
+            </kbd>
             <Search
               size={16}
               strokeWidth={2.5}

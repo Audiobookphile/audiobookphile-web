@@ -6,7 +6,7 @@ import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import { filterEncode } from '@/shared/lib/filterUtils'
 import { formatDuration } from '@/shared/lib/formatDuration'
 import { bytesPretty } from '@/shared/lib/string'
-import { BookLibraryItem, BookMetadata, PodcastLibraryItem, PodcastMetadata } from '@/types/api'
+import { BookLibraryItem, BookMedia, BookMetadata, PodcastLibraryItem, PodcastMetadata } from '@/types/api'
 
 interface LibraryItemDetailsProps {
   libraryItem: BookLibraryItem | PodcastLibraryItem
@@ -82,6 +82,10 @@ export default function LibraryItemDetails({ libraryItem }: LibraryItemDetailsPr
   const duration = getLibraryItemDuration(libraryItem)
   const size = libraryItem.media?.size || 0
 
+  const audioFiles = isBook ? (libraryItem.media as BookMedia)?.audioFiles : undefined
+  const firstAudioFile = audioFiles?.[0]
+  const audioFilesCount = (libraryItem.media as BookMedia)?.numAudioFiles || audioFiles?.length || 0
+
   return (
     <div className="mt-6 flex flex-col gap-1 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
       {/* Book-specific fields */}
@@ -137,6 +141,33 @@ export default function LibraryItemDetails({ libraryItem }: LibraryItemDetailsPr
       />
       <DetailRow label={t('LabelDuration')} value={formatDuration(duration || 0, t)} />
       <DetailRow label={t('LabelSize')} value={bytesPretty(size)} />
+
+      {/* Audio & Media Technical Specs */}
+      {isBook && (
+        <>
+          {firstAudioFile?.codec && (
+            <DetailRow label="Codec" value={firstAudioFile.codec.toUpperCase()} />
+          )}
+          {firstAudioFile?.bitRate ? (
+            <DetailRow
+              label="Bitrate"
+              value={`${Math.round(firstAudioFile.bitRate / 1000)} kbps`}
+            />
+          ) : null}
+          {firstAudioFile?.channels ? (
+            <DetailRow
+              label="Channels"
+              value={firstAudioFile.channels === 2 ? 'Stereo (2 ch)' : firstAudioFile.channels === 1 ? 'Mono (1 ch)' : `${firstAudioFile.channels} ch`}
+            />
+          ) : null}
+          {audioFilesCount > 0 && (
+            <DetailRow
+              label="Audio Tracks"
+              value={`${audioFilesCount} ${audioFilesCount === 1 ? 'track' : 'tracks'}`}
+            />
+          )}
+        </>
+      )}
     </div>
   )
 }
