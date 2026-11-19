@@ -35,3 +35,4 @@ export function formatBookMetadataMarkdown(libraryItem: BookLibraryItem | Podcas
 
   return lines.join('\n')
 }
+

@@ -51,3 +51,4 @@ export async function copyChapterTimestampLink(options: ChapterLinkOptions): Pro
   await copyToClipboard(url)
   return url
 }
+
