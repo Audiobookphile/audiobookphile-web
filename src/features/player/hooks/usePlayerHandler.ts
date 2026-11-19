@@ -84,6 +84,8 @@ export interface PlayerHandlerControls {
   closePlayer: () => Promise<void>
   /** Start a sleep timer with the given duration in seconds */
   startSleepTimer: (duration: number) => void
+  /** Extend the active sleep timer by a given number of seconds */
+  extendSleepTimer: (seconds: number) => void
   /** Cancel the active sleep timer */
   stopSleepTimer: () => void
 }
@@ -667,6 +669,11 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
     setSleepTimerRemaining(duration)
   }, [])
 
+  const extendSleepTimer = useCallback((seconds: number) => {
+    playerRef.current?.setVolume(volumeRef.current)
+    setSleepTimerRemaining((prev) => (prev !== null ? prev + seconds : seconds))
+  }, [])
+
   const stopSleepTimer = useCallback(() => {
     setSleepTimerRemaining(null)
     playerRef.current?.setVolume(volumeRef.current)
@@ -709,6 +716,7 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
       updateSettings: playerSettings.updateSettings,
       closePlayer,
       startSleepTimer,
+      extendSleepTimer,
       stopSleepTimer,
     },
   }

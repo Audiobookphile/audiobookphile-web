@@ -13,9 +13,20 @@ interface SleepTimerWidgetProps {
 
 const PRESET_DURATIONS = [5, 15, 30, 45, 60, 90] as const
 
+export function formatSleepTimerRemaining(seconds: number): string {
+  if (isNaN(seconds) || seconds <= 0) return '0:00'
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = Math.floor(seconds % 60)
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  }
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProps) {
   const { sleepTimerRemaining, currentChapter, currentTime, duration } = playerHandler.state
-  const { startSleepTimer, stopSleepTimer } = playerHandler.controls
+  const { startSleepTimer, extendSleepTimer, stopSleepTimer } = playerHandler.controls
 
   const widgetId = useId()
   const [isOpen, setIsOpen] = useState(false)
@@ -126,11 +137,7 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
     }
   }, [middlewareData.arrow, resolvedPlacement])
 
-  const formatRemainingTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60)
-    const s = seconds % 60
-    return `${m}:${s.toString().padStart(2, '0')}`
-  }
+  const formatRemainingTime = formatSleepTimerRemaining
 
   const remainingInChapter = currentChapter ? Math.max(1, Math.round(currentChapter.end - currentTime)) : 0
   const remainingInTrack = duration > 0 ? Math.max(1, Math.round(duration - currentTime)) : 0
@@ -148,35 +155,60 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
       </div>
 
       {sleepTimerRemaining !== null && (
-        <div className="mb-1 flex items-center justify-between rounded-xl border border-primary/25 bg-primary/10 px-2 py-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              const newTime = Math.max(60, sleepTimerRemaining - 300)
-              startSleepTimer(newTime)
-            }}
-            className="flex h-7 w-9 items-center justify-center rounded-lg border border-primary/30 bg-background/60 text-xs font-bold text-primary transition-all hover:bg-primary/20 active:scale-95"
-            title="Subtract 5 minutes"
-          >
-            -5m
-          </button>
-          <div className="text-center">
-            <span className="font-mono text-sm font-bold text-primary tabular-nums">
+        <div className="mb-1 flex flex-col gap-2 rounded-xl border border-primary/30 bg-primary/10 p-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+              <Moon size={13} />
+              <span>Active Countdown</span>
+            </div>
+            <span className="font-mono text-base font-extrabold text-primary tabular-nums">
               {formatRemainingTime(sleepTimerRemaining)}
             </span>
-            <span className="block text-[9px] uppercase tracking-wider text-primary/70">remaining</span>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              const newTime = sleepTimerRemaining + 300
-              startSleepTimer(newTime)
-            }}
-            className="flex h-7 w-9 items-center justify-center rounded-lg border border-primary/30 bg-background/60 text-xs font-bold text-primary transition-all hover:bg-primary/20 active:scale-95"
-            title="Add 5 minutes"
-          >
-            +5m
-          </button>
+
+          {sleepTimerRemaining <= 15 && (
+            <div className="flex items-center justify-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/15 px-2 py-1 text-[11px] font-semibold text-amber-300 animate-pulse">
+              <span>🔉 Fading volume smoothly...</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-4 gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                const newTime = Math.max(60, sleepTimerRemaining - 300)
+                startSleepTimer(newTime)
+              }}
+              className="flex items-center justify-center rounded-lg border border-primary/25 bg-background/70 py-1 text-xs font-bold text-primary transition-all hover:bg-primary/20 active:scale-95 cursor-pointer"
+              title="Subtract 5 minutes"
+            >
+              -5m
+            </button>
+            <button
+              type="button"
+              onClick={() => extendSleepTimer(300)}
+              className="flex items-center justify-center rounded-lg border border-primary/25 bg-background/70 py-1 text-xs font-bold text-primary transition-all hover:bg-primary/20 active:scale-95 cursor-pointer"
+              title="Add 5 minutes"
+            >
+              +5m
+            </button>
+            <button
+              type="button"
+              onClick={() => extendSleepTimer(900)}
+              className="flex items-center justify-center rounded-lg border border-primary/25 bg-background/70 py-1 text-xs font-bold text-primary transition-all hover:bg-primary/20 active:scale-95 cursor-pointer"
+              title="Add 15 minutes"
+            >
+              +15m
+            </button>
+            <button
+              type="button"
+              onClick={() => extendSleepTimer(1800)}
+              className="flex items-center justify-center rounded-lg border border-primary/25 bg-background/70 py-1 text-xs font-bold text-primary transition-all hover:bg-primary/20 active:scale-95 cursor-pointer"
+              title="Add 30 minutes"
+            >
+              +30m
+            </button>
+          </div>
         </div>
       )}
 
@@ -270,19 +302,37 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
         ref={triggerRef}
         type="button"
         onClick={toggleOpen}
+        onContextMenu={(e) => {
+          if (sleepTimerRemaining !== null) {
+            e.preventDefault()
+            extendSleepTimer(300)
+          }
+        }}
         aria-expanded={isOpen}
         aria-controls={`${widgetId}-popover`}
         aria-label="Sleep Timer"
-        className={mergeClasses(
-          'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold backdrop-blur-md transition-all active:scale-95',
+        title={
           sleepTimerRemaining !== null
-            ? 'bg-primary/20 text-primary border-primary/40 shadow-primary/20 shadow-md'
+            ? `Sleep Timer: ${formatRemainingTime(sleepTimerRemaining)} remaining (Right-click to +5m)`
+            : 'Sleep Timer'
+        }
+        className={mergeClasses(
+          'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold backdrop-blur-md transition-all active:scale-95 cursor-pointer',
+          sleepTimerRemaining !== null
+            ? 'bg-primary/20 text-primary border-primary/40 shadow-primary/20 shadow-md ring-1 ring-primary/30'
             : 'text-foreground/70 hover:text-foreground border-white/10 bg-white/5 hover:bg-white/15'
         )}
       >
-        <Moon size={15} />
+        {sleepTimerRemaining !== null ? (
+          <span className="relative flex h-2.5 w-2.5 items-center justify-center">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+          </span>
+        ) : (
+          <Moon size={15} />
+        )}
         {sleepTimerRemaining !== null && (
-          <span className="tabular-nums">{formatRemainingTime(sleepTimerRemaining)}</span>
+          <span className="tabular-nums font-mono">{formatRemainingTime(sleepTimerRemaining)}</span>
         )}
       </button>
 
