@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { resolveQueueUpdate } from '@/features/player/lib/queue'
+import { reorderQueue, resolveQueueUpdate } from '@/features/player/lib/queue'
 import type { PlayerQueueItem } from '@/features/player/contexts/MediaContext'
 
 /**
@@ -64,5 +64,33 @@ describe('resolveQueueUpdate', () => {
     const queue = [entry('a')]
     const result = resolveQueueUpdate(queue, undefined)
     expect(result).not.toBe(queue)
+  })
+})
+
+describe('reorderQueue', () => {
+  it('correctly moves an item forward in the queue', () => {
+    const queue = [entry('item-1'), entry('item-2'), entry('item-3'), entry('item-4')]
+    const reordered = reorderQueue(queue, 1, 3)
+    expect(reordered.map((i) => i.libraryItemId)).toEqual(['item-1', 'item-3', 'item-4', 'item-2'])
+  })
+
+  it('correctly moves an item backward in the queue', () => {
+    const queue = [entry('item-1'), entry('item-2'), entry('item-3'), entry('item-4')]
+    const reordered = reorderQueue(queue, 3, 1)
+    expect(reordered.map((i) => i.libraryItemId)).toEqual(['item-1', 'item-4', 'item-2', 'item-3'])
+  })
+
+  it('returns a clone when fromIndex equals toIndex', () => {
+    const queue = [entry('item-1'), entry('item-2')]
+    const reordered = reorderQueue(queue, 0, 0)
+    expect(reordered).toEqual(queue)
+    expect(reordered).not.toBe(queue)
+  })
+
+  it('safely handles out-of-bounds indices without mutating', () => {
+    const queue = [entry('item-1'), entry('item-2')]
+    expect(reorderQueue(queue, -1, 1)).toEqual(queue)
+    expect(reorderQueue(queue, 0, 5)).toEqual(queue)
+    expect(reorderQueue(queue, 10, 0)).toEqual(queue)
   })
 })

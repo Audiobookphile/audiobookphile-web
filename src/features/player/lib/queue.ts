@@ -30,3 +30,31 @@ export function resolveQueueUpdate(
 ): PlayerQueueItem[] {
   return queueItems === undefined ? [...current] : [...queueItems]
 }
+
+/**
+ * Pure function to reorder items in a queue safely.
+ * Returns a new array with the item at `fromIndex` moved to `toIndex`.
+ * If either index is out of bounds, returns a copy of the original array.
+ */
+export function reorderQueue(
+  current: readonly PlayerQueueItem[],
+  fromIndex: number,
+  toIndex: number
+): PlayerQueueItem[] {
+  if (
+    fromIndex < 0 ||
+    fromIndex >= current.length ||
+    toIndex < 0 ||
+    toIndex >= current.length ||
+    fromIndex === toIndex
+  ) {
+    return [...current]
+  }
+
+  const updated = [...current]
+  const [moved] = updated.splice(fromIndex, 1)
+  if (!moved) return [...current]
+  updated.splice(toIndex, 0, moved)
+  return updated
+}
+

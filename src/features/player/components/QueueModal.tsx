@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Clock, ListMusic, Music2, Play, Trash2, X } from 'lucide-react'
+import { Clock, GripVertical, ListMusic, Music2, Play, Trash2, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { getExpandedLibraryItemAction } from '@/features/player/actions/mediaActions'
 import { type PlayerQueueItem, useMediaContext } from '@/features/player/contexts/MediaContext'
@@ -23,9 +23,12 @@ export default function QueueModal({ isOpen, onClose }: QueueModalProps) {
     removeItemFromQueue,
     clearQueue,
     playItem,
+    moveQueueItem,
   } = useMediaContext()
 
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null)
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   // Current playing item (first in queue matching streamLibraryItem or first item)
   const currentItem = playerQueueItems.find(
@@ -40,6 +43,16 @@ export default function QueueModal({ isOpen, onClose }: QueueModalProps) {
   const upNextItems = currentIndex >= 0
     ? playerQueueItems.slice(currentIndex + 1)
     : playerQueueItems.slice(1)
+
+  const handleMove = useCallback(
+    (fromUpNextIndex: number, toUpNextIndex: number) => {
+      const startIndex = currentIndex >= 0 ? currentIndex + 1 : 1
+      const actualFrom = startIndex + fromUpNextIndex
+      const actualTo = startIndex + toUpNextIndex
+      moveQueueItem(actualFrom, actualTo)
+    },
+    [currentIndex, moveQueueItem]
+  )
 
   const handlePlayNow = useCallback(
     async (item: PlayerQueueItem) => {
@@ -182,6 +195,9 @@ export default function QueueModal({ isOpen, onClose }: QueueModalProps) {
                 <AnimatePresence initial={false}>
                   {upNextItems.map((item, index) => {
                     const isLoading = loadingItemId === item.libraryItemId
+                    const isDragging = draggedIndex === index
+                    const isDragOver = dragOverIndex === index && draggedIndex !== index
+
                     return (
                       <motion.div
                         key={`${item.libraryItemId}-${item.episodeId || 'main'}`}
@@ -189,11 +205,54 @@ export default function QueueModal({ isOpen, onClose }: QueueModalProps) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                         transition={{ duration: 0.2 }}
-                        className={mergeClasses(
-                          'group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-2.5 transition-all hover:border-white/15 hover:bg-white/[0.06]',
-                          isLoading && 'opacity-60 pointer-events-none'
-                        )}
                       >
+                        <div
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.effectAllowed = 'move'
+                            e.dataTransfer.setData('text/plain', String(index))
+                            setDraggedIndex(index)
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault()
+                            e.dataTransfer.dropEffect = 'move'
+                            if (dragOverIndex !== index) {
+                              setDragOverIndex(index)
+                            }
+                          }}
+                          onDragLeave={() => {
+                            if (dragOverIndex === index) {
+                              setDragOverIndex(null)
+                            }
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault()
+                            if (draggedIndex !== null && draggedIndex !== index) {
+                              handleMove(draggedIndex, index)
+                            }
+                            setDraggedIndex(null)
+                            setDragOverIndex(null)
+                          }}
+                          onDragEnd={() => {
+                            setDraggedIndex(null)
+                            setDragOverIndex(null)
+                          }}
+                          className={mergeClasses(
+                            'group relative flex items-center gap-2.5 rounded-xl border border-white/5 bg-white/[0.03] p-2.5 transition-all hover:border-white/15 hover:bg-white/[0.06]',
+                            isLoading && 'opacity-60 pointer-events-none',
+                            isDragging && 'opacity-35 scale-[0.98] border-primary/40 bg-primary/5',
+                            isDragOver && 'border-primary ring-1 ring-primary/40 bg-primary/10 shadow-lg shadow-primary/10'
+                          )}
+                        >
+                        {/* Drag grip handle */}
+                        <div
+                          className="flex h-7 w-5 shrink-0 cursor-grab items-center justify-center text-foreground-muted/40 transition-colors hover:text-foreground-muted active:cursor-grabbing"
+                          title="Drag to reorder"
+                          aria-label="Drag to reorder"
+                        >
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+
                         {/* Position badge */}
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5 font-mono text-xs font-bold text-foreground-muted">
                           {index + 1}
@@ -253,7 +312,8 @@ export default function QueueModal({ isOpen, onClose }: QueueModalProps) {
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
-                      </motion.div>
+                      </div>
+                    </motion.div>
                     )
                   })}
                 </AnimatePresence>
