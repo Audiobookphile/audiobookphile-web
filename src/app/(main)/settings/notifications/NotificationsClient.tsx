@@ -218,3 +218,4 @@ export default function NotificationsClient({ initialNotifications }: Notificati
     </div>
   )
 }
+

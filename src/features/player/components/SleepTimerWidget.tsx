@@ -1,10 +1,11 @@
 'use client'
 
 import { arrow as arrowMw, autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom'
-import { Moon } from 'lucide-react'
+import { Moon, Sparkles } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
+import { usePlayerSettings } from '@/features/player/hooks/usePlayerSettings'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 
 interface SleepTimerWidgetProps {
@@ -27,6 +28,9 @@ export function formatSleepTimerRemaining(seconds: number): string {
 export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProps) {
   const { sleepTimerRemaining, currentChapter, currentTime, duration } = playerHandler.state
   const { startSleepTimer, extendSleepTimer, stopSleepTimer } = playerHandler.controls
+
+  const { settings } = usePlayerSettings()
+  const defaultDurationSeconds = settings.defaultSleepTimerDuration || 900
 
   const widgetId = useId()
   const [isOpen, setIsOpen] = useState(false)
@@ -116,6 +120,15 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
     setIsOpen(false)
   }
 
+  const handleQuickStartDefault = () => {
+    let secondsToStart = defaultDurationSeconds
+    if (defaultDurationSeconds === -1) {
+      secondsToStart = remainingInChapter > 0 ? remainingInChapter : 900
+    }
+    startSleepTimer(secondsToStart)
+    setIsOpen(false)
+  }
+
   const handleStopTimer = () => {
     stopSleepTimer()
     setIsOpen(false)
@@ -153,6 +166,17 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
       <div className="mb-1 text-center text-xs font-bold tracking-wider text-foreground uppercase opacity-70">
         Sleep Timer
       </div>
+
+      {sleepTimerRemaining === null && (
+        <button
+          type="button"
+          onClick={handleQuickStartDefault}
+          className="mb-1 flex items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 py-1.5 text-xs font-bold text-primary transition-all hover:bg-primary/30 active:scale-95 cursor-pointer shadow-sm shadow-primary/20"
+        >
+          <Sparkles size={13} />
+          <span>Quick Start {defaultDurationSeconds === -1 ? 'End of Chapter' : `${Math.round(defaultDurationSeconds / 60)}m`}</span>
+        </button>
+      )}
 
       {sleepTimerRemaining !== null && (
         <div className="mb-1 flex flex-col gap-2 rounded-xl border border-primary/30 bg-primary/10 p-2.5">
@@ -213,16 +237,24 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
       )}
 
       <div className="grid grid-cols-6 gap-1">
-        {PRESET_DURATIONS.map((minutes) => (
-          <button
-            key={minutes}
-            type="button"
-            onClick={() => handleStartTimer(minutes)}
-            className="rounded-xl border border-white/10 bg-white/5 px-1.5 py-1.5 text-center text-xs font-bold text-foreground/80 transition-all hover:border-primary hover:bg-primary hover:text-white hover:shadow-md hover:shadow-primary/30 active:scale-95"
-          >
-            {minutes}m
-          </button>
-        ))}
+        {PRESET_DURATIONS.map((minutes) => {
+          const isDefault = minutes * 60 === defaultDurationSeconds
+          return (
+            <button
+              key={minutes}
+              type="button"
+              onClick={() => handleStartTimer(minutes)}
+              className={mergeClasses(
+                'rounded-xl border px-1.5 py-1.5 text-center text-xs font-bold transition-all active:scale-95 cursor-pointer',
+                isDefault
+                  ? 'border-primary/50 bg-primary/20 text-primary hover:bg-primary hover:text-white'
+                  : 'border-white/10 bg-white/5 text-foreground/80 hover:border-primary hover:bg-primary hover:text-white'
+              )}
+            >
+              {minutes}m
+            </button>
+          )
+        })}
       </div>
 
       <form

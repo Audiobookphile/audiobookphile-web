@@ -18,6 +18,8 @@ export interface PlayerSettings {
   equalizerPreset: EqualizerPreset
   /** Volume boost multiplier (1.0 = 100% normal, up to 2.0 = 200% / +6dB boost) */
   volumeBoost?: number
+  /** Default sleep timer duration in seconds (e.g. 900 for 15m, 1800 for 30m, -1 for end of chapter) */
+  defaultSleepTimerDuration: number
 }
 
 export interface UsePlayerSettingsReturn {
@@ -29,6 +31,7 @@ export interface UsePlayerSettingsReturn {
   setPlaybackRateIncrementDecrement: (value: 0.1 | 0.05) => void
   setEqualizerPreset: (value: EqualizerPreset) => void
   setVolumeBoost: (value: number) => void
+  setDefaultSleepTimerDuration: (value: number) => void
   /** Update multiple settings at once */
   updateSettings: (updates: Partial<PlayerSettings>) => void
   /** Increment playback rate by the configured increment amount */
@@ -56,6 +59,7 @@ const DEFAULT_SETTINGS: PlayerSettings = {
   volume: 0.5,
   equalizerPreset: 'off',
   volumeBoost: 1.0,
+  defaultSleepTimerDuration: 900,
 }
 
 // Playback rate bounds
@@ -203,6 +207,10 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setSettings((prev) => ({ ...prev, volumeBoost: value }))
   }, [])
 
+  const setDefaultSleepTimerDuration = useCallback((value: number) => {
+    setSettings((prev) => ({ ...prev, defaultSleepTimerDuration: value }))
+  }, [])
+
   const toggleMute = useCallback((): number => {
     const currentVolume = settings.volume
     if (currentVolume > 0) {
@@ -228,6 +236,7 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setPlaybackRateIncrementDecrement,
     setEqualizerPreset,
     setVolumeBoost,
+    setDefaultSleepTimerDuration,
     updateSettings,
     incrementPlaybackRate,
     decrementPlaybackRate,

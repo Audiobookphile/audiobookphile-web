@@ -45,3 +45,4 @@ describe('Notifications & Webhook Actions Contract', () => {
     expect(result.message).toBeDefined()
   })
 })
+

@@ -64,6 +64,17 @@ export class LocalAudioPlayer extends PlayerEventEmitter {
     audioEl.style.display = 'none'
     audioEl.preload = 'metadata'
     audioEl.crossOrigin = 'anonymous'
+
+    // Natural vocal pitch preservation across browsers (Chromium, WebKit, Gecko)
+    const mediaEl = audioEl as HTMLMediaElement & {
+      preservesPitch?: boolean
+      webkitPreservesPitch?: boolean
+      mozPreservesPitch?: boolean
+    }
+    mediaEl.preservesPitch = true
+    mediaEl.webkitPreservesPitch = true
+    mediaEl.mozPreservesPitch = true
+
     document.body.appendChild(audioEl)
     this.player = audioEl
 
@@ -316,6 +327,14 @@ export class LocalAudioPlayer extends PlayerEventEmitter {
 
   setPlaybackRate(rate: number): void {
     if (this.player) {
+      const mediaEl = this.player as HTMLMediaElement & {
+        preservesPitch?: boolean
+        webkitPreservesPitch?: boolean
+        mozPreservesPitch?: boolean
+      }
+      mediaEl.preservesPitch = true
+      mediaEl.webkitPreservesPitch = true
+      mediaEl.mozPreservesPitch = true
       this.player.playbackRate = rate
     }
   }

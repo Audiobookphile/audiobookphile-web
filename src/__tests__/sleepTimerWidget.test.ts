@@ -48,3 +48,4 @@ describe('SleepTimerWidget & Countdown formatting', () => {
     expect(formatSleepTimerRemaining(remainingInChapter)).toBe('7:30')
   })
 })
+

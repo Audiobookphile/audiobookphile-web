@@ -284,6 +284,12 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
+export { MediaContext }
+
+export function useOptionalMediaContext(): MediaContextValue | undefined {
+  return useContext(MediaContext)
+}
+
 export function useMediaContext(): MediaContextValue {
   const ctx = useContext(MediaContext)
   if (!ctx) {

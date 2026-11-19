@@ -220,7 +220,10 @@ export default function SharePlayer({ slug, startTime: startTimeParam }: SharePl
       console.log('[SharePlayer] Playback finished')
     })
 
-    const sessionStartTime = playbackSession.currentTime || 0
+    const sessionStartTime =
+      startTimeParam != null && !Number.isNaN(startTimeParam) && startTimeParam >= 0
+        ? startTimeParam
+        : playbackSession.currentTime || 0
     player.set(null, audioTracks, false, sessionStartTime, false)
 
     return () => {

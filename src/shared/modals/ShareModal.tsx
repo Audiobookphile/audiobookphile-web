@@ -3,10 +3,12 @@
 import { HelpCircle, Info } from 'lucide-react'
 import { useLocale } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useOptionalMediaContext } from '@/features/player/contexts/MediaContext'
 import { closeMediaItemShareAction, openMediaItemShareAction } from '@/features/tools/actions/shareActions'
 import { useGlobalToast } from '@/shared/contexts/ToastContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import { ApiError } from '@/shared/lib/apiErrors'
+import { secondsToTimestamp } from '@/shared/lib/datefns'
 import { formatDuration } from '@/shared/lib/formatDuration'
 import Modal from '@/shared/modals/Modal'
 import Btn from '@/shared/ui/Btn'
@@ -24,6 +26,7 @@ interface ShareModalProps {
   mediaItemId?: string
   mediaItemShare: MediaItemShare | null
   onShareChange?: (share: MediaItemShare | null) => void
+  currentPlaybackTime?: number
 }
 
 function getRandomSlug(length = 10) {
@@ -44,16 +47,29 @@ function toUnixMs(value: number | string | null | undefined): number | null {
   return Number.isNaN(parsed) ? null : parsed
 }
 
-export default function ShareModal({ isOpen, onClose, mediaItemId, mediaItemShare, onShareChange }: ShareModalProps) {
+export default function ShareModal({
+  isOpen,
+  onClose,
+  mediaItemId,
+  mediaItemShare,
+  onShareChange,
+  currentPlaybackTime,
+}: ShareModalProps) {
   const t = useTypeSafeTranslations()
   const { showToast } = useGlobalToast()
   const locale = useLocale()
+
+  const mediaContext = useOptionalMediaContext()
+  const isCurrentlyStreaming = mediaContext?.libraryItemIdStreaming === mediaItemId
+  const activeTime =
+    currentPlaybackTime ?? (isCurrentlyStreaming ? mediaContext?.playerHandler.state.currentTime : undefined)
 
   const [processing, setProcessing] = useState(false)
   const [newShareSlug, setNewShareSlug] = useState('')
   const [newShareDuration, setNewShareDuration] = useState(0)
   const [shareDurationUnit, setShareDurationUnit] = useState<ShareDurationUnit>('minutes')
   const [isDownloadable, setIsDownloadable] = useState(false)
+  const [includeTimestamp, setIncludeTimestamp] = useState(false)
   const [currentShare, setCurrentShare] = useState<MediaItemShare | null>(null)
 
   const handleDurationChange = useCallback((value: string) => {
@@ -76,6 +92,7 @@ export default function ShareModal({ isOpen, onClose, mediaItemId, mediaItemShar
     setNewShareDuration(0)
     setShareDurationUnit('minutes')
     setIsDownloadable(false)
+    setIncludeTimestamp(false)
     setCurrentShare(mediaItemShare ? { ...mediaItemShare } : null)
   }, [isOpen, mediaItemShare])
 
@@ -98,13 +115,21 @@ export default function ShareModal({ isOpen, onClose, mediaItemId, mediaItemShar
 
   const demoShareUrl = useMemo(() => {
     if (typeof window === 'undefined') return ''
-    return `${window.location.origin}/share/${newShareSlug}`
-  }, [newShareSlug])
+    const base = `${window.location.origin}/share/${newShareSlug}`
+    if (includeTimestamp && activeTime != null && activeTime > 0) {
+      return `${base}?t=${Math.floor(activeTime)}`
+    }
+    return base
+  }, [newShareSlug, includeTimestamp, activeTime])
 
   const currentShareUrl = useMemo(() => {
     if (!currentShare || typeof window === 'undefined') return ''
-    return `${window.location.origin}/share/${currentShare.slug}`
-  }, [currentShare])
+    const base = `${window.location.origin}/share/${currentShare.slug}`
+    if (includeTimestamp && activeTime != null && activeTime > 0) {
+      return `${base}?t=${Math.floor(activeTime)}`
+    }
+    return base
+  }, [currentShare, includeTimestamp, activeTime])
 
   const currentShareTimeRemaining = useMemo(() => {
     if (!currentShare) return t('LabelPermanent')
@@ -199,6 +224,14 @@ export default function ShareModal({ isOpen, onClose, mediaItemId, mediaItemShar
             <div className="w-full py-2">
               <label className="block px-1 text-sm font-semibold">{t('LabelShareURL')}</label>
               <TextInput value={currentShareUrl} showCopy readOnly />
+              {activeTime != null && activeTime > 0 && (
+                <div className="flex items-center gap-2.5 pt-2">
+                  <ToggleSwitch size="small" value={includeTimestamp} onChange={setIncludeTimestamp} />
+                  <span className="text-xs font-semibold text-foreground-muted">
+                    Include current position ({secondsToTimestamp(activeTime)})
+                  </span>
+                </div>
+              )}
             </div>
             <div className="w-full space-y-1 px-1 py-2">
               {currentShare.isDownloadable && <p className="text-sm">{t('LabelDownloadable')}</p>}
@@ -250,6 +283,15 @@ export default function ShareModal({ isOpen, onClose, mediaItemId, mediaItemShar
                 </span>
               </Tooltip>
             </div>
+
+            {activeTime != null && activeTime > 0 && (
+              <div className="mb-3 flex items-center gap-2.5">
+                <ToggleSwitch size="small" value={includeTimestamp} onChange={setIncludeTimestamp} />
+                <span className="text-xs font-semibold text-foreground-muted">
+                  Include current position ({secondsToTimestamp(activeTime)})
+                </span>
+              </div>
+            )}
 
             <p className="px-1 py-1 text-sm text-foreground-muted">
               {t.rich('MessageShareURLWillBe', {

@@ -314,6 +314,7 @@ export default function LibraryItemActionButtons({
         mediaItemId={libraryItem.media?.id ?? ''}
         mediaItemShare={mediaItemShare}
         onShareChange={handleShareChange}
+        currentPlaybackTime={isStreaming ? playerHandler.state.currentTime : undefined}
       />
       {collectionsModalOpen && (
         <AddToCollectionModal

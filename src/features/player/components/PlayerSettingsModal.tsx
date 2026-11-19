@@ -35,6 +35,16 @@ const VOLUME_BOOST_VALUES: DropdownItem[] = [
   { text: '200% (+6 dB boost - Quiet Books)', value: 2.0 },
 ]
 
+// Default sleep timer options
+const DEFAULT_SLEEP_TIMER_OPTIONS: DropdownItem[] = [
+  { text: '5 Minutes', value: 300 },
+  { text: '15 Minutes (Default)', value: 900 },
+  { text: '30 Minutes', value: 1800 },
+  { text: '45 Minutes', value: 2700 },
+  { text: '60 Minutes (1 Hour)', value: 3600 },
+  { text: 'End of Chapter', value: -1 },
+]
+
 export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdateSettings }: PlayerSettingsModalProps) {
   const t = useTypeSafeTranslations()
 
@@ -122,6 +132,15 @@ export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdat
             value={settings.volumeBoost || 1.0}
             items={VOLUME_BOOST_VALUES}
             onChange={(value) => onUpdateSettings({ volumeBoost: Number(value) })}
+            usePortal
+          />
+
+          {/* Default Sleep Timer Duration */}
+          <Dropdown
+            label="Default Sleep Timer Duration"
+            value={settings.defaultSleepTimerDuration || 900}
+            items={DEFAULT_SLEEP_TIMER_OPTIONS}
+            onChange={(value) => onUpdateSettings({ defaultSleepTimerDuration: Number(value) })}
             usePortal
           />
         </div>

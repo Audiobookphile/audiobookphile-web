@@ -247,3 +247,4 @@ export default function NewNotificationModal({ isOpen, onClose, onCreated }: New
     </Modal>
   )
 }
+
