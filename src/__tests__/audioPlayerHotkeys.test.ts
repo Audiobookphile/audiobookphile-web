@@ -42,10 +42,22 @@ describe('Player Hotkeys Scope for B, C and Shortcuts', () => {
     expect(shouldDeferToFocusedElement(textarea, 'KeyC')).toBe(true)
     expect(shouldDeferToFocusedElement(textarea, 'KeyQ')).toBe(true)
     expect(shouldDeferToFocusedElement(textarea, 'KeyS')).toBe(true)
+    expect(shouldDeferToFocusedElement(textarea, 'BracketLeft')).toBe(true)
+    expect(shouldDeferToFocusedElement(textarea, 'BracketRight')).toBe(true)
+    expect(shouldDeferToFocusedElement(textarea, 'Digit0')).toBe(true)
     expect(shouldDeferToFocusedElement(textarea, 'Slash', true)).toBe(true)
 
     expect(shouldDeferToFocusedElement(contentEditable, 'KeyB')).toBe(true)
     expect(shouldDeferToFocusedElement(contentEditable, 'KeyQ')).toBe(true)
     expect(shouldDeferToFocusedElement(contentEditable, 'KeyS')).toBe(true)
+    expect(shouldDeferToFocusedElement(contentEditable, 'BracketLeft')).toBe(true)
+    expect(shouldDeferToFocusedElement(contentEditable, 'Digit0')).toBe(true)
+  })
+
+  it('allows BracketLeft, BracketRight and Digit0 to reach the player when body is focused', () => {
+    expect(shouldDeferToFocusedElement(body, 'BracketLeft')).toBe(false)
+    expect(shouldDeferToFocusedElement(body, 'BracketRight')).toBe(false)
+    expect(shouldDeferToFocusedElement(body, 'Digit0')).toBe(false)
+    expect(shouldDeferToFocusedElement(body, 'Numpad0')).toBe(false)
   })
 })

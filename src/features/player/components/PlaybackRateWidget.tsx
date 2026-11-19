@@ -195,6 +195,34 @@ export default function PlaybackRateWidget({ playerHandler }: PlaybackRateWidget
     </div>
   ) : null
 
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setPlaybackRate(1)
+    },
+    [setPlaybackRate]
+  )
+
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      e.preventDefault()
+      const step = playbackRateIncrementDecrement || 0.1
+      if (e.deltaY < 0) {
+        const nextRate = Math.min(3.0, Math.round((playbackRate + step) * 100) / 100)
+        setPlaybackRate(nextRate)
+      } else if (e.deltaY > 0) {
+        const nextRate = Math.max(0.5, Math.round((playbackRate - step) * 100) / 100)
+        setPlaybackRate(nextRate)
+      }
+    },
+    [playbackRate, playbackRateIncrementDecrement, setPlaybackRate]
+  )
+
+  const rateTooltip = useMemo(() => {
+    return `${t('LabelPlaybackRate')}: ${formatRate(playbackRate)}x (Double-click: 1.0x, Scroll: adjust)`
+  }, [formatRate, playbackRate, t])
+
   return (
     <>
       {/* toggle widget button showing current playback rate */}
@@ -202,6 +230,9 @@ export default function PlaybackRateWidget({ playerHandler }: PlaybackRateWidget
         ref={triggerRef}
         type="button"
         onClick={toggleOpen}
+        onDoubleClick={handleDoubleClick}
+        onWheel={handleWheel}
+        title={rateTooltip}
         aria-expanded={isOpen}
         aria-controls={`${widgetId}-popover`}
         aria-label={`${t('LabelPlaybackRate')}: ${formatRate(playbackRate)}x`}

@@ -61,10 +61,16 @@ export function useAudioPlayerHotkeys(
           controls.jumpToPreviousChapter()
           break
         case 'Shift-ArrowUp':
+        case 'BracketRight':
           controls.incrementPlaybackRate()
           break
         case 'Shift-ArrowDown':
+        case 'BracketLeft':
           controls.decrementPlaybackRate()
+          break
+        case 'Digit0':
+        case 'Numpad0':
+          controls.setPlaybackRate(1)
           break
         case 'KeyB':
           if (actions?.onToggleBookmarks) {

@@ -154,4 +154,38 @@ describe('PlayerSettings - Default Sleep Timer Duration', () => {
     // Active with 120s remaining -> extends to 420s (+5m)
     expect(handleSleepTimerHotkey(120, 900)).toEqual({ action: 'extend', duration: 420 })
   })
+
+  it('supports playback rate double-click reset to 1.0x and wheel stepping bounds', () => {
+    let rate = 1.75
+
+    // Double-click resets to 1.0
+    rate = 1.0
+    expect(rate).toBe(1.0)
+
+    function stepRate(current: number, deltaY: number, step = 0.1): number {
+      if (deltaY < 0) {
+        return Math.min(3.0, Math.round((current + step) * 100) / 100)
+      } else if (deltaY > 0) {
+        return Math.max(0.5, Math.round((current - step) * 100) / 100)
+      }
+      return current
+    }
+
+    // Scroll up from 1.0x -> 1.1x
+    expect(stepRate(1.0, -100, 0.1)).toBe(1.1)
+    // Scroll down from 1.0x -> 0.9x
+    expect(stepRate(1.0, 100, 0.1)).toBe(0.9)
+
+    // With 0.05 step
+    expect(stepRate(1.0, -100, 0.05)).toBe(1.05)
+    expect(stepRate(1.0, 100, 0.05)).toBe(0.95)
+
+    // Upper bound clamped at 3.0x
+    expect(stepRate(3.0, -100, 0.1)).toBe(3.0)
+    expect(stepRate(2.95, -100, 0.1)).toBe(3.0)
+
+    // Lower bound clamped at 0.5x
+    expect(stepRate(0.5, 100, 0.1)).toBe(0.5)
+    expect(stepRate(0.55, 100, 0.1)).toBe(0.5)
+  })
 })

@@ -27,8 +27,9 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
       { keys: ['→'], description: 'Jump forward' },
       { keys: ['Shift', '←'], description: 'Previous chapter / start' },
       { keys: ['Shift', '→'], description: 'Next chapter' },
-      { keys: ['Shift', '↑'], description: 'Increase playback speed' },
-      { keys: ['Shift', '↓'], description: 'Decrease playback speed' },
+      { keys: ['Shift', '↑'], description: 'Increase playback speed (or ])' },
+      { keys: ['Shift', '↓'], description: 'Decrease playback speed (or [)' },
+      { keys: ['0'], description: 'Reset playback speed to 1.0x' },
     ],
   },
   {
