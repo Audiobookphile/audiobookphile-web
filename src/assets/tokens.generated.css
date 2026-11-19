@@ -41,4 +41,8 @@
   --design-text-2xl: 1.5rem;
   --design-text-3xl: 2rem;
   --design-text-4xl: 2.5rem;
+  --design-glass-specular: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%);
+  --design-glass-blur-sm: 8px;
+  --design-glass-blur-md: 16px;
+  --design-glass-blur-lg: 24px;
 }
