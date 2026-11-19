@@ -1,8 +1,11 @@
 'use client'
 
+import { Share2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useGlobalToast } from '@/shared/contexts/ToastContext'
 import { useUser } from '@/shared/contexts/UserContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
+import { copyChapterTimestampLink } from '@/shared/lib/chapterLink'
 import { secondsToTimestamp } from '@/shared/lib/datefns'
 import Btn from '@/shared/ui/Btn'
 import SimpleDataTable from '@/shared/ui/SimpleDataTable'
@@ -21,6 +24,7 @@ export default function ChaptersTable({
   expanded: expandedProp = false,
 }: ChaptersTableProps) {
   const t = useTypeSafeTranslations()
+  const { showToast } = useGlobalToast()
   const { userCanUpdate } = useUser()
   const [expanded, setExpanded] = useState(expandedProp)
 
@@ -73,8 +77,32 @@ export default function ChaptersTable({
         accessor: (row: Chapter) => secondsToTimestamp(Math.max(0, row.end - row.start)),
         hiddenBelow: 'md' as const,
       },
+      {
+        label: '',
+        headerClassName: 'text-end px-2 w-10',
+        cellClassName: 'text-end px-2',
+        accessor: (row: Chapter) => (
+          <button
+            type="button"
+            className="cursor-pointer text-foreground-muted hover:text-accent p-1 rounded-md transition-colors"
+            onClick={async (e) => {
+              e.stopPropagation()
+              try {
+                await copyChapterTimestampLink({ chapter: row, itemId: libraryItem.id })
+                showToast(`${t('ButtonCopiedToClipboard')} (${row.title})`, { type: 'success' })
+              } catch (err) {
+                console.error('Failed to copy chapter link', err)
+              }
+            }}
+            title={`Copy link for ${row.title}`}
+            aria-label={`Copy link for ${row.title}`}
+          >
+            <Share2 className="h-3.5 w-3.5" />
+          </button>
+        ),
+      },
     ],
-    [t, handleGoToTimestamp]
+    [t, handleGoToTimestamp, libraryItem.id, showToast]
   )
 
   const headerActions = useMemo(

@@ -84,6 +84,7 @@ export function useAudioPlayerHotkeys(
             window.dispatchEvent(new CustomEvent('audiobookphile:toggle-bookmarks'))
           }
           break
+        case 'Shift-KeyC':
         case 'KeyC':
           if (actions?.onToggleChapters) {
             actions.onToggleChapters()

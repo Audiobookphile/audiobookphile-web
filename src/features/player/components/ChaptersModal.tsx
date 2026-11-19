@@ -6,6 +6,7 @@ import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHa
 import { useGlobalToast } from '@/shared/contexts/ToastContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import { secondsToTimestamp } from '@/shared/lib/datefns'
+import { copyChapterTimestampLink } from '@/shared/lib/chapterLink'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 import Modal from '@/shared/modals/Modal'
 import type { Chapter } from '@/types/api'
@@ -171,12 +172,9 @@ export default function ChaptersModal({ isOpen, playerHandler, onClose }: Chapte
   const { seek } = playerHandler.controls
 
   const handleShareChapter = useCallback(
-    (chapter: Chapter) => {
-      if (typeof window === 'undefined') return
+    async (chapter: Chapter) => {
       try {
-        const url = new URL(window.location.href)
-        url.searchParams.set('t', Math.round(chapter.start).toString())
-        navigator.clipboard?.writeText(url.toString())
+        await copyChapterTimestampLink({ chapter })
         showToast(`${t('ButtonCopiedToClipboard')} (${chapter.title})`, { type: 'success' })
       } catch (err) {
         console.error('Failed to copy chapter link', err)
