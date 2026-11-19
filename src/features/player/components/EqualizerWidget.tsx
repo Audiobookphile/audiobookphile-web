@@ -5,7 +5,11 @@ import { Check, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
-import { EQUALIZER_PRESETS, type EqualizerPreset } from '@/features/player/lib/AudioEqualizer'
+import {
+  EQUALIZER_PRESETS,
+  type EqualizerPreset,
+  getPresetBands,
+} from '@/features/player/lib/AudioEqualizer'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 
 interface EqualizerWidgetProps {
@@ -116,6 +120,41 @@ export default function EqualizerWidget({ playerHandler }: EqualizerWidgetProps)
   const activePresetInfo = EQUALIZER_PRESETS.find((p) => p.id === currentPreset)
   const isCustomActive = currentPreset !== 'off'
 
+  const curveData = useMemo(() => {
+    const bands = getPresetBands(currentPreset)
+    const width = 248
+    const height = 54
+    const minLog = Math.log10(20)
+    const maxLog = Math.log10(20000)
+    const logRange = maxLog - minLog
+
+    const points = bands.map((b) => {
+      const clampedLog = Math.max(minLog, Math.min(maxLog, Math.log10(b.freq)))
+      const x = ((clampedLog - minLog) / logRange) * width
+      // Gain range: -10dB to +10dB, center at height / 2 = 27
+      const y = Math.max(4, Math.min(height - 4, height / 2 - (b.gain / 10) * (height / 2 - 6)))
+      return { x, y }
+    })
+
+    if (points.length === 0) return { pathD: '', areaD: '', points: [], width, height }
+
+    let pathD = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(0, i - 1)]
+      const p1 = points[i]
+      const p2 = points[i + 1]
+      const p3 = points[Math.min(points.length - 1, i + 2)]
+      const cp1x = p1.x + (p2.x - p0.x) / 6
+      const cp1y = p1.y + (p2.y - p0.y) / 6
+      const cp2x = p2.x - (p3.x - p1.x) / 6
+      const cp2y = p2.y - (p3.y - p1.y) / 6
+      pathD += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`
+    }
+
+    const areaD = `${pathD} L ${width} ${height} L 0 ${height} Z`
+    return { pathD, areaD, points, width, height }
+  }, [currentPreset])
+
   const popoverContent = isOpen ? (
     <div
       ref={popoverRef}
@@ -135,6 +174,78 @@ export default function EqualizerWidget({ playerHandler }: EqualizerWidgetProps)
             Active
           </span>
         )}
+      </div>
+
+      {/* Parametric EQ Frequency Response Curve */}
+      <div className="relative mt-1 mb-1 overflow-hidden rounded-xl border border-white/10 bg-black/40 p-2">
+        <div className="mb-1 flex items-center justify-between text-[10px] text-foreground-muted">
+          <span>Frequency Response</span>
+          <span className="font-mono text-[9px] text-primary/80">{activePresetInfo?.shortLabel || 'Flat'}</span>
+        </div>
+        <svg
+          viewBox={`0 0 ${curveData.width} ${curveData.height}`}
+          className="w-full h-14 overflow-visible"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="eq-curve-fill" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="var(--color-primary, #6366f1)" stopOpacity={isCustomActive ? '0.35' : '0.1'} />
+              <stop offset="100%" stopColor="var(--color-primary, #6366f1)" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+
+          {/* 0dB Reference Line */}
+          <line
+            x1="0"
+            y1={curveData.height / 2}
+            x2={curveData.width}
+            y2={curveData.height / 2}
+            stroke="currentColor"
+            strokeDasharray="2 3"
+            className="text-white/15"
+            strokeWidth="1"
+          />
+
+          {/* Grid lines for 100Hz, 1kHz, 10kHz */}
+          <line x1={curveData.width * 0.23} y1="0" x2={curveData.width * 0.23} y2={curveData.height} stroke="currentColor" strokeDasharray="1 4" className="text-white/10" strokeWidth="0.5" />
+          <line x1={curveData.width * 0.57} y1="0" x2={curveData.width * 0.57} y2={curveData.height} stroke="currentColor" strokeDasharray="1 4" className="text-white/10" strokeWidth="0.5" />
+          <line x1={curveData.width * 0.9} y1="0" x2={curveData.width * 0.9} y2={curveData.height} stroke="currentColor" strokeDasharray="1 4" className="text-white/10" strokeWidth="0.5" />
+
+          {/* Area fill */}
+          <path d={curveData.areaD} fill="url(#eq-curve-fill)" />
+
+          {/* Response curve line */}
+          <path
+            d={curveData.pathD}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            className={isCustomActive ? 'text-primary' : 'text-foreground-muted/60'}
+          />
+
+          {/* Filter nodal points */}
+          {isCustomActive &&
+            curveData.points.slice(1, -1).map((pt, idx) => (
+              <circle
+                key={idx}
+                cx={pt.x}
+                cy={pt.y}
+                r="2.5"
+                className="fill-primary stroke-background"
+                strokeWidth="1.5"
+              />
+            ))}
+        </svg>
+
+        {/* Axis markers */}
+        <div className="mt-0.5 flex justify-between px-0.5 font-mono text-[8px] text-foreground-muted/60">
+          <span>20Hz</span>
+          <span>100Hz</span>
+          <span>1kHz</span>
+          <span>10kHz</span>
+          <span>20kHz</span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-1 pt-1">

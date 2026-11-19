@@ -7,6 +7,67 @@ export interface EqualizerPresetInfo {
   description: string
 }
 
+export interface EqualizerBandPoint {
+  freq: number
+  gain: number // dB
+}
+
+export function getPresetBands(preset: EqualizerPreset): EqualizerBandPoint[] {
+  switch (preset) {
+    case 'voice-boost':
+      return [
+        { freq: 20, gain: -6.0 },
+        { freq: 85, gain: 0.0 },
+        { freq: 1000, gain: 1.0 },
+        { freq: 2600, gain: 4.5 },
+        { freq: 6000, gain: 2.0 },
+        { freq: 20000, gain: 1.0 },
+      ]
+    case 'night-mode':
+      return [
+        { freq: 20, gain: -8.0 },
+        { freq: 90, gain: 0.0 },
+        { freq: 1000, gain: 1.0 },
+        { freq: 2200, gain: 2.0 },
+        { freq: 5000, gain: 0.0 },
+        { freq: 20000, gain: -1.0 },
+      ]
+    case 'warm':
+      return [
+        { freq: 20, gain: 1.0 },
+        { freq: 320, gain: 2.5 },
+        { freq: 1200, gain: 0.0 },
+        { freq: 4500, gain: -3.5 },
+        { freq: 20000, gain: -5.0 },
+      ]
+    case 'bass-reducer':
+      return [
+        { freq: 20, gain: -6.5 },
+        { freq: 220, gain: -6.5 },
+        { freq: 1500, gain: 0.0 },
+        { freq: 5000, gain: 0.0 },
+        { freq: 20000, gain: 0.0 },
+      ]
+    case 'spoken-word':
+      return [
+        { freq: 20, gain: -6.0 },
+        { freq: 100, gain: 0.0 },
+        { freq: 1800, gain: 3.0 },
+        { freq: 4000, gain: 1.5 },
+        { freq: 20000, gain: 0.0 },
+      ]
+    case 'off':
+    default:
+      return [
+        { freq: 20, gain: 0.0 },
+        { freq: 100, gain: 0.0 },
+        { freq: 1000, gain: 0.0 },
+        { freq: 5000, gain: 0.0 },
+        { freq: 20000, gain: 0.0 },
+      ]
+  }
+}
+
 export const EQUALIZER_PRESETS: EqualizerPresetInfo[] = [
   {
     id: 'off',
