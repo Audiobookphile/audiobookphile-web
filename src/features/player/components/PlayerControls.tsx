@@ -191,17 +191,20 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
   // Synchronize global hotkey events with modals
   useEffect(() => {
     const onToggleBookmarks = () => setIsBookmarksModalOpen((prev) => !prev)
+    const onAddBookmark = () => setIsBookmarksModalOpen(true)
     const onToggleChapters = () => setIsChaptersModalOpen((prev) => !prev)
     const onToggleShortcuts = () => setIsShortcutsModalOpen((prev) => !prev)
     const onToggleQueue = () => setIsQueueModalOpen((prev) => !prev)
 
     window.addEventListener('audiobookphile:toggle-bookmarks', onToggleBookmarks)
+    window.addEventListener('audiobookphile:add-bookmark', onAddBookmark)
     window.addEventListener('audiobookphile:toggle-chapters', onToggleChapters)
     window.addEventListener('audiobookphile:toggle-shortcuts', onToggleShortcuts)
     window.addEventListener('audiobookphile:toggle-queue', onToggleQueue)
 
     return () => {
       window.removeEventListener('audiobookphile:toggle-bookmarks', onToggleBookmarks)
+      window.removeEventListener('audiobookphile:add-bookmark', onAddBookmark)
       window.removeEventListener('audiobookphile:toggle-chapters', onToggleChapters)
       window.removeEventListener('audiobookphile:toggle-shortcuts', onToggleShortcuts)
       window.removeEventListener('audiobookphile:toggle-queue', onToggleQueue)

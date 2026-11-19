@@ -72,6 +72,11 @@ export function useAudioPlayerHotkeys(
         case 'Numpad0':
           controls.setPlaybackRate(1)
           break
+        case 'Shift-KeyB':
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('audiobookphile:add-bookmark'))
+          }
+          break
         case 'KeyB':
           if (actions?.onToggleBookmarks) {
             actions.onToggleBookmarks()

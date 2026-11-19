@@ -18,6 +18,7 @@ const contentEditable = el('div', {}, true)
 describe('Player Hotkeys Scope for B, C and Shortcuts', () => {
   it('gives hotkeys KeyB, KeyC, KeyQ, and Slash to the player when body is focused', () => {
     expect(shouldDeferToFocusedElement(body, 'KeyB')).toBe(false)
+    expect(shouldDeferToFocusedElement(body, 'KeyB', true)).toBe(false)
     expect(shouldDeferToFocusedElement(body, 'KeyC')).toBe(false)
     expect(shouldDeferToFocusedElement(body, 'KeyQ')).toBe(false)
     expect(shouldDeferToFocusedElement(body, 'KeyS')).toBe(false)

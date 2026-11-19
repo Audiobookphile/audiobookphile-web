@@ -48,6 +48,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
       { keys: ['Q'], description: 'Toggle Up Next queue' },
       { keys: ['C'], description: 'Toggle chapters list' },
       { keys: ['B'], description: 'Toggle bookmarks & notes' },
+      { keys: ['Shift', 'B'], description: 'Add bookmark at current time' },
       { keys: ['?'], description: 'Toggle keyboard shortcuts' },
       { keys: ['Esc'], description: 'Close modal or active player' },
     ],

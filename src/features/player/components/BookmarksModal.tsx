@@ -1,8 +1,9 @@
 'use client'
 
-import { Bookmark, ChevronDown, Clock, Download, FileJson, FileSpreadsheet, FileText, Loader2, MessageSquare, Plus, Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { Bookmark, ChevronDown, Clock, Download, FileJson, FileSpreadsheet, FileText, Loader2, MessageSquare, Plus, Search, Share2, Trash2, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
+import { useGlobalToast } from '@/shared/contexts/ToastContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import { getServerBaseUrl } from '@/shared/lib/api/base'
 import { apiFetch } from '@/shared/lib/api/browser'
@@ -10,6 +11,8 @@ import { secondsToTimestamp } from '@/shared/lib/datefns'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 import Modal from '@/shared/modals/Modal'
 import { getSupabaseAnonKey } from '@/shared/utils/supabase/env'
+
+const QUICK_TAGS = ['Quote', 'Key Idea', 'Plot', 'Review', 'Vocabulary'] as const
 
 interface BookmarksModalProps {
   isOpen: boolean
@@ -34,12 +37,14 @@ export default function BookmarksModal({
   onClose,
 }: BookmarksModalProps) {
   const t = useTypeSafeTranslations()
+  const { showToast } = useGlobalToast()
   const { currentTime } = playerHandler.state
   const { seek } = playerHandler.controls
 
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [newTitle, setNewTitle] = useState('')
   const [newNote, setNewNote] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -68,10 +73,60 @@ export default function BookmarksModal({
     if (isOpen && libraryItemId) {
       void fetchBookmarks()
       setIsAdding(false)
+      setSearchQuery('')
       setNewTitle('')
       setNewNote('')
     }
   }, [isOpen, libraryItemId, fetchBookmarks])
+
+  // Listen for global shortcut add-bookmark event (Shift-B)
+  useEffect(() => {
+    const handleAddEvent = () => {
+      setIsAdding(true)
+      setNewTitle(`Bookmark at ${secondsToTimestamp(playerHandler.state.currentTime)}`)
+      setNewNote('')
+    }
+    window.addEventListener('audiobookphile:add-bookmark', handleAddEvent)
+    return () => window.removeEventListener('audiobookphile:add-bookmark', handleAddEvent)
+  }, [playerHandler.state.currentTime])
+
+  const handleShareBookmark = useCallback(
+    (bm: BookmarkItem) => {
+      if (typeof window === 'undefined') return
+      try {
+        const url = new URL(window.location.href)
+        const timeSec = Math.round(bm.time_pos / 1000)
+        url.searchParams.set('t', timeSec.toString())
+        navigator.clipboard?.writeText(url.toString())
+        showToast(
+          `${t('ButtonCopiedToClipboard')} (${bm.title || secondsToTimestamp(timeSec)})`,
+          { type: 'success' }
+        )
+      } catch (err) {
+        console.error('[BookmarksModal] Failed to copy bookmark link', err)
+      }
+    },
+    [showToast, t]
+  )
+
+  const handleApplyTag = useCallback((tag: string) => {
+    setNewNote((prev) => {
+      const tagPrefix = `[${tag}] `
+      if (prev.includes(tagPrefix)) return prev
+      return tagPrefix + prev
+    })
+  }, [])
+
+  const filteredBookmarks = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return bookmarks
+    return bookmarks.filter((bm) => {
+      const titleMatch = (bm.title || '').toLowerCase().includes(query)
+      const noteMatch = (bm.note || '').toLowerCase().includes(query)
+      const timeMatch = secondsToTimestamp(bm.time_pos / 1000).toLowerCase().includes(query)
+      return titleMatch || noteMatch || timeMatch
+    })
+  }, [bookmarks, searchQuery])
 
   const handleStartAdd = () => {
     setNewTitle(`Bookmark at ${secondsToTimestamp(currentTime)}`)
@@ -296,6 +351,21 @@ export default function BookmarksModal({
                 />
               </div>
 
+              {/* Quick Category Tags */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <span className="text-[11px] font-medium text-foreground-muted/70">Quick Tags:</span>
+                {QUICK_TAGS.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => handleApplyTag(tag)}
+                    className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-semibold text-foreground/80 hover:bg-white/15 hover:text-primary transition-all active:scale-95"
+                  >
+                    +{tag}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex justify-end gap-2 pt-1">
                 <button
                   type="button"
@@ -314,6 +384,30 @@ export default function BookmarksModal({
               </div>
             </div>
           </form>
+        )}
+
+        {/* Real-time Search Filter */}
+        {bookmarks.length > 1 && !isAdding && (
+          <div className="relative mb-3">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-foreground-muted/50" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search bookmarks by title, note, or time..."
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-1.5 pl-8 pr-8 text-xs text-foreground placeholder:text-foreground-muted/50 focus:border-primary focus:outline-none"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-foreground-muted/60 hover:text-foreground cursor-pointer"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         )}
 
         {/* Bookmarks List */}
@@ -336,9 +430,21 @@ export default function BookmarksModal({
                 <span>Bookmark at {secondsToTimestamp(currentTime)}</span>
               </button>
             </div>
+          ) : filteredBookmarks.length === 0 && searchQuery ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center text-foreground-muted">
+              <Search className="mb-2 h-6 w-6 opacity-40" />
+              <p className="text-sm font-medium">No bookmarks match &ldquo;{searchQuery}&rdquo;</p>
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="mt-2 text-xs font-semibold text-primary hover:underline"
+              >
+                Clear search
+              </button>
+            </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {bookmarks.map((bm) => {
+              {filteredBookmarks.map((bm) => {
                 const timeSec = bm.time_pos / 1000
                 const formattedTime = secondsToTimestamp(timeSec)
 
@@ -353,7 +459,7 @@ export default function BookmarksModal({
                     <button
                       type="button"
                       onClick={() => handleSeek(bm.time_pos)}
-                      className="flex flex-1 items-start gap-3 text-left"
+                      className="flex flex-1 items-start gap-3 text-left cursor-pointer"
                     >
                       <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary/10 px-2 py-1 font-mono text-xs font-medium text-primary">
                         <Clock className="h-3 w-3" />
@@ -373,14 +479,26 @@ export default function BookmarksModal({
                       </div>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteBookmark(bm.id)}
-                      className="shrink-0 rounded p-1 text-foreground-muted/40 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-                      title="Delete bookmark"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleShareBookmark(bm)}
+                        className="rounded p-1 text-foreground-muted/60 transition-colors hover:text-primary cursor-pointer"
+                        title="Copy timestamp link"
+                        aria-label="Copy timestamp link"
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteBookmark(bm.id)}
+                        className="rounded p-1 text-foreground-muted/40 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 cursor-pointer"
+                        title="Delete bookmark"
+                        aria-label="Delete bookmark"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 )
               })}
