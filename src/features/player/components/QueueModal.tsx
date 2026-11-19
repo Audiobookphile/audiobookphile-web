@@ -2,11 +2,12 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { Clock, GripVertical, ListMusic, Music2, Play, Trash2, X } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { getExpandedLibraryItemAction } from '@/features/player/actions/mediaActions'
 import { type PlayerQueueItem, useMediaContext } from '@/features/player/contexts/MediaContext'
+import { calculateQueueMetrics } from '@/features/player/lib/queue'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
-import { secondsToTimestamp } from '@/shared/lib/datefns'
+import { formatDurationHuman, secondsToTimestamp } from '@/shared/lib/datefns'
 import { mergeClasses } from '@/shared/lib/merge-classes'
 import Modal from '@/shared/modals/Modal'
 
@@ -24,11 +25,20 @@ export default function QueueModal({ isOpen, onClose }: QueueModalProps) {
     clearQueue,
     playItem,
     moveQueueItem,
+    playerHandler,
   } = useMediaContext()
 
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
+  const metrics = useMemo(() => {
+    return calculateQueueMetrics(
+      playerQueueItems,
+      streamLibraryItem?.id,
+      playerHandler.state.currentTime
+    )
+  }, [playerQueueItems, streamLibraryItem?.id, playerHandler.state.currentTime])
 
   // Current playing item (first in queue matching streamLibraryItem or first item)
   const currentItem = playerQueueItems.find(
@@ -97,6 +107,7 @@ export default function QueueModal({ isOpen, onClose }: QueueModalProps) {
               </h2>
               <p className="text-xs text-foreground-muted">
                 {playerQueueItems.length} {playerQueueItems.length === 1 ? 'item' : 'items'} in queue
+                {metrics.remainingDuration > 0 && ` • ${formatDurationHuman(metrics.remainingDuration)} remaining`}
               </p>
             </div>
           </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, BookOpen, CheckSquare, Edit, ListPlus, Pause, Play } from 'lucide-react'
+import { AlertCircle, BookOpen, CheckSquare, Edit, ListPlus, ListStart, Pause, Play } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useMediaContext } from '@/features/player/contexts/MediaContext'
 import { useUser } from '@/shared/contexts/UserContext'
@@ -43,6 +43,7 @@ export default function LibraryItemActionButtons({
     isStreamingFromDifferentLibrary,
     getIsMediaQueued,
     addItemToQueue,
+    playNext,
     removeItemFromQueue,
     playerHandler,
   } = useMediaContext()
@@ -152,6 +153,24 @@ export default function LibraryItemActionButtons({
     })
   }, [addItemToQueue, isBook, isQueued, libraryItem, removeItemFromQueue])
 
+  const handlePlayNextClick = useCallback(() => {
+    const title = libraryItem.media?.metadata?.title ?? ''
+    const subtitle =
+      libraryItem.media?.metadata && 'authors' in libraryItem.media.metadata
+        ? (libraryItem.media.metadata.authors ?? []).map((a) => a.name).join(', ')
+        : ''
+    playNext({
+      libraryItemId: libraryItem.id,
+      libraryId: libraryItem.libraryId,
+      episodeId: null,
+      title,
+      subtitle,
+      caption: '',
+      duration: isBook ? (libraryItem.media?.duration ?? null) : null,
+      coverPath: libraryItem.media?.coverPath ?? null,
+    })
+  }, [isBook, libraryItem, playNext])
+
   const handleToggleFinished = useCallback(() => {
     handleMoreAction('toggleFinished')
   }, [handleMoreAction])
@@ -224,6 +243,21 @@ export default function LibraryItemActionButtons({
         )}
 
         <div className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 px-2 py-1 backdrop-blur-md">
+          {showQueueBtn && !isQueued && (
+            <Tooltip text={t('ButtonPlayNext')} position="top">
+              <span className="inline-flex">
+                <IconBtn
+                  ariaLabel={t('ButtonPlayNext')}
+                  onClick={handlePlayNextClick}
+                  borderless
+                  className="text-foreground/60 hover:text-accent transition-all duration-300"
+                  size="small"
+                  icon={ListStart}
+                />
+              </span>
+            </Tooltip>
+          )}
+
           {showQueueBtn && (
             <Tooltip text={isQueued ? t('ButtonQueueRemoveItem') : t('ButtonQueueAddItem')} position="top">
               <span className="inline-flex">

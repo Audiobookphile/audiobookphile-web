@@ -69,7 +69,7 @@ export function useMediaCardActions({
   const t = useTypeSafeTranslations()
   const { userCanUpdate, userCanDelete, userCanDownload, userIsAdminOrUp } = useUser()
   const { showToast } = useGlobalToast()
-  const { addItemToQueue, removeItemFromQueue } = useMediaContext()
+  const { addItemToQueue, playNext, removeItemFromQueue } = useMediaContext()
   const [processing, setProcessing] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null)
@@ -152,7 +152,20 @@ export function useMediaCardActions({
 
   const dispatchMoreAction = useCallback(
     (action: string, data?: Record<string, string>) => {
-      if (action === 'addToQueue') {
+      if (action === 'playNext') {
+        const queueItem = {
+          libraryItemId: libraryItem.id,
+          libraryId: libraryItem.libraryId,
+          episodeId: episodeForQueue ? episodeForQueue.id : null,
+          title: episodeForQueue ? episodeForQueue.title : title,
+          subtitle: episodeForQueue ? title : author || '',
+          caption: '',
+          duration: episodeForQueue?.audioFile?.duration ?? (media as { duration?: number }).duration ?? null,
+          coverPath: (media as { coverPath?: string }).coverPath ?? null,
+        }
+        playNext(queueItem)
+        showToast(t('ToastItemAddedToPlayNext', { 0: queueItem.title }), { type: 'success' })
+      } else if (action === 'addToQueue') {
         const queueItem = {
           libraryItemId: libraryItem.id,
           libraryId: libraryItem.libraryId,
@@ -279,6 +292,7 @@ export function useMediaCardActions({
     },
     [
       addItemToQueue,
+      playNext,
       author,
       episodeForQueue,
       libraryItem.id,
@@ -392,6 +406,10 @@ export function useMediaCardActions({
 
     if (!isPodcast && libraryItemIdStreaming && !isStreamingFromDifferentLib) {
       if (!isQueued) {
+        items.push({
+          text: t('ButtonPlayNext'),
+          func: 'playNext',
+        })
         items.push({
           text: t('ButtonQueueAddItem'),
           func: 'addToQueue',

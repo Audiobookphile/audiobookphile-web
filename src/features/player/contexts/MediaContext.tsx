@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import MediaPlayerContainer from '@/features/player/components/MediaPlayerContainer'
-import { reorderQueue, resolveQueueUpdate } from '@/features/player/lib/queue'
+import { insertPlayNext, reorderQueue, resolveQueueUpdate } from '@/features/player/lib/queue'
 import {
   type PlayerHandlerControls,
   type PlayerHandlerState,
@@ -42,6 +42,7 @@ interface MediaContextValue {
   // Stream actions
   clearStreamMedia: () => void
   addItemToQueue: (item: PlayerQueueItem) => void
+  playNext: (item: PlayerQueueItem) => void
   removeItemFromQueue: (params: { libraryItemId: string; episodeId?: string | null }) => void
   moveQueueItem: (fromIndex: number, toIndex: number) => void
   clearQueue: () => void
@@ -147,6 +148,15 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
+  const playNext = useCallback(
+    (item: PlayerQueueItem) => {
+      setPlayerQueueItems((prev) =>
+        insertPlayNext(prev, item, streamLibraryItem?.id, streamEpisodeId)
+      )
+    },
+    [streamLibraryItem?.id, streamEpisodeId]
+  )
+
   const removeItemFromQueue = useCallback(
     ({ libraryItemId, episodeId }: { libraryItemId: string; episodeId?: string | null }) => {
       setPlayerQueueItems((prev) =>
@@ -238,6 +248,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
       // Stream actions
       clearStreamMedia,
       addItemToQueue,
+      playNext,
       removeItemFromQueue,
       moveQueueItem,
       clearQueue,
@@ -266,6 +277,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
       getIsMediaQueued,
       clearStreamMedia,
       addItemToQueue,
+      playNext,
       removeItemFromQueue,
       moveQueueItem,
       clearQueue,

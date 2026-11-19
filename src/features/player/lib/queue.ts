@@ -58,3 +58,90 @@ export function reorderQueue(
   return updated
 }
 
+/**
+ * Inserts an item into the queue to play next.
+ * If the item is already present in the queue, it is moved from its current position
+ * to immediately after the current playing item (or to index 0 if no current item is found).
+ *
+ * @param current - Current queue items
+ * @param item - Item to insert to play next
+ * @param currentItemId - Optional ID of the currently playing item
+ * @param currentEpisodeId - Optional episode ID of currently playing item
+ */
+export function insertPlayNext(
+  current: readonly PlayerQueueItem[],
+  item: PlayerQueueItem,
+  currentItemId?: string | null,
+  currentEpisodeId?: string | null
+): PlayerQueueItem[] {
+  // First, filter out any existing instance of the item being inserted
+  const filtered = current.filter((i) => {
+    if (!item.episodeId && !i.episodeId) {
+      return i.libraryItemId !== item.libraryItemId
+    }
+    return !(i.libraryItemId === item.libraryItemId && i.episodeId === item.episodeId)
+  })
+
+  // Find where the current playing item is located in the filtered queue
+  const currentIndex = currentItemId
+    ? filtered.findIndex((i) => {
+        if (!currentEpisodeId && !i.episodeId) {
+          return i.libraryItemId === currentItemId
+        }
+        return i.libraryItemId === currentItemId && i.episodeId === currentEpisodeId
+      })
+    : -1
+
+  // If found, insert immediately after current item; otherwise insert at head
+  const insertIndex = currentIndex >= 0 ? currentIndex + 1 : 0
+  const result = [...filtered]
+  result.splice(insertIndex, 0, item)
+  return result
+}
+
+/**
+ * Calculates aggregate queue metrics: total duration of all items,
+ * remaining duration across current and upcoming items, and upcoming item count.
+ */
+export function calculateQueueMetrics(
+  items: readonly PlayerQueueItem[],
+  currentItemId?: string | null,
+  currentTime = 0
+): {
+  totalDuration: number
+  remainingDuration: number
+  upcomingCount: number
+} {
+  const currentIndex = currentItemId
+    ? items.findIndex((i) => i.libraryItemId === currentItemId)
+    : -1
+
+  let totalDuration = 0
+  let remainingDuration = 0
+
+  items.forEach((item, index) => {
+    const dur = item.duration ?? 0
+    totalDuration += dur
+
+    if (currentIndex >= 0) {
+      if (index === currentIndex) {
+        remainingDuration += Math.max(0, dur - currentTime)
+      } else if (index > currentIndex) {
+        remainingDuration += dur
+      }
+    } else {
+      // If current item not in queue, all items are remaining
+      remainingDuration += dur
+    }
+  })
+
+  const upcomingCount = currentIndex >= 0 ? Math.max(0, items.length - (currentIndex + 1)) : items.length
+
+  return {
+    totalDuration,
+    remainingDuration,
+    upcomingCount,
+  }
+}
+
+

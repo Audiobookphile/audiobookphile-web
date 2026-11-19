@@ -39,3 +39,23 @@ export function secondsToTimestamp(seconds: number): string {
   }
   return `${pad(minutes)}:${pad(secs)}`
 }
+
+/**
+ * Formats seconds into human-readable hours and minutes (e.g. "8h 15m" or "45m").
+ */
+export function formatDurationHuman(seconds: number): string {
+  if (seconds == null || isNaN(seconds) || seconds <= 0) {
+    return '0m'
+  }
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = Math.floor(seconds % 60)
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`
+  }
+  if (minutes > 0) {
+    return `${minutes}m`
+  }
+  return `${secs}s`
+}

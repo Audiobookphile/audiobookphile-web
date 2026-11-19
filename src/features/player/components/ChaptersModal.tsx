@@ -19,6 +19,7 @@ interface ChapterRowProps {
   chapter: Chapter
   isCurrentChapter: boolean
   isListened: boolean
+  currentTime?: number
   onSeek: (time: number) => void
 }
 
@@ -36,10 +37,23 @@ export function filterChapters(chapters: Chapter[], query: string): Chapter[] {
   )
 }
 
-const ChapterRow = memo(function ChapterRow({ chapter, isCurrentChapter, isListened, onSeek }: ChapterRowProps) {
+const ChapterRow = memo(function ChapterRow({
+  chapter,
+  isCurrentChapter,
+  isListened,
+  currentTime,
+  onSeek,
+}: ChapterRowProps) {
   const startTimestamp = secondsToTimestamp(chapter.start)
   const duration = Math.max(0, chapter.end - chapter.start)
   const durationTimestamp = secondsToTimestamp(duration)
+
+  const remainingInChapter =
+    isCurrentChapter && currentTime != null ? Math.max(0, chapter.end - currentTime) : 0
+  const progressPercent =
+    isCurrentChapter && currentTime != null && duration > 0
+      ? Math.min(100, Math.max(0, ((currentTime - chapter.start) / duration) * 100))
+      : 0
 
   const handleClick = useCallback(() => {
     onSeek(chapter.start)
@@ -93,10 +107,23 @@ const ChapterRow = memo(function ChapterRow({ chapter, isCurrentChapter, isListe
         >
           {chapter.title}
         </p>
-        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-foreground-muted">
+        <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-foreground-muted">
           <span className="font-mono">{startTimestamp}</span>
           <span className="font-mono text-foreground-muted/60">({durationTimestamp})</span>
+          {isCurrentChapter && (
+            <span className="inline-flex items-center rounded-md bg-accent/20 px-1.5 py-0.5 text-[10px] font-semibold text-accent ring-1 ring-accent/30">
+              -{secondsToTimestamp(remainingInChapter)} left
+            </span>
+          )}
         </div>
+        {isCurrentChapter && (
+          <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full bg-accent transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        )}
       </div>
     </button>
   )
@@ -215,6 +242,7 @@ export default function ChaptersModal({ isOpen, playerHandler, onClose }: Chapte
                     chapter={chapter}
                     isCurrentChapter={isCurrentChapter}
                     isListened={isListened}
+                    currentTime={playerHandler.state.currentTime}
                     onSeek={handleSeek}
                   />
                 )
