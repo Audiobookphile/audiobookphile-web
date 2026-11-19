@@ -25,13 +25,13 @@ const InputWrapper = ({
 }: InputWrapperProps) => {
   const wrapperClass = mergeClasses(
     // Base styles
-    'relative flex items-stretch rounded-md px-2 has-[:focus-visible]:outline',
+    'relative flex items-stretch rounded-lg px-2 has-[:focus-visible]:outline transition-all duration-200',
 
     // Size-based padding
     size === 'small' ? 'h-9' : size === 'large' ? 'h-11' : size === 'auto' ? 'h-full' : 'h-10',
 
     // Border and focus styles
-    error ? 'border-error focus-within:outline-error' : 'border-border',
+    error ? 'border-error focus-within:outline-error' : 'border-white/10',
 
     // Background styles based on state
     disabled
@@ -40,7 +40,7 @@ const InputWrapper = ({
         ? 'bg-bg-read-only'
         : borderless
           ? 'bg-transparent'
-          : 'bg-primary',
+          : 'liquid-glass-input',
 
     // Borderless styles
     borderless ? 'border-0' : 'border',

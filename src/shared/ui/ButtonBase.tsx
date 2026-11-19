@@ -77,7 +77,7 @@ const ButtonBase = ({
   const buttonClass = mergeClasses(
     'relative flex items-center justify-center overflow-hidden transition-all duration-200 select-none font-sans font-semibold',
     'rounded-2xl border shadow-md shadow-black/20',
-    !borderless && 'bg-white/10 backdrop-blur-md border-white/15 hover:border-white/30 hover:bg-white/15',
+    !borderless && 'liquid-glass-button text-foreground',
     borderless && 'border-transparent bg-transparent shadow-none text-foreground/60 hover:text-foreground',
 
     // Focus states
