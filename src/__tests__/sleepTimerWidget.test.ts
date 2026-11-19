@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { formatSleepTimerRemaining } from '@/features/player/components/SleepTimerWidget'
+import { calculateSecondsUntilTargetTime, formatSleepTimerRemaining } from '@/features/player/components/SleepTimerWidget'
 
 describe('SleepTimerWidget & Countdown formatting', () => {
   it('formats remaining seconds into MM:SS format accurately', () => {
@@ -46,6 +46,43 @@ describe('SleepTimerWidget & Countdown formatting', () => {
     const remainingInChapter = Math.max(1, Math.round(chapterEnd - currentTime))
     expect(remainingInChapter).toBe(450)
     expect(formatSleepTimerRemaining(remainingInChapter)).toBe('7:30')
+  })
+
+  it('calculates seconds until target wall-clock time correctly', () => {
+    const baseNow = new Date('2026-11-18T22:00:00Z')
+
+    // Same day: 22:30 is 30 minutes away = 1800s
+    const targetSameDay = calculateSecondsUntilTargetTime('22:30', baseNow)
+    expect(targetSameDay).toBe(1800)
+
+    // Same day: 23:45 is 1 hour 45 minutes away = 6300s
+    const targetSameDay2 = calculateSecondsUntilTargetTime('23:45', baseNow)
+    expect(targetSameDay2).toBe(6300)
+
+    // Next day (midnight rollover): 00:30 is 2.5 hours away = 9000s
+    const targetNextDay = calculateSecondsUntilTargetTime('00:30', baseNow)
+    expect(targetNextDay).toBe(9000)
+
+    // Invalid formats return null
+    expect(calculateSecondsUntilTargetTime('')).toBeNull()
+    expect(calculateSecondsUntilTargetTime('invalid')).toBeNull()
+  })
+
+  it('verifies mouse wheel volume step calculations and clamp bounds', () => {
+    const stepVolume = (current: number, deltaY: number) => {
+      const step = deltaY < 0 ? 0.05 : -0.05
+      return Math.max(0, Math.min(1, Math.round((current + step) * 100) / 100))
+    }
+
+    // Step up
+    expect(stepVolume(0.5, -100)).toBe(0.55)
+    expect(stepVolume(0.95, -100)).toBe(1.0)
+    expect(stepVolume(1.0, -100)).toBe(1.0) // clamped
+
+    // Step down
+    expect(stepVolume(0.5, 100)).toBe(0.45)
+    expect(stepVolume(0.05, 100)).toBe(0.0)
+    expect(stepVolume(0.0, 100)).toBe(0.0) // clamped
   })
 })
 

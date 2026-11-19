@@ -25,6 +25,25 @@ export function formatSleepTimerRemaining(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+export function calculateSecondsUntilTargetTime(timeString: string, now: Date = new Date()): number | null {
+  if (!timeString || !timeString.includes(':')) return null
+  const [hoursStr, minutesStr] = timeString.split(':')
+  const targetHour = parseInt(hoursStr, 10)
+  const targetMinute = parseInt(minutesStr, 10)
+  if (isNaN(targetHour) || isNaN(targetMinute)) return null
+
+  const targetDate = new Date(now.getTime())
+  targetDate.setHours(targetHour, targetMinute, 0, 0)
+
+  // If the target time today has already passed, set for tomorrow
+  if (targetDate.getTime() <= now.getTime()) {
+    targetDate.setDate(targetDate.getDate() + 1)
+  }
+
+  const seconds = Math.round((targetDate.getTime() - now.getTime()) / 1000)
+  return seconds > 0 ? seconds : null
+}
+
 export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProps) {
   const { sleepTimerRemaining, currentChapter, currentTime, duration } = playerHandler.state
   const { startSleepTimer, extendSleepTimer, stopSleepTimer } = playerHandler.controls
@@ -36,6 +55,7 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [customMinutes, setCustomMinutes] = useState('')
+  const [targetTimeInput, setTargetTimeInput] = useState('')
 
   const triggerRef = useRef<HTMLButtonElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -152,6 +172,12 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
 
   const formatRemainingTime = formatSleepTimerRemaining
 
+  const stopAtTime = useMemo(() => {
+    if (sleepTimerRemaining === null) return null
+    const d = new Date(Date.now() + sleepTimerRemaining * 1000)
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }, [sleepTimerRemaining])
+
   const remainingInChapter = currentChapter ? Math.max(1, Math.round(currentChapter.end - currentTime)) : 0
   const remainingInTrack = duration > 0 ? Math.max(1, Math.round(duration - currentTime)) : 0
 
@@ -185,9 +211,14 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
               <Moon size={13} />
               <span>Active Countdown</span>
             </div>
-            <span className="font-mono text-base font-extrabold text-primary tabular-nums">
-              {formatRemainingTime(sleepTimerRemaining)}
-            </span>
+            <div className="flex flex-col items-end">
+              <span className="font-mono text-base font-extrabold text-primary tabular-nums">
+                {formatRemainingTime(sleepTimerRemaining)}
+              </span>
+              {stopAtTime && (
+                <span className="text-[10px] font-medium text-foreground/50">Stops at {stopAtTime}</span>
+              )}
+            </div>
           </div>
 
           {sleepTimerRemaining <= 15 && (
@@ -283,6 +314,34 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
           className="cursor-pointer rounded-xl border border-primary/30 bg-primary/20 px-3 py-1 text-xs font-bold text-primary transition-all hover:bg-primary/30 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Set
+        </button>
+      </form>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          const seconds = calculateSecondsUntilTargetTime(targetTimeInput)
+          if (seconds) {
+            startSleepTimer(seconds)
+            setTargetTimeInput('')
+            setIsOpen(false)
+          }
+        }}
+        className="mt-0.5 flex items-center gap-1.5"
+      >
+        <input
+          type="time"
+          aria-label="Stop at specific time"
+          value={targetTimeInput}
+          onChange={(e) => setTargetTimeInput(e.target.value)}
+          className="flex-1 rounded-xl border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-foreground placeholder:text-foreground/40 focus:border-primary focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={!targetTimeInput}
+          className="cursor-pointer rounded-xl border border-primary/30 bg-primary/20 px-3 py-1 text-xs font-bold text-primary transition-all hover:bg-primary/30 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          At Time
         </button>
       </form>
       {currentChapter && remainingInChapter > 0 && (

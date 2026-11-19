@@ -141,6 +141,17 @@ export default function VolumeControl({ playerHandler }: VolumeControlProps) {
     [calculateVolumeFromEvent]
   )
 
+  // Handle mouse wheel scrolling over volume button or track to adjust volume ±5%
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      e.preventDefault()
+      const step = e.deltaY < 0 ? 0.05 : -0.05
+      const nextVolume = Math.max(0, Math.min(1, Math.round((volume + step) * 100) / 100))
+      setVolume(nextVolume)
+    },
+    [volume, setVolume]
+  )
+
   const volumePercentage = Math.round(volume * 100)
   const trackHeight = 128
   const filledHeight = trackHeight * volume
@@ -180,6 +191,7 @@ export default function VolumeControl({ playerHandler }: VolumeControlProps) {
               className="group relative flex cursor-pointer items-center justify-center select-none"
               style={{ height: trackHeight, width: 24 }}
               onMouseDown={handleMouseDown}
+              onWheel={handleWheel}
             >
               <div
                 className="pointer-events-none absolute rounded-full bg-white/10 transition-colors group-hover:bg-white/20"
@@ -214,6 +226,7 @@ export default function VolumeControl({ playerHandler }: VolumeControlProps) {
         ref={triggerRef}
         type="button"
         onClick={toggleMute}
+        onWheel={handleWheel}
         onMouseEnter={openPopover}
         onMouseLeave={closePopoverSoon}
         aria-label={t('LabelVolume')}
