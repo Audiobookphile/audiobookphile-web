@@ -995,3 +995,24 @@ export interface BookAIInsights {
   themes: string[]
   isCached: boolean
 }
+
+export type NotificationEvent =
+  | 'onItemAdded'
+  | 'onItemUpdated'
+  | 'onItemDeleted'
+  | 'onUserLogin'
+  | 'onBackupCompleted'
+  | 'onTest'
+
+export interface NotificationTarget {
+  id: string
+  name: string
+  url: string
+  events: NotificationEvent[]
+  enabled: boolean
+  authHeader?: string | null
+  createdAt: string
+  lastFiredAt?: string | null
+  lastStatus?: number | null
+}
+
