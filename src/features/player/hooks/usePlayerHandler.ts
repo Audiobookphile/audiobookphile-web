@@ -9,6 +9,7 @@ import {
 } from '@/features/player/hooks/usePlayerSettings'
 import { AudioTrack } from '@/features/player/lib/AudioTrack'
 import { LocalAudioPlayer } from '@/features/player/lib/LocalAudioPlayer'
+import { playSleepTimerExpiryChime } from '@/features/player/lib/soundEffects'
 import { useGlobalToast } from '@/shared/contexts/ToastContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import type { Chapter, LibraryItem, PlaybackSession, PlayMethod } from '@/types/api'
@@ -145,6 +146,9 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
 
   const volumeRef = useRef(settings.volume)
   volumeRef.current = settings.volume
+
+  const sleepTimerChimeRef = useRef(settings.sleepTimerChime)
+  sleepTimerChimeRef.current = settings.sleepTimerChime
 
   const currentChapter = chapters.find((chapter) => chapter.start <= currentTime && chapter.end > currentTime) ?? null
   const nextChapter = chapters.find((chapter) => chapter.start > currentTime && chapter.end > currentTime) ?? null
@@ -354,6 +358,9 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
         if (prev <= 1) {
           playerRef.current?.pause()
           playerRef.current?.setVolume(volumeRef.current)
+          if (sleepTimerChimeRef.current) {
+            playSleepTimerExpiryChime()
+          }
           return null
         }
         // Graceful fade-out during the final 15 seconds

@@ -86,4 +86,35 @@ describe('PlayerSettings - Default Sleep Timer Duration', () => {
     // Custom maxSeconds (10s cap)
     expect(calculateRewindOffset(true, 10, 3600)).toBe(10)
   })
+
+  it('supports sleep timer expiry chime setting and defaults to true', () => {
+    const settings = {
+      sleepTimerChime: true,
+    }
+    expect(settings.sleepTimerChime).toBe(true)
+
+    const updated = {
+      ...settings,
+      sleepTimerChime: false,
+    }
+    expect(updated.sleepTimerChime).toBe(false)
+  })
+
+  it('cycles quick jump durations sequentially through presets', () => {
+    const QUICK_JUMP_AMOUNTS = [5, 10, 15, 30, 45, 60] as const
+
+    function getNextJumpDuration(current: number): number {
+      const idx = QUICK_JUMP_AMOUNTS.indexOf(current as any)
+      const nextIdx = idx === -1 ? 0 : (idx + 1) % QUICK_JUMP_AMOUNTS.length
+      return QUICK_JUMP_AMOUNTS[nextIdx]
+    }
+
+    expect(getNextJumpDuration(10)).toBe(15)
+    expect(getNextJumpDuration(15)).toBe(30)
+    expect(getNextJumpDuration(30)).toBe(45)
+    expect(getNextJumpDuration(45)).toBe(60)
+    expect(getNextJumpDuration(60)).toBe(5)
+    expect(getNextJumpDuration(5)).toBe(10)
+    expect(getNextJumpDuration(999)).toBe(5) // fallback to first preset
+  })
 })

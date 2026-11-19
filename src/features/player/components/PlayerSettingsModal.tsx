@@ -151,6 +151,13 @@ export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdat
             usePortal
           />
 
+          {/* Sleep Timer Expiry Chime toggle */}
+          <ToggleSwitch
+            value={settings.sleepTimerChime ?? true}
+            label="Sleep Timer Expiry Chime"
+            onChange={(value) => onUpdateSettings({ sleepTimerChime: value })}
+          />
+
           {/* Smart Rewind on Resume toggle */}
           <ToggleSwitch
             value={settings.smartRewindEnabled ?? true}

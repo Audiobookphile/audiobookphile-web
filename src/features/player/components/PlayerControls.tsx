@@ -4,6 +4,7 @@ import { Bookmark, Keyboard, List, ListMusic, Pause, Play, RotateCcw, RotateCw, 
 import { useEffect, useState } from 'react'
 import { useMediaContext } from '@/features/player/contexts/MediaContext'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
+import { useGlobalToast } from '@/shared/contexts/ToastContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import { PlayerState } from '@/types/api'
 import IconBtn from '../../../shared/ui/IconBtn'
@@ -22,9 +23,12 @@ export interface PlayerTransportControlsProps {
   playerHandler: UsePlayerHandlerReturn
 }
 
+const QUICK_JUMP_AMOUNTS = [5, 10, 15, 30, 45, 60] as const
+
 export function PlayerTransportControls({ playerHandler }: PlayerTransportControlsProps) {
   const t = useTypeSafeTranslations()
-  const { jumpBackward, jumpForward, playPause, seek } = playerHandler.controls
+  const { showToast } = useGlobalToast()
+  const { jumpBackward, jumpForward, playPause, seek, updateSettings } = playerHandler.controls
   const { nextChapter, previousChapter, currentChapter, playerState, currentTime, settings } = playerHandler.state
 
   const isPlaying = playerState === PlayerState.PLAYING
@@ -38,8 +42,26 @@ export function PlayerTransportControls({ playerHandler }: PlayerTransportContro
     return `${prefix} - ${timeText}`
   }
 
-  const jumpBackwardTooltipText = getJumpTooltipText(t('ButtonJumpBackward'), settings.jumpBackwardAmount)
-  const jumpForwardTooltipText = getJumpTooltipText(t('ButtonJumpForward'), settings.jumpForwardAmount)
+  const jumpBackwardTooltipText = `${getJumpTooltipText(t('ButtonJumpBackward'), settings.jumpBackwardAmount)} (Right-click to change duration)`
+  const jumpForwardTooltipText = `${getJumpTooltipText(t('ButtonJumpForward'), settings.jumpForwardAmount)} (Right-click to change duration)`
+
+  const cycleJumpBackward = (e: React.MouseEvent) => {
+    e.preventDefault()
+    const currentIndex = QUICK_JUMP_AMOUNTS.indexOf(settings.jumpBackwardAmount as (typeof QUICK_JUMP_AMOUNTS)[number])
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % QUICK_JUMP_AMOUNTS.length
+    const newAmount = QUICK_JUMP_AMOUNTS[nextIndex]
+    updateSettings({ jumpBackwardAmount: newAmount })
+    showToast(`Jump backward: ${newAmount}s`, { type: 'info' })
+  }
+
+  const cycleJumpForward = (e: React.MouseEvent) => {
+    e.preventDefault()
+    const currentIndex = QUICK_JUMP_AMOUNTS.indexOf(settings.jumpForwardAmount as (typeof QUICK_JUMP_AMOUNTS)[number])
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % QUICK_JUMP_AMOUNTS.length
+    const newAmount = QUICK_JUMP_AMOUNTS[nextIndex]
+    updateSettings({ jumpForwardAmount: newAmount })
+    showToast(`Jump forward: ${newAmount}s`, { type: 'info' })
+  }
 
   const handleNextChapter = () => {
     if (nextChapter) {
@@ -79,12 +101,13 @@ export function PlayerTransportControls({ playerHandler }: PlayerTransportContro
 
       {/* Jump backward */}
       <Tooltip text={jumpBackwardTooltipText} position="top">
-        <div className="group relative">
+        <div className="group relative" onContextMenu={cycleJumpBackward}>
           <IconBtn
             borderless
             size="custom"
             className="p-1.5 text-foreground/80 transition-colors hover:text-foreground"
             onClick={jumpBackward}
+            onContextMenu={cycleJumpBackward}
             ariaLabel={jumpBackwardTooltipText}
             icon={RotateCcw}
             whileHover={{ rotate: -15 }}
@@ -115,12 +138,13 @@ export function PlayerTransportControls({ playerHandler }: PlayerTransportContro
 
       {/* Jump forward */}
       <Tooltip text={jumpForwardTooltipText} position="top">
-        <div className="group relative">
+        <div className="group relative" onContextMenu={cycleJumpForward}>
           <IconBtn
             borderless
             size="custom"
             className="p-1.5 text-foreground/80 transition-colors hover:text-foreground"
             onClick={jumpForward}
+            onContextMenu={cycleJumpForward}
             ariaLabel={jumpForwardTooltipText}
             icon={RotateCw}
             whileHover={{ rotate: 15 }}

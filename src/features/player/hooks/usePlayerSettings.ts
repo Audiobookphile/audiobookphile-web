@@ -24,6 +24,8 @@ export interface PlayerSettings {
   smartRewindEnabled: boolean
   /** Maximum smart rewind duration in seconds (10, 20, 30) */
   smartRewindSeconds: number
+  /** Whether to play a gentle chime sound when the sleep timer finishes */
+  sleepTimerChime: boolean
 }
 
 export interface UsePlayerSettingsReturn {
@@ -38,6 +40,7 @@ export interface UsePlayerSettingsReturn {
   setDefaultSleepTimerDuration: (value: number) => void
   setSmartRewindEnabled: (value: boolean) => void
   setSmartRewindSeconds: (value: number) => void
+  setSleepTimerChime: (value: boolean) => void
   /** Update multiple settings at once */
   updateSettings: (updates: Partial<PlayerSettings>) => void
   /** Increment playback rate by the configured increment amount */
@@ -68,6 +71,7 @@ const DEFAULT_SETTINGS: PlayerSettings = {
   defaultSleepTimerDuration: 900,
   smartRewindEnabled: true,
   smartRewindSeconds: 20,
+  sleepTimerChime: true,
 }
 
 // Playback rate bounds
@@ -227,6 +231,10 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setSettings((prev) => ({ ...prev, smartRewindSeconds: value }))
   }, [])
 
+  const setSleepTimerChime = useCallback((value: boolean) => {
+    setSettings((prev) => ({ ...prev, sleepTimerChime: value }))
+  }, [])
+
   const toggleMute = useCallback((): number => {
     const currentVolume = settings.volume
     if (currentVolume > 0) {
@@ -255,6 +263,7 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setDefaultSleepTimerDuration,
     setSmartRewindEnabled,
     setSmartRewindSeconds,
+    setSleepTimerChime,
     updateSettings,
     incrementPlaybackRate,
     decrementPlaybackRate,

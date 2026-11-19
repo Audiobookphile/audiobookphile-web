@@ -1,7 +1,7 @@
 'use client'
 
 import { arrow as arrowMw, autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom'
-import { Moon, Sparkles } from 'lucide-react'
+import { Bell, BellOff, Moon, Sparkles } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { UsePlayerHandlerReturn } from '@/features/player/hooks/usePlayerHandler'
@@ -48,7 +48,7 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
   const { sleepTimerRemaining, currentChapter, currentTime, duration } = playerHandler.state
   const { startSleepTimer, extendSleepTimer, stopSleepTimer } = playerHandler.controls
 
-  const { settings } = usePlayerSettings()
+  const { settings, updateSettings } = usePlayerSettings()
   const defaultDurationSeconds = settings.defaultSleepTimerDuration || 900
 
   const widgetId = useId()
@@ -210,6 +210,24 @@ export default function SleepTimerWidget({ playerHandler }: SleepTimerWidgetProp
             <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
               <Moon size={13} />
               <span>Active Countdown</span>
+              <button
+                type="button"
+                onClick={() => updateSettings({ sleepTimerChime: !settings.sleepTimerChime })}
+                className="ml-1 flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold text-foreground/80 transition-colors hover:border-white/20 active:scale-95 cursor-pointer"
+                title={settings.sleepTimerChime !== false ? 'Disable Expiry Chime' : 'Enable Expiry Chime'}
+              >
+                {settings.sleepTimerChime !== false ? (
+                  <>
+                    <Bell size={10} className="text-primary" />
+                    <span>Chime</span>
+                  </>
+                ) : (
+                  <>
+                    <BellOff size={10} className="text-foreground/40" />
+                    <span className="text-foreground/40">Mute</span>
+                  </>
+                )}
+              </button>
             </div>
             <div className="flex flex-col items-end">
               <span className="font-mono text-base font-extrabold text-primary tabular-nums">

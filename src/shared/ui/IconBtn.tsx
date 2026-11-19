@@ -22,6 +22,7 @@ interface IconBtnProps {
   to?: string
   onClick?: (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void
   onMouseDown?: (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void
+  onContextMenu?: (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void
   onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement | HTMLAnchorElement>) => void
   'aria-pressed'?: boolean
   className?: string
