@@ -17,6 +17,23 @@ interface ChapterTick {
   left: number
 }
 
+export function formatEstimatedFinishTime(remainingSeconds: number, now: Date = new Date()): string {
+  if (!isFinite(remainingSeconds) || remainingSeconds <= 0) return 'Ends now'
+  const finishDate = new Date(now.getTime() + remainingSeconds * 1000)
+  const hours = finishDate.getHours()
+  const minutes = finishDate.getMinutes().toString().padStart(2, '0')
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  const displayHours = hours % 12 || 12
+  const timeStr = `${displayHours}:${minutes} ${ampm}`
+
+  const isTomorrow =
+    finishDate.getDate() !== now.getDate() ||
+    finishDate.getMonth() !== now.getMonth() ||
+    finishDate.getFullYear() !== now.getFullYear()
+
+  return isTomorrow ? `Ends tom. ${timeStr}` : `Ends ${timeStr}`
+}
+
 export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
   const { currentTime, duration, bufferedTime, settings, chapters, playerState, currentChapter } = playerHandler.state
   const { seek } = playerHandler.controls
@@ -38,8 +55,9 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
   const [isDragging, setIsDragging] = useState(false)
   // While dragging show the drag position instead of real currentTime
   const [dragPercent, setDragPercent] = useState<number | null>(null)
-  // Toggle between Chapter remaining and Total remaining time
-  const [showChapterRemaining, setShowChapterRemaining] = useState(false)
+  // Remaining display modes: 'total' | 'chapter' | 'finish'
+  type RemainingTimeMode = 'total' | 'chapter' | 'finish'
+  const [remainingMode, setRemainingMode] = useState<RemainingTimeMode>('total')
 
   // Chapter duration and start for chapter-mode display
   const currentChapterDuration = currentChapter ? currentChapter.end - currentChapter.start : 0
@@ -52,13 +70,28 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
     ? (currentChapter.end - currentTime) / effectivePlaybackRate
     : remainingTotal
 
-  const isShowingChapter = (useChapterTrack || showChapterRemaining) && currentChapter != null
-  const timeRemainingToShow = isShowingChapter ? remainingChapter : remainingTotal
+  const isShowingChapter = (useChapterTrack || remainingMode === 'chapter') && currentChapter != null
 
-  const timeRemainingFormatted =
-    timeRemainingToShow < 0
-      ? `${secondsToTimestamp(timeRemainingToShow * -1)}${isShowingChapter ? ' (ch)' : ''}`
-      : `-${secondsToTimestamp(timeRemainingToShow)}${isShowingChapter ? ' (ch)' : ''}`
+  let timeRemainingFormatted = ''
+  let remainingTooltip = ''
+  if (remainingMode === 'finish') {
+    timeRemainingFormatted = formatEstimatedFinishTime(remainingTotal)
+    remainingTooltip = 'Showing estimated completion time at current speed. Click to show Total remaining.'
+  } else if (isShowingChapter) {
+    timeRemainingFormatted =
+      remainingChapter < 0
+        ? `${secondsToTimestamp(remainingChapter * -1)} (ch)`
+        : `-${secondsToTimestamp(remainingChapter)} (ch)`
+    remainingTooltip = 'Showing Chapter remaining time. Click to show estimated completion clock time.'
+  } else {
+    timeRemainingFormatted =
+      remainingTotal < 0
+        ? `${secondsToTimestamp(remainingTotal * -1)}`
+        : `-${secondsToTimestamp(remainingTotal)}`
+    remainingTooltip = currentChapter
+      ? 'Showing Total remaining time. Click to show Chapter remaining.'
+      : 'Showing Total remaining time. Click to show estimated completion clock time.'
+  }
 
   const currentTimeToShow = useChapterTrack ? Math.max(0, currentTime - currentChapterStart) : currentTime
   const currentTimeFormatted = secondsToTimestamp(currentTimeToShow / effectivePlaybackRate)
@@ -403,24 +436,14 @@ export default function PlayerTrackBar({ playerHandler }: PlayerTrackBarProps) {
         <button
           type="button"
           onClick={() => {
-            if (currentChapter) {
-              setShowChapterRemaining((prev) => !prev)
-            }
+            setRemainingMode((prev) => {
+              if (prev === 'total') return currentChapter ? 'chapter' : 'finish'
+              if (prev === 'chapter') return 'finish'
+              return 'total'
+            })
           }}
-          disabled={!currentChapter}
-          className={mergeClasses(
-            'shrink-0 font-mono transition-colors text-xs select-none',
-            currentChapter
-              ? 'cursor-pointer hover:text-accent focus:outline-none'
-              : 'cursor-default'
-          )}
-          title={
-            currentChapter
-              ? isShowingChapter
-                ? 'Showing Chapter remaining time. Click to show Total remaining.'
-                : 'Showing Total remaining time. Click to show Chapter remaining.'
-              : 'Total remaining time'
-          }
+          className="shrink-0 font-mono transition-colors text-xs select-none cursor-pointer hover:text-accent focus:outline-none"
+          title={remainingTooltip}
           aria-label="Toggle remaining time display"
         >
           {timeRemainingFormatted}

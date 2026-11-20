@@ -30,6 +30,15 @@ interface BookmarkItem {
   created_at?: string
 }
 
+export function getBookmarkChapter(
+  timeSeconds: number,
+  chapters: { title: string; start: number; end: number }[]
+): string | null {
+  if (!chapters || chapters.length === 0) return null
+  const found = chapters.find((ch) => ch.start <= timeSeconds && timeSeconds < ch.end)
+  return found?.title || null
+}
+
 export default function BookmarksModal({
   isOpen,
   libraryItemId,
@@ -121,12 +130,16 @@ export default function BookmarksModal({
     const query = searchQuery.trim().toLowerCase()
     if (!query) return bookmarks
     return bookmarks.filter((bm) => {
+      const timeSec = bm.time_pos / 1000
+      const formattedTime = secondsToTimestamp(timeSec).toLowerCase()
       const titleMatch = (bm.title || '').toLowerCase().includes(query)
       const noteMatch = (bm.note || '').toLowerCase().includes(query)
-      const timeMatch = secondsToTimestamp(bm.time_pos / 1000).toLowerCase().includes(query)
-      return titleMatch || noteMatch || timeMatch
+      const timeMatch = formattedTime.includes(query)
+      const chapterTitle = getBookmarkChapter(timeSec, playerHandler.state.chapters)
+      const chapterMatch = chapterTitle ? chapterTitle.toLowerCase().includes(query) : false
+      return titleMatch || noteMatch || timeMatch || chapterMatch
     })
-  }, [bookmarks, searchQuery])
+  }, [bookmarks, searchQuery, playerHandler.state.chapters])
 
   const handleStartAdd = () => {
     setNewTitle(`Bookmark at ${secondsToTimestamp(currentTime)}`)
@@ -394,7 +407,7 @@ export default function BookmarksModal({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search bookmarks by title, note, or time..."
+              placeholder="Search bookmarks by title, note, chapter, or time..."
               className="w-full rounded-xl border border-white/10 bg-white/5 py-1.5 pl-8 pr-8 text-xs text-foreground placeholder:text-foreground-muted/50 focus:border-primary focus:outline-none"
             />
             {searchQuery && (
@@ -461,10 +474,25 @@ export default function BookmarksModal({
                       onClick={() => handleSeek(bm.time_pos)}
                       className="flex flex-1 items-start gap-3 text-left cursor-pointer"
                     >
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary/10 px-2 py-1 font-mono text-xs font-medium text-primary">
-                        <Clock className="h-3 w-3" />
-                        {formattedTime}
-                      </span>
+                      <div className="flex shrink-0 flex-col items-start gap-1">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary/10 px-2 py-1 font-mono text-xs font-medium text-primary">
+                          <Clock className="h-3 w-3" />
+                          {formattedTime}
+                        </span>
+                        {(() => {
+                          const chapterName = getBookmarkChapter(timeSec, playerHandler.state.chapters)
+                          if (!chapterName) return null
+                          return (
+                            <span
+                              className="inline-flex max-w-[130px] shrink-0 items-center gap-1 truncate rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[11px] font-medium text-foreground-muted"
+                              title={`Chapter: ${chapterName}`}
+                            >
+                              <Bookmark className="h-2.5 w-2.5 shrink-0 text-primary" />
+                              <span className="truncate">{chapterName}</span>
+                            </span>
+                          )
+                        })()}
+                      </div>
 
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-foreground group-hover:text-primary">
