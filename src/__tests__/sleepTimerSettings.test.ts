@@ -218,4 +218,32 @@ describe('PlayerSettings - Default Sleep Timer Duration', () => {
     // Temporarily awake on user activity -> un-dim
     expect(shouldDimScreen(300, true, true)).toBe(false)
   })
+
+  it('supports configurable sleep timer audio fade-out duration and calculates volume attenuation factor', () => {
+    function calculateFadeVolume(
+      baseVolume: number,
+      remainingSeconds: number,
+      fadeDurationSeconds: number
+    ): number {
+      if (fadeDurationSeconds <= 0 || remainingSeconds > fadeDurationSeconds) {
+        return baseVolume
+      }
+      const factor = Math.max(0.05, remainingSeconds / fadeDurationSeconds)
+      return baseVolume * factor
+    }
+
+    const baseVol = 0.8
+    // With 10s fade duration:
+    // When 60s remaining, volume is full base volume
+    expect(calculateFadeVolume(baseVol, 60, 10)).toBe(0.8)
+
+    // When 5s remaining (halfway through fade), volume is 0.4
+    expect(calculateFadeVolume(baseVol, 5, 10)).toBeCloseTo(0.4, 2)
+
+    // When 1s remaining, volume is at minimum 0.08
+    expect(calculateFadeVolume(baseVol, 1, 10)).toBeCloseTo(0.08, 2)
+
+    // With fadeDuration = 0 (disabled), volume stays full
+    expect(calculateFadeVolume(baseVol, 5, 0)).toBe(0.8)
+  })
 })

@@ -150,6 +150,9 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
   const sleepTimerChimeRef = useRef(settings.sleepTimerChime)
   sleepTimerChimeRef.current = settings.sleepTimerChime
 
+  const sleepTimerFadeOutRef = useRef(settings.sleepTimerFadeOutDuration)
+  sleepTimerFadeOutRef.current = settings.sleepTimerFadeOutDuration
+
   const currentChapter = chapters.find((chapter) => chapter.start <= currentTime && chapter.end > currentTime) ?? null
   const nextChapter = chapters.find((chapter) => chapter.start > currentTime && chapter.end > currentTime) ?? null
   const previousChapter =
@@ -363,9 +366,10 @@ export function usePlayerHandler(): UsePlayerHandlerReturn {
           }
           return null
         }
-        // Graceful fade-out during the final 15 seconds
-        if (prev <= 16) {
-          const fadeFactor = Math.max(0.05, (prev - 1) / 15)
+        // Graceful fade-out during the configured final seconds
+        const fadeDuration = sleepTimerFadeOutRef.current
+        if (fadeDuration > 0 && prev <= fadeDuration + 1) {
+          const fadeFactor = Math.max(0.05, (prev - 1) / fadeDuration)
           playerRef.current?.setVolume(volumeRef.current * fadeFactor)
         }
         return prev - 1

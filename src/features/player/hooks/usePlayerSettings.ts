@@ -28,6 +28,8 @@ export interface PlayerSettings {
   sleepTimerChime: boolean
   /** Whether nightstand dim display mode is active during sleep timer */
   sleepTimerDimScreen: boolean
+  /** Volume fade-out duration before sleep timer expires in seconds (0 = off, 10, 30, 60) */
+  sleepTimerFadeOutDuration: number
 }
 
 export interface UsePlayerSettingsReturn {
@@ -44,6 +46,7 @@ export interface UsePlayerSettingsReturn {
   setSmartRewindSeconds: (value: number) => void
   setSleepTimerChime: (value: boolean) => void
   setSleepTimerDimScreen: (value: boolean) => void
+  setSleepTimerFadeOutDuration: (value: number) => void
   /** Update multiple settings at once */
   updateSettings: (updates: Partial<PlayerSettings>) => void
   /** Increment playback rate by the configured increment amount */
@@ -76,6 +79,7 @@ const DEFAULT_SETTINGS: PlayerSettings = {
   smartRewindSeconds: 20,
   sleepTimerChime: true,
   sleepTimerDimScreen: false,
+  sleepTimerFadeOutDuration: 10,
 }
 
 // Playback rate bounds
@@ -243,6 +247,10 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setSettings((prev) => ({ ...prev, sleepTimerDimScreen: value }))
   }, [])
 
+  const setSleepTimerFadeOutDuration = useCallback((value: number) => {
+    setSettings((prev) => ({ ...prev, sleepTimerFadeOutDuration: value }))
+  }, [])
+
   const toggleMute = useCallback((): number => {
     const currentVolume = settings.volume
     if (currentVolume > 0) {
@@ -273,6 +281,7 @@ export function usePlayerSettings(): UsePlayerSettingsReturn {
     setSmartRewindSeconds,
     setSleepTimerChime,
     setSleepTimerDimScreen,
+    setSleepTimerFadeOutDuration,
     updateSettings,
     incrementPlaybackRate,
     decrementPlaybackRate,

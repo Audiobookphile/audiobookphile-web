@@ -52,6 +52,14 @@ const SMART_REWIND_SECONDS_VALUES: DropdownItem[] = [
   { text: '30 Seconds', value: 30 },
 ]
 
+// Sleep timer fade-out duration values
+const SLEEP_TIMER_FADE_OUT_VALUES: DropdownItem[] = [
+  { text: 'Off (Instant pause)', value: 0 },
+  { text: '10 Seconds (Default)', value: 10 },
+  { text: '30 Seconds', value: 30 },
+  { text: '60 Seconds (1 Minute)', value: 60 },
+]
+
 export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdateSettings }: PlayerSettingsModalProps) {
   const t = useTypeSafeTranslations()
 
@@ -163,6 +171,15 @@ export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdat
             value={settings.sleepTimerDimScreen ?? false}
             label="Nightstand Dim Display (Bedtime Listening)"
             onChange={(value) => onUpdateSettings({ sleepTimerDimScreen: value })}
+          />
+
+          {/* Sleep Timer Fade Out dropdown */}
+          <Dropdown
+            label="Sleep Timer Audio Fade-Out"
+            value={settings.sleepTimerFadeOutDuration ?? 10}
+            items={SLEEP_TIMER_FADE_OUT_VALUES}
+            onChange={(value) => onUpdateSettings({ sleepTimerFadeOutDuration: Number(value) })}
+            usePortal
           />
 
           {/* Smart Rewind on Resume toggle */}

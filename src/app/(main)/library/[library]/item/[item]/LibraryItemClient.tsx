@@ -1,6 +1,6 @@
 'use client'
 
-import { Folder, X } from 'lucide-react'
+import { ChevronsUpDown, Folder, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Fragment, useCallback, useEffect, useState } from 'react'
@@ -39,6 +39,7 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
   const [libraryItem, setLibraryItem] = useState(initialLibraryItem)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isClearQueueDialogOpen, setIsClearQueueDialogOpen] = useState(false)
+  const [areAllSectionsExpanded, setAreAllSectionsExpanded] = useState<boolean | undefined>(undefined)
 
   useEffect(() => {
     setLibraryItem(initialLibraryItem)
@@ -203,16 +204,32 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
             {description && <ExpandableHtml html={description} lineClamp={4} className="mt-6" />}
 
             <div className="mt-6 flex flex-col gap-4">
+              {/* Expand / Collapse All Sections Toolbar */}
+              <div className="flex items-center justify-between pb-1">
+                <span className="text-xs font-bold tracking-wider uppercase text-foreground-muted">
+                  Book Media & Content
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAreAllSectionsExpanded((prev) => !prev)}
+                  className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-foreground-muted transition-all hover:bg-white/10 hover:text-foreground cursor-pointer"
+                  title={areAllSectionsExpanded ? 'Collapse all media sections' : 'Expand all media sections'}
+                >
+                  <ChevronsUpDown className="h-3.5 w-3.5" />
+                  <span>{areAllSectionsExpanded ? 'Collapse All' : 'Expand All'}</span>
+                </button>
+              </div>
+
               {/* chapters table */}
               {libraryItem.mediaType === 'book' && (libraryItem.media?.chapters?.length ?? 0) > 0 && (
-                <ChaptersTable libraryItem={libraryItem} />
+                <ChaptersTable libraryItem={libraryItem} expanded={areAllSectionsExpanded} />
               )}
 
               {/* audio tracks table — audioFiles is the API's per-track array;
                   `tracks` never exists on an API payload, so gating on it hid
                   the table entirely. */}
               {libraryItem.mediaType === 'book' && (libraryItem.media?.audioFiles?.length ?? 0) > 0 && (
-                <AudioTracksTable libraryItem={libraryItem} />
+                <AudioTracksTable libraryItem={libraryItem} expanded={areAllSectionsExpanded} />
               )}
 
               {/* podcast episodes table */}
@@ -227,7 +244,7 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
 
               {/* library files table */}
               {!isPodcast && (libraryItem.libraryFiles?.length ?? 0) > 0 && (
-                <LibraryFilesTable libraryItem={libraryItem} />
+                <LibraryFilesTable libraryItem={libraryItem} expanded={areAllSectionsExpanded} />
               )}
             </div>
 
