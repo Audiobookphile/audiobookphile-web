@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronsUpDown, Folder, X } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, ChevronsUpDown, Folder, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Fragment, useCallback, useEffect, useState } from 'react'
@@ -13,6 +13,7 @@ import ChaptersTable from '@/features/player/components/ChaptersTable'
 import { useGlobalToast } from '@/shared/contexts/ToastContext'
 import { useUser } from '@/shared/contexts/UserContext'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
+import { apiFetch } from '@/shared/lib/api/browser'
 import LibraryItemEditModal from '@/shared/modals/LibraryItemEditModal'
 import { sanitizeDisplayTitle } from '@/shared/utils/titleAuthorParser'
 import ConfirmDialog from '@/shared/widgets/ConfirmDialog'
@@ -46,12 +47,67 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
   }, [initialLibraryItem])
 
   const isPodcast = libraryItem.mediaType === 'podcast'
+  const isBook = libraryItem.mediaType === 'book'
   const metadata = libraryItem.media?.metadata as BookMetadata | PodcastMetadata | undefined
   const podcastAuthor = metadata && 'author' in metadata ? metadata.author : undefined
   const subtitle = metadata && 'subtitle' in metadata ? metadata.subtitle : undefined
   const bookAuthors = metadata && 'authors' in metadata && Array.isArray(metadata.authors) ? metadata.authors : []
   const bookSeries = metadata && 'series' in metadata && Array.isArray(metadata.series) ? metadata.series : []
   const description = metadata && 'description' in metadata ? metadata.description : undefined
+
+  interface SeriesContinuityBook {
+    id: string
+    title: string
+    sequence?: string
+  }
+  const [seriesContinuity, setSeriesContinuity] = useState<{
+    previous: SeriesContinuityBook | null
+    next: SeriesContinuityBook | null
+    seriesName: string
+  } | null>(null)
+
+  useEffect(() => {
+    if (!isBook || bookSeries.length === 0 || !bookSeries[0]?.id) return
+    const primarySeries = bookSeries[0]
+    let isCancelled = false
+
+    const loadSeries = async () => {
+      try {
+        const res = await apiFetch<{ books?: any[] }>(`/api/libraries/${library.id}/series/${primarySeries.id}`)
+        if (!res.ok || !res.data || isCancelled) return
+        const books = res.data.books || []
+        const currentIdx = books.findIndex((b: any) => b.id === libraryItem.id)
+        if (currentIdx === -1) return
+
+        const prev = currentIdx > 0 ? {
+          id: books[currentIdx - 1].id,
+          title: books[currentIdx - 1].title || books[currentIdx - 1].media?.metadata?.title || 'Previous Book',
+          sequence: books[currentIdx - 1].sequence || books[currentIdx - 1].media?.metadata?.series?.[0]?.sequence,
+        } : null
+
+        const next = currentIdx + 1 < books.length ? {
+          id: books[currentIdx + 1].id,
+          title: books[currentIdx + 1].title || books[currentIdx + 1].media?.metadata?.title || 'Next Book',
+          sequence: books[currentIdx + 1].sequence || books[currentIdx + 1].media?.metadata?.series?.[0]?.sequence,
+        } : null
+
+        if (!isCancelled && (prev || next)) {
+          setSeriesContinuity({
+            previous: prev,
+            next: next,
+            seriesName: primarySeries.name,
+          })
+        }
+      } catch (err) {
+        console.error('[LibraryItemClient] Failed to load series continuity:', err)
+      }
+    }
+
+    void loadSeries()
+    return () => {
+      isCancelled = true
+    }
+  }, [isBook, bookSeries, library.id, libraryItem.id])
 
   const userProgress = libraryItem.media?.id ? getMediaItemProgress(libraryItem.media.id) : undefined
 
@@ -158,6 +214,52 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
             </div>
 
             <LibraryItemDetails libraryItem={libraryItem} />
+
+            {/* Series Continuity (Previous & Next book in series) */}
+            {seriesContinuity && (seriesContinuity.previous || seriesContinuity.next) && (
+              <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground-subdued">
+                  <BookOpen className="h-3.5 w-3.5 text-primary" />
+                  <span>Series Continuity: {seriesContinuity.seriesName}</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                  {seriesContinuity.previous ? (
+                    <Link
+                      href={`/library/${library.id}/item/${seriesContinuity.previous.id}`}
+                      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition-all hover:border-primary/40 hover:bg-primary/5 active:scale-95"
+                    >
+                      <ChevronLeft className="h-4 w-4 text-primary shrink-0 transition-transform group-hover:-translate-x-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-foreground-subdued">
+                          Previous {seriesContinuity.previous.sequence ? `#${seriesContinuity.previous.sequence}` : ''}
+                        </p>
+                        <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary">
+                          {seriesContinuity.previous.title}
+                        </p>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="hidden sm:block" />
+                  )}
+                  {seriesContinuity.next && (
+                    <Link
+                      href={`/library/${library.id}/item/${seriesContinuity.next.id}`}
+                      className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition-all hover:border-primary/40 hover:bg-primary/5 active:scale-95 sm:col-start-2"
+                    >
+                      <div className="min-w-0 flex-1 text-right sm:text-left">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                          Next in Series {seriesContinuity.next.sequence ? `#${seriesContinuity.next.sequence}` : ''}
+                        </p>
+                        <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary">
+                          {seriesContinuity.next.title}
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-primary shrink-0 transition-transform group-hover:translate-x-0.5" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
 
             <LibraryItemActionButtons
               libraryItem={libraryItem}

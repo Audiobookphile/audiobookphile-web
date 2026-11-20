@@ -11,8 +11,11 @@ import { useBookshelfVirtualizer } from '@/features/library/hooks/useBookshelfVi
 import { useUser } from '@/shared/contexts/UserContext'
 import { usePersistentScroll } from '@/shared/hooks/usePersistentScroll'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
+import { filterEncode } from '@/shared/lib/filterUtils'
 import { buildMediaItemProgressMap } from '@/shared/lib/mediaProgress'
+import { mergeClasses } from '@/shared/lib/merge-classes'
 import Btn from '@/shared/ui/Btn'
+import { QUICK_PROGRESS_FILTERS } from '@/features/library/lib/quickFilters'
 import { BookshelfEntity, BookshelfView, EntityType } from '@/types/api'
 import LibraryEmptyState from '../LibraryEmptyState'
 import { ENTITY_CONFIGS } from './entity-config'
@@ -82,6 +85,14 @@ export default function BookshelfClient({ entityType }: BookshelfClientProps) {
   // Selection mode & batch actions state
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set())
+
+  const activeQuickFilter = useMemo(() => {
+    if (filterBy === 'all') return 'all'
+    for (const item of QUICK_PROGRESS_FILTERS) {
+      if (filterBy === item.filterValue) return item.id
+    }
+    return null
+  }, [filterBy])
 
   const handleToggleSelect = useCallback((id: string, e?: React.MouseEvent) => {
     if (e) {
@@ -379,6 +390,33 @@ export default function BookshelfClient({ entityType }: BookshelfClientProps) {
         handlePersistentScroll(scrollTop)
       }}
     >
+      {/* Quick Progress Filter Bar (Audiobooks only) */}
+      {entityType === 'items' && !error && (
+        <div className="sticky top-0 z-20 flex items-center gap-2 overflow-x-auto px-4 py-2.5 backdrop-blur-md bg-background/80 border-b border-white/5 scrollbar-none">
+          {QUICK_PROGRESS_FILTERS.map((pill) => {
+            const isActive = activeQuickFilter === pill.id
+            return (
+              <button
+                key={pill.id}
+                type="button"
+                onClick={() => {
+                  const target = isActive && pill.id !== 'all' ? 'all' : pill.filterValue
+                  updateSetting('filterBy', target)
+                }}
+                className={mergeClasses(
+                  'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all cursor-pointer select-none active:scale-95',
+                  isActive
+                    ? 'bg-primary text-white shadow-sm ring-1 ring-primary/40'
+                    : 'bg-white/5 text-foreground-muted hover:bg-white/10 hover:text-foreground'
+                )}
+              >
+                <span>{pill.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Measurement Dummy - Hidden but rendered for sizing */}
       <div
         ref={dummyCardRef}
