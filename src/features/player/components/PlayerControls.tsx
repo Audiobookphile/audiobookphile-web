@@ -184,7 +184,6 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [isChaptersModalOpen, setIsChaptersModalOpen] = useState(false)
   const [isBookmarksModalOpen, setIsBookmarksModalOpen] = useState(false)
-  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false)
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false)
   const { chapters } = playerHandler.state
 
@@ -193,20 +192,17 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
     const onToggleBookmarks = () => setIsBookmarksModalOpen((prev) => !prev)
     const onAddBookmark = () => setIsBookmarksModalOpen(true)
     const onToggleChapters = () => setIsChaptersModalOpen((prev) => !prev)
-    const onToggleShortcuts = () => setIsShortcutsModalOpen((prev) => !prev)
     const onToggleQueue = () => setIsQueueModalOpen((prev) => !prev)
 
     window.addEventListener('audiobookphile:toggle-bookmarks', onToggleBookmarks)
     window.addEventListener('audiobookphile:add-bookmark', onAddBookmark)
     window.addEventListener('audiobookphile:toggle-chapters', onToggleChapters)
-    window.addEventListener('audiobookphile:toggle-shortcuts', onToggleShortcuts)
     window.addEventListener('audiobookphile:toggle-queue', onToggleQueue)
 
     return () => {
       window.removeEventListener('audiobookphile:toggle-bookmarks', onToggleBookmarks)
       window.removeEventListener('audiobookphile:add-bookmark', onAddBookmark)
       window.removeEventListener('audiobookphile:toggle-chapters', onToggleChapters)
-      window.removeEventListener('audiobookphile:toggle-shortcuts', onToggleShortcuts)
       window.removeEventListener('audiobookphile:toggle-queue', onToggleQueue)
     }
   }, [])
@@ -281,7 +277,11 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
             size="custom"
             borderless
             className="hidden p-1.5 text-foreground/60 transition-colors hover:text-foreground sm:inline-flex"
-            onClick={() => setIsShortcutsModalOpen(true)}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('audiobookphile:toggle-shortcuts'))
+              }
+            }}
             ariaLabel="Keyboard shortcuts"
             icon={Keyboard}
             whileHover={{ scale: 1.1 }}
@@ -337,10 +337,6 @@ export function PlayerRightControls({ playerHandler, onClose }: PlayerRightContr
       <QueueModal
         isOpen={isQueueModalOpen}
         onClose={() => setIsQueueModalOpen(false)}
-      />
-      <KeyboardShortcutsModal
-        isOpen={isShortcutsModalOpen}
-        onClose={() => setIsShortcutsModalOpen(false)}
       />
     </>
   )

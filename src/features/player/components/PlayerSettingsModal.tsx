@@ -1,7 +1,8 @@
 'use client'
 
-import { Sliders } from 'lucide-react'
+import { Sliders, Volume2 } from 'lucide-react'
 import { EQUALIZER_PRESETS, type EqualizerPreset } from '@/features/player/lib/AudioEqualizer'
+import { playSleepTimerExpiryChime } from '@/features/player/lib/soundEffects'
 import type { PlayerSettings } from '@/features/player/hooks/usePlayerSettings'
 import { useTypeSafeTranslations } from '@/shared/hooks/useTypeSafeTranslations'
 import Modal from '@/shared/modals/Modal'
@@ -160,11 +161,24 @@ export default function PlayerSettingsModal({ isOpen, settings, onClose, onUpdat
           />
 
           {/* Sleep Timer Expiry Chime toggle */}
-          <ToggleSwitch
-            value={settings.sleepTimerChime ?? true}
-            label="Sleep Timer Expiry Chime"
-            onChange={(value) => onUpdateSettings({ sleepTimerChime: value })}
-          />
+          <div className="flex items-center justify-between">
+            <ToggleSwitch
+              value={settings.sleepTimerChime ?? true}
+              label="Sleep Timer Expiry Chime"
+              onChange={(value) => onUpdateSettings({ sleepTimerChime: value })}
+            />
+            {settings.sleepTimerChime !== false && (
+              <button
+                type="button"
+                onClick={() => playSleepTimerExpiryChime()}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-foreground/80 transition-colors hover:bg-white/10 hover:text-foreground"
+                title="Preview Chime Sound"
+              >
+                <Volume2 className="h-3.5 w-3.5 text-accent" />
+                <span>Test</span>
+              </button>
+            )}
+          </div>
 
           {/* Nightstand Dim Display toggle */}
           <ToggleSwitch

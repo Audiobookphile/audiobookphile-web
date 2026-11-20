@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { MetadataProvider } from '@/features/metadata/contexts/MetadataContext'
+import GlobalShortcutsModal from '@/features/player/components/GlobalShortcutsModal'
 import { MediaProvider } from '@/features/player/contexts/MediaContext'
 import { CommandPaletteProvider } from '@/shared/contexts/CommandPaletteContext'
 import { TasksProvider } from '@/shared/contexts/TasksContext'
@@ -69,6 +70,7 @@ export async function UserDataFetcher({ children }: { children: React.ReactNode 
             <CommandPaletteProvider>
               {children}
               <CommandPalette />
+              <GlobalShortcutsModal />
               <InstallPrompt />
             </CommandPaletteProvider>
           </MediaProvider>
